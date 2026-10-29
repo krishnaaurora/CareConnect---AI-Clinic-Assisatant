@@ -22,7 +22,7 @@ import {
   Languages,
   Headphones
 } from 'lucide-react';
-import { fetchAICallActivity } from '../api/client';
+import { fetchAICallActivity, resolveCallFollowup } from '../api/client';
 
 export default function AICallActivity() {
   const [activityData, setActivityData] = useState(null);
@@ -55,17 +55,23 @@ export default function AICallActivity() {
   }, []);
 
   // Quick Resolve Followup Request
-  const handleResolveFollowup = (callId) => {
-    setActivityData(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        calls: prev.calls.map(c => 
-          c.call_id === callId ? { ...c, followup_status: 'Resolved (Handled by Staff)' } : c
-        )
-      };
-    });
-    showNotification(`Follow-up request for call ${callId} marked as resolved!`);
+  const handleResolveFollowup = async (callId) => {
+    try {
+      await resolveCallFollowup(callId);
+      setActivityData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          calls: prev.calls.map(c => 
+            c.call_id === callId ? { ...c, followup_status: 'Resolved (Handled by Staff)' } : c
+          )
+        };
+      });
+      showNotification(`Follow-up request for call ${callId} marked as resolved!`);
+    } catch (err) {
+      console.error('Failed to resolve follow-up:', err);
+      showNotification('Failed to update follow-up status.');
+    }
   };
 
   const metrics = activityData?.metrics || {

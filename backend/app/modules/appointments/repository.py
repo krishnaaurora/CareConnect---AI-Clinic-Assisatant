@@ -8,7 +8,6 @@ class AppointmentRepository:
 
     async def create_appointment(self, appointment_data: dict) -> dict:
         await self.collection.insert_one(appointment_data)
-        # Return without MongoDB internal _id
         appointment_data_clean = dict(appointment_data)
         appointment_data_clean.pop("_id", None)
         return appointment_data_clean
@@ -29,7 +28,7 @@ class AppointmentRepository:
             "status": "VERIFIED_CONFIRMED"
         })
 
-    async def get_recent_appointments(self, limit: int = 50) -> List[dict]:
+    async def get_recent_appointments(self, limit: int = 100) -> List[dict]:
         cursor = self.collection.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
         return await cursor.to_list(length=limit)
 

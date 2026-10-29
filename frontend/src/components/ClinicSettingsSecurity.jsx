@@ -28,6 +28,7 @@ import {
   fetchClinicSettings, 
   updateClinicSettings, 
   fetchClinicStaff, 
+  addClinicStaff,
   fetchAuditLogs 
 } from '../api/client';
 
@@ -135,6 +136,8 @@ export default function ClinicSettingsSecurity() {
     try {
       await updateClinicSettings('CARE-IND-01', payload);
       showNotification('Clinic settings & AI voice configuration updated successfully!');
+      const updatedLogs = await fetchAuditLogs('CARE-IND-01');
+      if (updatedLogs) setAuditLogs(updatedLogs);
     } catch (err) {
       console.error('Failed to save settings:', err);
     } finally {
@@ -150,12 +153,11 @@ export default function ClinicSettingsSecurity() {
   };
 
   // Add Staff Member
-  const handleAddStaffSubmit = (e) => {
+  const handleAddStaffSubmit = async (e) => {
     e.preventDefault();
     if (!newStaffName.trim() || !newStaffEmail.trim()) return;
 
     const newStaff = {
-      id: `stf-${Date.now().toString(36)}`,
       name: newStaffName.trim(),
       email: newStaffEmail.trim(),
       role: newStaffRole,
@@ -164,11 +166,19 @@ export default function ClinicSettingsSecurity() {
       last_active: 'Just Now'
     };
 
-    setStaffList(prev => [newStaff, ...prev]);
-    showNotification(`Staff user ${newStaff.name} created with ${newStaff.role} role.`);
-    setIsAddStaffOpen(false);
-    setNewStaffName('');
-    setNewStaffEmail('');
+    try {
+      const res = await addClinicStaff('CARE-IND-01', newStaff);
+      setStaffList(prev => [res.data || newStaff, ...prev]);
+      showNotification(`Staff user ${newStaff.name} created with ${newStaff.role} role.`);
+      setIsAddStaffOpen(false);
+      setNewStaffName('');
+      setNewStaffEmail('');
+      const updatedLogs = await fetchAuditLogs('CARE-IND-01');
+      if (updatedLogs) setAuditLogs(updatedLogs);
+    } catch (err) {
+      console.error('Failed to add staff member:', err);
+      showNotification('Failed to create staff member.');
+    }
   };
 
   // Filtered Audit Logs

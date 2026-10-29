@@ -93,18 +93,25 @@ async def get_clinic_settings_route(clinic_code: str):
 
 @router.put("/{clinic_code}/settings", response_model=dict)
 async def update_clinic_settings_route(clinic_code: str, payload: dict):
-    """Update clinic configuration, opening hours, AI greeting, and language preferences."""
-    return {"success": True, "data": payload, "message": "Clinic settings updated successfully."}
+    """Update clinic configuration, opening hours, AI greeting, and language preferences in MongoDB."""
+    updated = await service.update_clinic_settings(clinic_code, payload)
+    return {"success": True, "data": updated, "message": "Clinic settings updated successfully in database."}
 
 @router.get("/{clinic_code}/staff", response_model=dict)
 async def get_clinic_staff_route(clinic_code: str):
-    """Retrieve staff credentials, roles, and access control permissions."""
+    """Retrieve staff credentials, roles, and access control permissions from MongoDB."""
     staff = await service.get_clinic_staff(clinic_code)
     return {"success": True, "data": staff}
 
+@router.post("/{clinic_code}/staff", response_model=dict)
+async def add_clinic_staff_route(clinic_code: str, payload: dict):
+    """Create a new staff member profile in MongoDB."""
+    staff = await service.add_clinic_staff(clinic_code, payload)
+    return {"success": True, "data": staff, "message": f"Staff member {staff.get('name')} created successfully."}
+
 @router.get("/{clinic_code}/audit-logs", response_model=dict)
 async def get_clinic_audit_logs_route(clinic_code: str):
-    """Retrieve chronological audit trail of booking and configuration changes."""
+    """Retrieve chronological audit trail of booking and configuration changes from MongoDB."""
     logs = await service.get_audit_logs(clinic_code)
     return {"success": True, "data": logs}
 

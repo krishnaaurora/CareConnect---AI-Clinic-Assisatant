@@ -16,7 +16,6 @@ class AppointmentService:
 
         clinic = await self.clinic_repo.get_clinic_by_code(req.clinic_code)
         if not clinic:
-            # Fallback lookup by any clinic
             clinics = await self.clinic_repo.get_all_clinics()
             clinic = clinics[0] if clinics else {
                 "name": "CareConnect Central Clinic",
@@ -35,7 +34,6 @@ class AppointmentService:
                 break
 
         if not matched_doctor and doctors:
-            # Select first available doctor or keep requested
             matched_doctor = doctors[0]
 
         specialty = matched_doctor.get("specialty", "General Medicine") if matched_doctor else "General Consultation"
@@ -68,6 +66,16 @@ class AppointmentService:
         }
 
         saved = await self.repo.create_appointment(appointment_doc)
+
+        # Record in Audit Logs
+        await self.clinic_repo.add_audit_log(
+            action="APPOINTMENT_CREATED",
+            target=f"Ticket {reference_id} ({appointment_doc['patient_name']})",
+            details=f"Booked for {appointment_doc['preferred_date']} at {appointment_doc['preferred_time']} with {appointment_doc['doctor_name']} via {req.booking_source}",
+            clinic_code=req.clinic_code,
+            user=f"{req.booking_source} Bridge"
+        )
+
         return saved
 
     async def _run_verification(
@@ -89,7 +97,7 @@ class AppointmentService:
                 "Requested physician schedule requires manual clinic verification. Clinic desk has been alerted for priority callback."
             )
 
-        # Strict conflict check: Prevent two patients from booking the exact same slot
+        # Strict conflict check: Prevent double-booking the exact same slot
         conflict_count = await self.repo.count_existing_bookings(
             clinic_code=clinic.get("code", ""),
             doctor_name=doctor.get("name", ""),
@@ -115,10 +123,21 @@ class AppointmentService:
         return await self.repo.get_by_reference(reference_id)
 
     async def list_all(self):
-        return await self.repo.get_recent_appointments()
+        return await self.repo.get_recent_appointments(limit=100)
 
     async def update_status(self, reference_id: str, status: str, notes: str = None):
-        return await self.repo.update_status(reference_id, status, notes)
+        appt = await self.repo.get_by_reference(reference_id)
+        success = await self.repo.update_status(reference_id, status, notes)
+        if success and appt:
+            action_name = "APPOINTMENT_CANCELLED" if status == "CANCELLED" else "APPOINTMENT_STATUS_UPDATED"
+            await self.clinic_repo.add_audit_log(
+                action=action_name,
+                target=f"Ticket {reference_id} ({appt.get('patient_name')})",
+                details=f"Status updated to {status}. Notes: {notes or 'No notes provided'}",
+                clinic_code=appt.get("clinic_code", "CARE-IND-01"),
+                user="Kavita Nair (Receptionist)"
+            )
+        return success
 
     async def reschedule(self, reference_id: str, new_date: str, new_time: str, doctor_name: str = None) -> dict:
         appt = await self.repo.get_by_reference(reference_id)
@@ -126,7 +145,7 @@ class AppointmentService:
             raise ValueError(f"Appointment {reference_id} not found")
         
         target_doctor = doctor_name or appt.get("doctor_name")
-        clinic_code = appt.get("clinic_code", "")
+        clinic_code = appt.get("clinic_code", "CARE-IND-01")
 
         # Conflict check
         conflict_count = await self.repo.count_existing_bookings(
@@ -142,6 +161,14 @@ class AppointmentService:
         if not success:
             raise ValueError("Failed to reschedule appointment")
 
+        await self.clinic_repo.add_audit_log(
+            action="APPOINTMENT_RESCHEDULED",
+            target=f"Ticket {reference_id} ({appt.get('patient_name')})",
+            details=f"Rescheduled to {new_date} at {new_time} with {target_doctor}",
+            clinic_code=clinic_code,
+            user="Kavita Nair (Receptionist)"
+        )
+
         return {
             "reference_id": reference_id,
             "preferred_date": new_date,
@@ -153,7 +180,7 @@ class AppointmentService:
     async def get_overview(self) -> Dict[str, Any]:
         today_str = datetime.utcnow().strftime("%Y-%m-%d")
         metrics = await self.repo.get_overview_counts(today_str)
-        recent = await self.repo.get_recent_appointments(limit=60)
+        recent = await self.repo.get_recent_appointments(limit=100)
         
         # Categorize
         today_appointments = [a for a in recent if a.get("preferred_date") == today_str]
@@ -163,14 +190,14 @@ class AppointmentService:
 
         return {
             "metrics": {
-                "today_count": len(today_appointments) or metrics.get("today_count", 0),
-                "upcoming_count": len(upcoming) or metrics.get("upcoming_count", 0),
-                "pending_count": len(pending) or metrics.get("pending_count", 0),
-                "cancellations_count": len(cancellations) or metrics.get("cancellations_count", 0),
+                "today_count": len(today_appointments),
+                "upcoming_count": len(upcoming),
+                "pending_count": len(pending),
+                "cancellations_count": len(cancellations),
             },
             "today_appointments": today_appointments,
-            "upcoming_bookings": upcoming[:15],
-            "pending_requests": pending[:15],
-            "cancellations": cancellations[:15],
-            "all_recent": recent[:30]
+            "upcoming_bookings": upcoming,
+            "pending_requests": pending,
+            "cancellations": cancellations,
+            "all_recent": recent
         }
