@@ -242,3 +242,107 @@ export async function fetchAuditLogs(clinicCode = 'CARE-IND-01') {
   const json = await res.json();
   return json.data;
 }
+
+// ── Reports & Follow-ups (Module 7) ──
+import { INITIAL_REPORTS, INITIAL_FOLLOWUPS } from '../data/reportsMockData';
+
+export async function fetchReports() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports`);
+    if (!res.ok) throw new Error('Failed to fetch reports');
+    return await res.json();
+  } catch (err) {
+    console.warn('Reports backend offline, using mock data fallback:', err);
+    return INITIAL_REPORTS;
+  }
+}
+
+export async function fetchReportsSummary() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/summary`);
+    if (!res.ok) throw new Error('Failed to fetch reports summary');
+    const json = await res.json();
+    return json.data;
+  } catch (err) {
+    console.warn('Reports summary backend offline, using mock calculation:', err);
+    return {
+      awaiting_verification: INITIAL_REPORTS.filter(r => r.verification_status === 'Awaiting Verification').length,
+      ready_to_notify: INITIAL_REPORTS.filter(r => r.verification_status === 'Ready to Notify').length,
+      notification_pending: INITIAL_REPORTS.filter(r => r.notification_status === 'Pending').length,
+      followup_required: INITIAL_REPORTS.filter(r => ['Follow-up Required', 'No Answer', 'Call Failed'].includes(r.notification_status)).length
+    };
+  }
+}
+
+export async function uploadReport(reportData) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reportData)
+    });
+    if (!res.ok) throw new Error('Failed to upload report');
+    return await res.json();
+  } catch (err) {
+    console.warn('Upload report local simulation:', err);
+    return {
+      success: true,
+      data: {
+        ...reportData,
+        id: `RPT-${Math.floor(1000 + Math.random() * 9000)}`,
+        uploaded_date: reportData.uploaded_date || new Date().toISOString().split('T')[0],
+        uploaded_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        verification_status: 'Awaiting Verification',
+        notification_status: 'Not Started',
+        timeline: [
+          { step: 'Report Uploaded', timestamp: 'Just Now', actor: reportData.uploaded_by || 'Admin', done: true },
+          { step: 'Physician Verification', timestamp: 'Pending', actor: 'Attending Doctor', done: false },
+          { step: 'Ready to Notify', timestamp: 'Pending', actor: 'Clinical Desk', done: false },
+          { step: 'Patient Notification', timestamp: 'Scheduled Phase 4', actor: 'Priya AI Voice', done: false }
+        ]
+      },
+      message: 'Report uploaded successfully (simulated).'
+    };
+  }
+}
+
+export async function updateReportStatus(reportId, updateData) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/${reportId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData)
+    });
+    if (!res.ok) throw new Error('Failed to update report status');
+    return await res.json();
+  } catch (err) {
+    console.warn('Update report status fallback:', err);
+    return { success: true, message: `Report ${reportId} status updated locally.` };
+  }
+}
+
+export async function fetchFollowups() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/followups`);
+    if (!res.ok) throw new Error('Failed to fetch follow-ups');
+    return await res.json();
+  } catch (err) {
+    console.warn('Followups backend offline, using mock data:', err);
+    return INITIAL_FOLLOWUPS;
+  }
+}
+
+export async function resolveFollowup(followupId, notes = '') {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reports/followups/${followupId}/resolve`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes })
+    });
+    if (!res.ok) throw new Error('Failed to resolve follow-up');
+    return await res.json();
+  } catch (err) {
+    console.warn('Resolve followup fallback:', err);
+    return { success: true, message: `Follow-up ${followupId} marked resolved.` };
+  }
+}

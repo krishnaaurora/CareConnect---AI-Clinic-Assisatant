@@ -30,14 +30,18 @@ async def connect_to_mongo():
         await db_instance.db["call_logs"].create_index("call_id", unique=True)
         await db_instance.db["audit_logs"].create_index("created_at")
         await db_instance.db["clinic_staff"].create_index("id", unique=True)
+        await db_instance.db["patient_reports"].create_index("id", unique=True)
+        await db_instance.db["report_followups"].create_index("id", unique=True)
         
-        # Auto seed/enrich initial clinics, doctors, appointments, calls, settings, staff, audit logs
+        # Auto seed/enrich initial clinics, doctors, appointments, calls, settings, staff, audit logs, reports
         await seed_initial_clinics_if_needed()
         await seed_initial_appointments_if_needed()
         await seed_initial_call_logs_if_needed()
         await seed_initial_settings_if_needed()
         await seed_initial_staff_if_needed()
         await seed_initial_audit_logs_if_needed()
+        await seed_initial_reports_if_needed()
+        await seed_initial_followups_if_needed()
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB: {e}")
         raise e
@@ -756,3 +760,280 @@ async def seed_initial_audit_logs_if_needed():
             logger.info("Successfully seeded audit logs in MongoDB.")
     except Exception as e:
         logger.warning(f"Could not seed audit logs: {e}")
+
+async def seed_initial_reports_if_needed():
+    try:
+        count = await db_instance.db["patient_reports"].count_documents({})
+        if count == 0:
+            logger.info("Seeding initial patient diagnostic reports in MongoDB...")
+            today = datetime.utcnow().strftime("%Y-%m-%d")
+            yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+            two_days_ago = (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d")
+            three_days_ago = (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")
+
+            initial_reports = [
+                {
+                    "id": "RPT-1001",
+                    "patient_id": "PID-1042",
+                    "patient_name": "Ananya Reddy",
+                    "patient_phone": "+91 99001 77889",
+                    "report_type": "Blood Test",
+                    "title": "Complete Blood Count (CBC) & Lipid Panel",
+                    "file_name": "CBC_Lipid_Panel_Ananya_Reddy.pdf",
+                    "file_size": "1.4 MB",
+                    "uploaded_date": today,
+                    "uploaded_time": "09:15 AM",
+                    "uploaded_by": "Kavita Nair (Receptionist)",
+                    "verification_status": "Awaiting Verification",
+                    "notification_status": "Not Started",
+                    "notes": "Routine fasting sample collected at Indiranagar diagnostic wing. Requires physician sign-off.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{today} 09:15 AM", "actor": "Kavita Nair", "done": True},
+                        {"step": "Physician Verification", "timestamp": "Pending", "actor": "Dr. Rajesh Sharma", "done": False},
+                        {"step": "Ready to Notify", "timestamp": "Pending", "actor": "Clinical Team", "done": False},
+                        {"step": "Patient Notification", "timestamp": "Scheduled Phase 4", "actor": "Priya AI Voice", "done": False}
+                    ],
+                    "created_at": f"{today}T09:15:00Z"
+                },
+                {
+                    "id": "RPT-1002",
+                    "patient_id": "PID-1043",
+                    "patient_name": "Anita Deshmukh",
+                    "patient_phone": "+91 98201 54321",
+                    "report_type": "Diagnostic Report",
+                    "title": "12-Lead Electrocardiogram (ECG) Report",
+                    "file_name": "ECG_Analysis_Anita_Deshmukh.pdf",
+                    "file_size": "2.1 MB",
+                    "uploaded_date": today,
+                    "uploaded_time": "10:05 AM",
+                    "uploaded_by": "Admin",
+                    "verification_status": "Ready to Notify",
+                    "notification_status": "Pending",
+                    "notes": "Normal sinus rhythm confirmed by Dr. Sharma. Front office cleared for patient notification.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{today} 10:05 AM", "actor": "Admin", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{today} 10:30 AM", "actor": "Dr. Rajesh Sharma", "done": True},
+                        {"step": "Ready to Notify", "timestamp": f"{today} 10:35 AM", "actor": "Kavita Nair", "done": True},
+                        {"step": "Patient Notification", "timestamp": "Queued", "actor": "Priya AI Voice", "done": False}
+                    ],
+                    "created_at": f"{today}T10:05:00Z"
+                },
+                {
+                    "id": "RPT-1003",
+                    "patient_id": "PID-1044",
+                    "patient_name": "Vikram Malhotra",
+                    "patient_phone": "+91 98450 11223",
+                    "report_type": "Urine Test",
+                    "title": "Urine Routine & Microscopic Examination",
+                    "file_name": "Urine_Micro_Vikram_M.pdf",
+                    "file_size": "890 KB",
+                    "uploaded_date": yesterday,
+                    "uploaded_time": "04:20 PM",
+                    "uploaded_by": "Sunil Kumar (Front Desk)",
+                    "verification_status": "Verified",
+                    "notification_status": "Patient Notified",
+                    "notes": "No abnormal sediments detected. Notified patient via SMS link and verified receipt.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{yesterday} 04:20 PM", "actor": "Sunil Kumar", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{yesterday} 05:00 PM", "actor": "Dr. Sneha Kulkarni", "done": True},
+                        {"step": "Ready to Notify", "timestamp": f"{yesterday} 05:10 PM", "actor": "Desk Staff", "done": True},
+                        {"step": "Patient Notified", "timestamp": f"{yesterday} 05:25 PM", "actor": "CareConnect Notification Service", "done": True}
+                    ],
+                    "created_at": f"{yesterday}T16:20:00Z"
+                },
+                {
+                    "id": "RPT-1004",
+                    "patient_id": "PID-1045",
+                    "patient_name": "Meera Krishnan",
+                    "patient_phone": "+91 94480 55667",
+                    "report_type": "Blood Test",
+                    "title": "Glycated Hemoglobin (HbA1c) & Fasting Glucose",
+                    "file_name": "HbA1c_Meera_Krishnan.pdf",
+                    "file_size": "1.2 MB",
+                    "uploaded_date": yesterday,
+                    "uploaded_time": "02:45 PM",
+                    "uploaded_by": "Kavita Nair (Receptionist)",
+                    "verification_status": "Ready to Notify",
+                    "notification_status": "Call Queued",
+                    "notes": "HbA1c value 6.8%. Routine quarterly diabetic monitoring. Auto voice notification queued.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{yesterday} 02:45 PM", "actor": "Kavita Nair", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{yesterday} 03:30 PM", "actor": "Dr. Rajesh Sharma", "done": True},
+                        {"step": "Ready to Notify", "timestamp": f"{yesterday} 03:45 PM", "actor": "Admin Desk", "done": True},
+                        {"step": "Patient Notification", "timestamp": "In Queue", "actor": "Priya AI Voice", "done": False}
+                    ],
+                    "created_at": f"{yesterday}T14:45:00Z"
+                },
+                {
+                    "id": "RPT-1005",
+                    "patient_id": "PID-1046",
+                    "patient_name": "Deepak Choudhury",
+                    "patient_phone": "+91 98451 90876",
+                    "report_type": "Imaging",
+                    "title": "Digital Chest X-Ray (PA View)",
+                    "file_name": "Chest_XRay_PA_Deepak_C.pdf",
+                    "file_size": "4.8 MB",
+                    "uploaded_date": two_days_ago,
+                    "uploaded_time": "11:15 AM",
+                    "uploaded_by": "Admin",
+                    "verification_status": "Ready to Notify",
+                    "notification_status": "No Answer",
+                    "notes": "Clear lung fields. Tried dialing patient twice at 11:30 AM and 03:15 PM; call went unanswered.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{two_days_ago} 11:15 AM", "actor": "Admin", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{two_days_ago} 11:45 AM", "actor": "Dr. Rajesh Sharma", "done": True},
+                        {"step": "Ready to Notify", "timestamp": f"{two_days_ago} 12:00 PM", "actor": "Admin Desk", "done": True},
+                        {"step": "Patient Notification", "timestamp": "No Answer (2 attempts)", "actor": "Telephony Bridge", "done": False}
+                    ],
+                    "created_at": f"{two_days_ago}T11:15:00Z"
+                },
+                {
+                    "id": "RPT-1006",
+                    "patient_id": "PID-1047",
+                    "patient_name": "Karan Johar",
+                    "patient_phone": "+91 98860 33445",
+                    "report_type": "Blood Test",
+                    "title": "Thyroid Function Test (T3, T4, TSH Ultra)",
+                    "file_name": "Thyroid_Profile_Karan_Johar.pdf",
+                    "file_size": "1.1 MB",
+                    "uploaded_date": two_days_ago,
+                    "uploaded_time": "09:30 AM",
+                    "uploaded_by": "Sunil Kumar (Front Desk)",
+                    "verification_status": "Ready to Notify",
+                    "notification_status": "Call Failed",
+                    "notes": "Number temporarily unreachable. Marked for front-desk follow-up and alternate WhatsApp notification.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{two_days_ago} 09:30 AM", "actor": "Sunil Kumar", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{two_days_ago} 10:15 AM", "actor": "Dr. Rajesh Sharma", "done": True},
+                        {"step": "Ready to Notify", "timestamp": f"{two_days_ago} 10:30 AM", "actor": "Admin Desk", "done": True},
+                        {"step": "Patient Notification", "timestamp": "Failed - Unreachable", "actor": "Telephony Bridge", "done": False}
+                    ],
+                    "created_at": f"{two_days_ago}T09:30:00Z"
+                },
+                {
+                    "id": "RPT-1007",
+                    "patient_id": "PID-1048",
+                    "patient_name": "Sunita Rao",
+                    "patient_phone": "+91 97312 99887",
+                    "report_type": "Imaging",
+                    "title": "Knee Joint Digital Radiography (AP & Lateral View)",
+                    "file_name": "Knee_XRay_Sunita_Rao.pdf",
+                    "file_size": "5.2 MB",
+                    "uploaded_date": three_days_ago,
+                    "uploaded_time": "03:50 PM",
+                    "uploaded_by": "Admin",
+                    "verification_status": "Verified",
+                    "notification_status": "Follow-up Required",
+                    "notes": "Post-operative evaluation reviewed by Dr. Venkat Rao. Patient requested in-depth telephonic consultation callback.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{three_days_ago} 03:50 PM", "actor": "Admin", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{three_days_ago} 04:30 PM", "actor": "Dr. Venkat Rao", "done": True},
+                        {"step": "Ready to Notify", "timestamp": f"{three_days_ago} 04:45 PM", "actor": "Kavita Nair", "done": True},
+                        {"step": "Follow-up Created", "timestamp": f"{three_days_ago} 05:15 PM", "actor": "Front Office Coordinator", "done": True}
+                    ],
+                    "created_at": f"{three_days_ago}T15:50:00Z"
+                },
+                {
+                    "id": "RPT-1008",
+                    "patient_id": "PID-1049",
+                    "patient_name": "Rohan Deshpande",
+                    "patient_phone": "+91 97410 44556",
+                    "report_type": "Blood Test",
+                    "title": "Vitamin D3 & Vitamin B12 Immunoassay",
+                    "file_name": "Vitamins_D3_B12_Rohan_D.pdf",
+                    "file_size": "1.3 MB",
+                    "uploaded_date": three_days_ago,
+                    "uploaded_time": "01:10 PM",
+                    "uploaded_by": "Kavita Nair (Receptionist)",
+                    "verification_status": "Rejected",
+                    "notification_status": "Not Started",
+                    "notes": "Sample hemolyzed during centrifugation. Physician requested repeat venous blood sample collection.",
+                    "timeline": [
+                        {"step": "Report Uploaded", "timestamp": f"{three_days_ago} 01:10 PM", "actor": "Kavita Nair", "done": True},
+                        {"step": "Physician Verification", "timestamp": f"{three_days_ago} 02:00 PM", "actor": "Dr. Rajesh Sharma (Rejected)", "done": True},
+                        {"step": "Redraw Requested", "timestamp": f"{three_days_ago} 02:15 PM", "actor": "Laboratory Coordinator", "done": True}
+                    ],
+                    "created_at": f"{three_days_ago}T13:10:00Z"
+                }
+            ]
+            await db_instance.db["patient_reports"].insert_many(initial_reports)
+            logger.info("Successfully seeded patient reports in MongoDB.")
+    except Exception as e:
+        logger.warning(f"Could not seed patient reports: {e}")
+
+async def seed_initial_followups_if_needed():
+    try:
+        count = await db_instance.db["report_followups"].count_documents({})
+        if count == 0:
+            logger.info("Seeding initial report follow-up tasks in MongoDB...")
+            today = datetime.utcnow().strftime("%Y-%m-%d")
+            tomorrow = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
+            yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+            initial_followups = [
+                {
+                    "id": "FLP-201",
+                    "patient_reference": "PID-1046",
+                    "patient_name": "Deepak Choudhury",
+                    "patient_phone": "+91 98451 90876",
+                    "report_id": "RPT-1005",
+                    "report_title": "Digital Chest X-Ray (PA View)",
+                    "reason": "Patient did not answer",
+                    "last_attempt": "Yesterday, 03:15 PM",
+                    "assigned_staff": "Kavita Nair",
+                    "due_date": tomorrow,
+                    "status": "Pending",
+                    "priority": "Medium",
+                    "notes": "Attempted voice call twice without answer. Alternate phone number inquiry required from registration card."
+                },
+                {
+                    "id": "FLP-202",
+                    "patient_reference": "PID-1048",
+                    "patient_name": "Sunita Rao",
+                    "patient_phone": "+91 97312 99887",
+                    "report_id": "RPT-1007",
+                    "report_title": "Knee Joint Digital Radiography (AP & Lateral View)",
+                    "reason": "Patient requested assistance",
+                    "last_attempt": "Today, 10:45 AM",
+                    "assigned_staff": "Dr. Venkat Rao (Care Coordinator)",
+                    "due_date": today,
+                    "status": "In Progress",
+                    "priority": "High",
+                    "notes": "Patient inquired whether post-surgery swelling is normal; scheduled 10-minute follow-up phone call."
+                },
+                {
+                    "id": "FLP-203",
+                    "patient_reference": "PID-1047",
+                    "patient_name": "Karan Johar",
+                    "patient_phone": "+91 98860 33445",
+                    "report_id": "RPT-1006",
+                    "report_title": "Thyroid Function Test (T3, T4, TSH Ultra)",
+                    "reason": "Notification failed",
+                    "last_attempt": "27 Oct 2026, 10:30 AM",
+                    "assigned_staff": "Sunil Kumar",
+                    "due_date": tomorrow,
+                    "status": "Pending",
+                    "priority": "Medium",
+                    "notes": "Carrier returned unreachable status. Send encrypted PDF report link via WhatsApp business API."
+                },
+                {
+                    "id": "FLP-204",
+                    "patient_reference": "PID-1049",
+                    "patient_name": "Rohan Deshpande",
+                    "patient_phone": "+91 97410 44556",
+                    "report_id": "RPT-1008",
+                    "report_title": "Vitamin D3 & Vitamin B12 Immunoassay",
+                    "reason": "Reception callback required",
+                    "last_attempt": "26 Oct 2026, 03:00 PM",
+                    "assigned_staff": "Vikram Sethi",
+                    "due_date": yesterday,
+                    "status": "Resolved",
+                    "priority": "Low",
+                    "notes": "Patient visited clinic for repeat venous blood redraw; specimen re-routed to diagnostics laboratory."
+                }
+            ]
+            await db_instance.db["report_followups"].insert_many(initial_followups)
+            logger.info("Successfully seeded report follow-up tasks in MongoDB.")
+    except Exception as e:
+        logger.warning(f"Could not seed report follow-ups: {e}")
+

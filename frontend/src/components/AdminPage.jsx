@@ -19,7 +19,8 @@ import {
   X,
   Radio,
   ChevronRight,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
 import DoctorManagement from './DoctorManagement';
@@ -27,6 +28,7 @@ import ScheduleCalendar from './ScheduleCalendar';
 import AppointmentManagement from './AppointmentManagement';
 import AICallActivity from './AICallActivity';
 import ClinicSettingsSecurity from './ClinicSettingsSecurity';
+import ReportsFollowups from './ReportsFollowups';
 
 export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState('overview'); // 'overview' | 'doctors' | 'calendar' | 'appointments' | 'calls' | 'settings'
@@ -81,6 +83,13 @@ export default function AdminPage({ onNavigateHome }) {
       label: 'Clinic Settings & Security',
       icon: ShieldCheck,
       badge: null
+    },
+    {
+      id: 'reports',
+      num: '7',
+      label: 'Reports & Follow-ups',
+      icon: FileText,
+      badge: 'New'
     }
   ];
 
@@ -606,6 +615,7 @@ export default function AdminPage({ onNavigateHome }) {
           {adminTab === 'appointments' && <AppointmentManagement />}
           {adminTab === 'calls' && <AICallActivity />}
           {adminTab === 'settings' && <ClinicSettingsSecurity />}
+          {adminTab === 'reports' && <ReportsFollowups />}
         </main>
       </div>
 
