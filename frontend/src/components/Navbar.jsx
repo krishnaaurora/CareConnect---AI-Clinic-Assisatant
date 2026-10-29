@@ -1,15 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ShieldCheck } from 'lucide-react';
+import careconnectLogo from '../assets/careconnect-logo-transparent.png';
 
-export default function Navbar({ onOpenDialer }) {
+export default function Navbar({ onOpenDialer, onNavigateAdmin }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hideNav, setHideNav] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+
+      // Detect phone mockup position
+      const mockupEl = document.getElementById('hero-phone-mockup');
+      if (mockupEl) {
+        const rect = mockupEl.getBoundingClientRect();
+        // Hide navbar while user has scrolled into the phone mockup focus area
+        const inMockupArea = rect.top < 220 && rect.bottom > 100;
+        setHideNav(inMockupArea);
+        if (inMockupArea && mobileMenuOpen) {
+          setMobileMenuOpen(false);
+        }
+      } else {
+        setHideNav(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [mobileMenuOpen]);
 
   const navLinks = [
     { label: 'Product', href: '#features' },
@@ -24,12 +44,15 @@ export default function Navbar({ onOpenDialer }) {
       position: 'fixed',
       top: 0, left: 0, right: 0,
       zIndex: 100,
-      transition: 'all 0.3s ease',
-      backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(253, 252, 250, 0.88)',
+      transform: hideNav ? 'translateY(-110%)' : 'translateY(0)',
+      opacity: hideNav ? 0 : 1,
+      pointerEvents: hideNav ? 'none' : 'auto',
+      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, background-color 0.3s ease, box-shadow 0.3s ease',
+      backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.82)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: isScrolled ? '1px solid rgba(15, 91, 76, 0.08)' : '1px solid transparent',
-      boxShadow: isScrolled ? '0 2px 18px rgba(15, 91, 76, 0.04)' : 'none',
+      borderBottom: isScrolled ? '1px solid #E2E8F0' : '1px solid rgba(226, 232, 240, 0.6)',
+      boxShadow: isScrolled ? '0 4px 20px rgba(15, 23, 42, 0.04)' : 'none',
     }}>
       <div style={{
         maxWidth: '1200px', margin: '0 auto',
@@ -37,79 +60,57 @@ export default function Navbar({ onOpenDialer }) {
         padding: '16px 28px',
       }}>
         {/* Logo */}
-        <a href="#" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }} aria-label="CareConnect AI Home">
-          <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
-            <path d="M14 6C14 4.89543 14.8954 4 16 4H20C21.1046 4 22 4.89543 22 6V14H30C31.1046 14 32 14.8954 32 16V20C32 21.1046 31.1046 22 30 22H22V30C22 31.1046 21.1046 32 20 32H16C14.8954 32 14 31.1046 14 30V22H6C4.89543 22 4 21.1046 4 20V16C4 14.8954 4.89543 14 6 14H14V6Z" fill="url(#navCrossGrad)" />
-            <circle cx="10" cy="10" r="4.5" fill="#38BDF8" opacity="0.9" />
-            <circle cx="26" cy="10" r="4.5" fill="#00C9A7" opacity="0.9" />
-            <circle cx="10" cy="26" r="4.5" fill="#0F5B4C" opacity="0.9" />
-            <circle cx="26" cy="26" r="4.5" fill="#10B981" opacity="0.9" />
-            <defs>
-              <linearGradient id="navCrossGrad" x1="4" y1="4" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#00C9A7" />
-                <stop offset="0.5" stopColor="#0F5B4C" />
-                <stop offset="1" stopColor="#0A2520" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
-            <span style={{ fontSize: '20px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif', letterSpacing: '-0.02em' }}>
-              CareConnect
-            </span>
-            <span style={{ fontSize: '20px', fontWeight: 900, color: '#00C9A7', fontFamily: 'Manrope, sans-serif' }}>
-              AI
-            </span>
-          </div>
+        <a href="#" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="CareConnect AI Home">
+          <img 
+            src={careconnectLogo} 
+            alt="CareConnect AI" 
+            style={{ 
+              height: '36px', 
+              width: 'auto', 
+              display: 'block', 
+              objectFit: 'contain' 
+            }} 
+          />
         </a>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop Nav Links with Animated Yellow Underline on Hover */}
         <nav aria-label="Main navigation" style={{ display: 'none', alignItems: 'center', gap: '32px' }} className="desktop-nav">
           {navLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
-              style={{
-                color: '#475569',
-                textDecoration: 'none',
-                fontSize: '14.5px',
-                fontWeight: 600,
-                transition: 'color 0.2s ease',
-                fontFamily: 'Inter, sans-serif',
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = '#0F5B4C'}
-              onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+              className="nav-link-item"
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        {/* Right Button: Request a Demo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Right Actions: Admin Portal & Mobile Menu Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             type="button"
-            onClick={onOpenDialer}
+            onClick={onNavigateAdmin}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              backgroundColor: '#0F5B4C',
-              border: 'none',
-              color: '#FFFFFF',
-              fontSize: '14px',
-              fontWeight: 700,
-              padding: '10px 22px',
+              padding: '8px 16px',
               borderRadius: '999px',
+              backgroundColor: '#EDFDF9',
+              color: '#0F5B4C',
+              border: '1px solid rgba(0, 201, 167, 0.4)',
+              fontSize: '13px',
+              fontWeight: 700,
               cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)',
               transition: 'all 0.2s ease',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'Inter, sans-serif'
             }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#083F34'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#0F5B4C'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#0F5B4C'; e.currentTarget.style.color = '#FFFFFF'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#EDFDF9'; e.currentTarget.style.color = '#0F5B4C'; }}
           >
-            <span>Request a Demo</span>
-            <ArrowRight size={14} strokeWidth={2.5} />
+            <ShieldCheck size={15} color="#00C9A7" />
+            <span>Admin Portal</span>
           </button>
 
           <button
@@ -137,15 +138,103 @@ export default function Navbar({ onOpenDialer }) {
               key={link.label}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              style={{ color: '#0F5B4C', textDecoration: 'none', fontSize: '15px', fontWeight: 600, padding: '6px 0' }}
+              className="mobile-nav-link-item"
             >
               {link.label}
             </a>
           ))}
+          <button
+            type="button"
+            onClick={() => { setMobileMenuOpen(false); onNavigateAdmin(); }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              backgroundColor: '#0F5B4C',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              marginTop: '6px'
+            }}
+          >
+            <ShieldCheck size={16} />
+            <span>Open Admin Portal</span>
+          </button>
         </div>
       )}
 
       <style>{`
+        /* Desktop Navigation Links with Smooth Yellow Underline */
+        .nav-link-item {
+          position: relative;
+          color: #475569;
+          text-decoration: none;
+          fontSize: 14.5px;
+          font-weight: 600;
+          font-family: 'Inter', sans-serif;
+          padding: 6px 0;
+          display: inline-block;
+          transition: color 0.2s ease;
+        }
+
+        .nav-link-item::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: 0px;
+          width: 0%;
+          height: 2.5px;
+          background-color: #FACC15; /* Crisp, vibrant yellow */
+          border-radius: 2px;
+          transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-link-item:hover {
+          color: #0A2520;
+        }
+
+        .nav-link-item:hover::after {
+          width: 100%;
+        }
+
+        /* Mobile Navigation Links */
+        .mobile-nav-link-item {
+          position: relative;
+          color: #0F5B4C;
+          text-decoration: none;
+          font-size: 15px;
+          font-weight: 600;
+          padding: 6px 0;
+          display: inline-block;
+          align-self: flex-start;
+          transition: color 0.2s ease;
+        }
+
+        .mobile-nav-link-item::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: 0px;
+          width: 0%;
+          height: 2.5px;
+          background-color: #FACC15;
+          border-radius: 2px;
+          transition: width 0.25s ease;
+        }
+
+        .mobile-nav-link-item:hover {
+          color: #0A2520;
+        }
+
+        .mobile-nav-link-item:hover::after {
+          width: 100%;
+        }
+
         @media (min-width: 820px) { .desktop-nav { display: flex !important; } }
         @media (max-width: 819px) { .mobile-menu-btn { display: flex !important; } }
       `}</style>

@@ -89,7 +89,7 @@ class AppointmentService:
                 "Requested physician schedule requires manual clinic verification. Clinic desk has been alerted for priority callback."
             )
 
-        # Check existing bookings for slot conflict
+        # Strict conflict check: Prevent two patients from booking the exact same slot
         conflict_count = await self.repo.count_existing_bookings(
             clinic_code=clinic.get("code", ""),
             doctor_name=doctor.get("name", ""),
@@ -97,11 +97,11 @@ class AppointmentService:
             preferred_time=preferred_time
         )
 
-        if conflict_count >= 2:
+        if conflict_count >= 1:
             return (
                 False,
                 AppointmentStatus.PENDING_STAFF_FOLLOWUP,
-                f"Selected slot ({preferred_time} on {preferred_date}) is at high capacity. Priya has placed you on the priority waitlist and front-desk staff will call to confirm."
+                f"Slot conflict: {preferred_time} on {preferred_date} with {doctor.get('name')} is already booked. Double-booking prevented. Routed to front-desk for alternative slot allocation."
             )
 
         # Slot is valid and verified
@@ -116,3 +116,61 @@ class AppointmentService:
 
     async def list_all(self):
         return await self.repo.get_recent_appointments()
+
+    async def update_status(self, reference_id: str, status: str, notes: str = None):
+        return await self.repo.update_status(reference_id, status, notes)
+
+    async def reschedule(self, reference_id: str, new_date: str, new_time: str, doctor_name: str = None) -> dict:
+        appt = await self.repo.get_by_reference(reference_id)
+        if not appt:
+            raise ValueError(f"Appointment {reference_id} not found")
+        
+        target_doctor = doctor_name or appt.get("doctor_name")
+        clinic_code = appt.get("clinic_code", "")
+
+        # Conflict check
+        conflict_count = await self.repo.count_existing_bookings(
+            clinic_code=clinic_code,
+            doctor_name=target_doctor,
+            preferred_date=new_date,
+            preferred_time=new_time
+        )
+        if conflict_count >= 1:
+            raise ValueError(f"Slot {new_time} on {new_date} with {target_doctor} is already booked. Double-booking prevented.")
+
+        success = await self.repo.reschedule_appointment(reference_id, new_date, new_time, doctor_name)
+        if not success:
+            raise ValueError("Failed to reschedule appointment")
+
+        return {
+            "reference_id": reference_id,
+            "preferred_date": new_date,
+            "preferred_time": new_time,
+            "doctor_name": target_doctor,
+            "status": "VERIFIED_CONFIRMED"
+        }
+
+    async def get_overview(self) -> Dict[str, Any]:
+        today_str = datetime.utcnow().strftime("%Y-%m-%d")
+        metrics = await self.repo.get_overview_counts(today_str)
+        recent = await self.repo.get_recent_appointments(limit=60)
+        
+        # Categorize
+        today_appointments = [a for a in recent if a.get("preferred_date") == today_str]
+        upcoming = [a for a in recent if a.get("preferred_date", "") >= today_str and a.get("status") == "VERIFIED_CONFIRMED"]
+        pending = [a for a in recent if a.get("status") in ["PENDING_STAFF_FOLLOWUP", "ROUTED_TO_HUMAN_DESK"]]
+        cancellations = [a for a in recent if a.get("status") == "CANCELLED"]
+
+        return {
+            "metrics": {
+                "today_count": len(today_appointments) or metrics.get("today_count", 0),
+                "upcoming_count": len(upcoming) or metrics.get("upcoming_count", 0),
+                "pending_count": len(pending) or metrics.get("pending_count", 0),
+                "cancellations_count": len(cancellations) or metrics.get("cancellations_count", 0),
+            },
+            "today_appointments": today_appointments,
+            "upcoming_bookings": upcoming[:15],
+            "pending_requests": pending[:15],
+            "cancellations": cancellations[:15],
+            "all_recent": recent[:30]
+        }

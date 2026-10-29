@@ -32,3 +32,44 @@ class AppointmentRepository:
     async def get_recent_appointments(self, limit: int = 50) -> List[dict]:
         cursor = self.collection.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
         return await cursor.to_list(length=limit)
+
+    async def update_status(self, reference_id: str, status: str, notes: Optional[str] = None) -> bool:
+        update_data = {"status": status}
+        if notes:
+            update_data["status_notes"] = notes
+        res = await self.collection.update_one(
+            {"reference_id": reference_id},
+            {"$set": update_data}
+        )
+        return res.modified_count > 0
+
+    async def reschedule_appointment(self, reference_id: str, new_date: str, new_time: str, doctor_name: Optional[str] = None) -> bool:
+        update_data = {
+            "preferred_date": new_date,
+            "preferred_time": new_time,
+            "status": "VERIFIED_CONFIRMED"
+        }
+        if doctor_name:
+            update_data["doctor_name"] = doctor_name
+        res = await self.collection.update_one(
+            {"reference_id": reference_id},
+            {"$set": update_data}
+        )
+        return res.modified_count > 0
+
+    async def get_overview_counts(self, today_date: str) -> dict:
+        total_today = await self.collection.count_documents({"preferred_date": today_date})
+        pending_count = await self.collection.count_documents({
+            "status": {"$in": ["PENDING_STAFF_FOLLOWUP", "ROUTED_TO_HUMAN_DESK"]}
+        })
+        cancellations_count = await self.collection.count_documents({"status": "CANCELLED"})
+        upcoming_count = await self.collection.count_documents({
+            "preferred_date": {"$gte": today_date},
+            "status": "VERIFIED_CONFIRMED"
+        })
+        return {
+            "today_count": total_today,
+            "upcoming_count": upcoming_count,
+            "pending_count": pending_count,
+            "cancellations_count": cancellations_count
+        }

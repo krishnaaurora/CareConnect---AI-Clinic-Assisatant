@@ -13,6 +13,12 @@ class AppointmentStatus(str, Enum):
     VERIFIED_CONFIRMED = "VERIFIED_CONFIRMED"
     PENDING_STAFF_FOLLOWUP = "PENDING_STAFF_FOLLOWUP"
     ROUTED_TO_HUMAN_DESK = "ROUTED_TO_HUMAN_DESK"
+    CANCELLED = "CANCELLED"
+    COMPLETED = "COMPLETED"
+
+class AppointmentStatusUpdateRequest(BaseModel):
+    status: AppointmentStatus
+    notes: Optional[str] = None
 
 class AppointmentCreateRequest(BaseModel):
     patient_name: str = Field(..., min_length=2, example="Rahul Verma")

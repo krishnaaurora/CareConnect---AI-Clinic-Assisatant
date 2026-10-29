@@ -4,7 +4,7 @@ import {
   Calendar, Clock, Phone, AlertCircle, Sparkles, User, Globe2, 
   ArrowRight, ShieldCheck, Stethoscope, ChevronRight, MessageSquare
 } from 'lucide-react';
-import priyaImg from '../assets/priya_character.jpg';
+import priyaImg from '../assets/priya-avatar.png';
 
 export default function VirtualReceptionistDemo() {
   // Scenarios definition

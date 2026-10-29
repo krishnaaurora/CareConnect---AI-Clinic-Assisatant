@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import AnimatedGridPattern from './AnimatedGridPattern';
+import { ScaleInText } from './ScaleInText';
 import { 
   Play, 
   Pause, 
@@ -14,10 +16,16 @@ import {
   PhoneOff, 
   MoreHorizontal,
   Volume2,
-  VolumeX,
-  Sparkles
+  VolumeX
 } from 'lucide-react';
-import priyaCharacter from '../assets/priya_character.jpg';
+import priyaCharacter from '../assets/priya-avatar.png';
+
+const HERO_FLIP_WORDS = [
+  "gets an answer.",
+  "books an appointment.",
+  "speaks their language.",
+  "never waits on hold."
+];
 
 const KEYFRAMES = `
 @keyframes heroFadeUp {
@@ -37,13 +45,51 @@ const KEYFRAMES = `
   50%      { transform: scale(1.3); opacity: 1; }
 }
 @keyframes cardPulseRing {
-  0%   { box-shadow: 0 0 0 0 rgba(0, 201, 167, 0.45); }
-  70%  { box-shadow: 0 0 0 10px rgba(0, 201, 167, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 201, 167, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(0, 145, 255, 0.45); }
+  70%  { box-shadow: 0 0 0 10px rgba(0, 145, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 145, 255, 0); }
 }
 @keyframes typingBounce {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40%           { transform: scale(1); opacity: 1; }
+}
+@keyframes auraMorphBlue {
+  0%, 100% {
+    transform: translate(-18px, 14px) scale(1) rotate(0deg);
+    opacity: 0.48;
+  }
+  33% {
+    transform: translate(22px, -18px) scale(1.12) rotate(8deg);
+    opacity: 0.62;
+  }
+  66% {
+    transform: translate(-14px, -22px) scale(0.94) rotate(-6deg);
+    opacity: 0.42;
+  }
+}
+@keyframes auraMorphPink {
+  0%, 100% {
+    transform: translate(18px, -14px) scale(1) rotate(0deg);
+    opacity: 0.45;
+  }
+  33% {
+    transform: translate(-20px, 18px) scale(1.10) rotate(-8deg);
+    opacity: 0.58;
+  }
+  66% {
+    transform: translate(14px, 22px) scale(0.92) rotate(6deg);
+    opacity: 0.38;
+  }
+}
+@keyframes auraPulseCenter {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 0.52;
+  }
 }
 `;
 
@@ -258,26 +304,41 @@ export default function Hero({ onOpenDialer }) {
           position: 'relative',
           paddingTop: '136px',
           paddingBottom: '40px',
-          background: 'radial-gradient(ellipse 90% 60% at 50% 28%, #F0F9F6 0%, #FAF8F5 45%, #FFFFFF 100%)',
+          background: 'radial-gradient(ellipse 90% 60% at 50% 20%, #F0FDF4 0%, #F8FAFC 50%, #FFFFFF 100%)',
           overflow: 'hidden',
           textAlign: 'center',
         }}
         aria-label="CareConnect AI Hero"
       >
-        {/* Soft decorative background ambient glow with parallax */}
+        {/* ── Subtle Hero Animated Grid Pattern (Shadcn / SeraUI) ── */}
+        <AnimatedGridPattern 
+          patternType="grid"
+          width={44}
+          height={44}
+          numSquares={20}
+          strokeColor="rgba(203, 213, 225, 0.35)"
+          cellFill="rgba(99, 102, 241, 0.12)"
+          cellStroke="rgba(99, 102, 241, 0.25)"
+          maxCellOpacity={0.45}
+          spotlight={true}
+          withScanLine={false}
+          style={{ zIndex: 0 }}
+        />
+
+        {/* Soft decorative background ambient glow with parallax echoing Indigo & Rose-Pink aura */}
         <div style={{
-          position: 'absolute', top: '20%', left: '5%',
-          width: '320px', height: '320px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 201, 167, 0.12) 0%, transparent 70%)',
-          filter: 'blur(50px)', pointerEvents: 'none',
+          position: 'absolute', top: '16%', left: '4%',
+          width: '420px', height: '420px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(79, 70, 229, 0.14) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 75%)',
+          filter: 'blur(60px)', pointerEvents: 'none',
           transform: `translate3d(0, ${pScroll * 0.22}px, 0)`,
           willChange: 'transform',
         }} />
         <div style={{
-          position: 'absolute', top: '22%', right: '5%',
-          width: '320px', height: '320px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(15, 91, 76, 0.1) 0%, transparent 70%)',
-          filter: 'blur(50px)', pointerEvents: 'none',
+          position: 'absolute', top: '18%', right: '4%',
+          width: '440px', height: '440px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.14) 0%, rgba(232, 121, 249, 0.07) 50%, transparent 75%)',
+          filter: 'blur(65px)', pointerEvents: 'none',
           transform: `translate3d(0, ${pScroll * 0.16}px, 0)`,
           willChange: 'transform',
         }} />
@@ -291,32 +352,7 @@ export default function Hero({ onOpenDialer }) {
             willChange: 'transform, opacity',
             transition: 'transform 0.05s linear, opacity 0.05s linear',
           }}>
-            {/* ── Eyebrow ── */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 16px',
-              borderRadius: '999px',
-              backgroundColor: 'rgba(235, 248, 244, 0.85)',
-              border: '1px solid rgba(0, 201, 167, 0.25)',
-              marginBottom: '22px',
-              animation: 'heroFadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s both',
-            }}>
-              <Sparkles size={14} color="#0F5B4C" />
-            <span style={{
-              fontSize: '11.5px',
-              fontWeight: 800,
-              color: '#0F5B4C',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              fontFamily: 'Inter, sans-serif',
-            }}>
-              AI VOICE ASSISTANT FOR HEALTHCARE
-            </span>
-          </div>
-
-          {/* ── Headline ── */}
+            {/* ── Headline ── */}
           <h1 style={{
             fontSize: 'clamp(2.6rem, 5.2vw, 4.4rem)',
             fontWeight: 900,
@@ -325,17 +361,15 @@ export default function Hero({ onOpenDialer }) {
             letterSpacing: '-0.035em',
             margin: '0 auto 18px',
             maxWidth: '860px',
-            fontFamily: 'Manrope, sans-serif',
+            fontFamily: 'Plus Jakarta Sans, sans-serif',
             animation: 'heroFadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.12s both',
           }}>
             Every patient call<br />
-            <span style={{
-              background: 'linear-gradient(135deg, #0091FF 0%, #00C9A7 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>
-              gets an answer.
-            </span>
+            <ScaleInText
+              text="gets an answer."
+              words={HERO_FLIP_WORDS}
+              duration={3400}
+            />
           </h1>
 
           {/* ── Description ── */}
@@ -444,6 +478,7 @@ export default function Hero({ onOpenDialer }) {
           {/* ── Central Smartphone with Floating Feature Bubbles ── */}
           <div
             ref={phoneRef}
+            id="hero-phone-mockup"
             style={{
               position: 'relative',
               maxWidth: '1040px',
@@ -454,6 +489,72 @@ export default function Hero({ onOpenDialer }) {
               minHeight: '620px',
             }}
           >
+            {/* ── Dreamy Living Mesh Aura (Deep Cobalt/Indigo & Rose-Pink from Reference) ── */}
+            <div 
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '100%',
+                maxWidth: '960px',
+                height: '580px',
+                pointerEvents: 'none',
+                zIndex: 0,
+                overflow: 'visible',
+              }}
+            >
+              {/* Soft Periwinkle / Royal Indigo Wave (Lower-Left to Center) */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  left: '6%',
+                  bottom: '4%',
+                  width: '480px',
+                  height: '380px',
+                  borderRadius: '40% 60% 65% 35% / 45% 40% 60% 55%',
+                  background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.45) 0%, rgba(129, 140, 248, 0.30) 40%, rgba(147, 197, 253, 0.16) 65%, transparent 80%)',
+                  filter: 'blur(95px)',
+                  animation: 'auraMorphBlue 11s ease-in-out infinite',
+                  mixBlendMode: 'normal',
+                  willChange: 'transform, opacity',
+                }}
+              />
+
+              {/* Luminous Pastel Rose / Lavender Mist Cloud (Top-Right) */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  right: '4%',
+                  top: '0%',
+                  width: '520px',
+                  height: '400px',
+                  borderRadius: '60% 40% 50% 50% / 50% 60% 40% 50%',
+                  background: 'radial-gradient(ellipse at center, rgba(244, 114, 182, 0.42) 0%, rgba(249, 168, 212, 0.28) 40%, rgba(233, 213, 255, 0.15) 65%, transparent 80%)',
+                  filter: 'blur(100px)',
+                  animation: 'auraMorphPink 13s ease-in-out infinite',
+                  mixBlendMode: 'normal',
+                  willChange: 'transform, opacity',
+                }}
+              />
+
+              {/* Central Soft Violet Atmosphere Transition */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: '640px',
+                  height: '440px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(ellipse at center, rgba(192, 132, 252, 0.22) 0%, rgba(167, 139, 250, 0.12) 50%, transparent 75%)',
+                  filter: 'blur(100px)',
+                  animation: 'auraPulseCenter 9s ease-in-out infinite',
+                  willChange: 'transform, opacity',
+                }}
+              />
+            </div>
             {/* Ambient Elliptical Orbit Track with Parallax */}
             <div style={{
               position: 'absolute',
@@ -503,9 +604,9 @@ export default function Hero({ onOpenDialer }) {
                       backgroundColor: 'rgba(255, 255, 255, 0.88)',
                       backdropFilter: 'blur(16px)',
                       WebkitBackdropFilter: 'blur(16px)',
-                      border: isActive ? '2px solid #00C9A7' : '1px solid rgba(255, 255, 255, 0.95)',
+                      border: isActive ? '2px solid #0091FF' : '1px solid rgba(255, 255, 255, 0.95)',
                       boxShadow: isActive 
-                        ? '0 12px 32px rgba(0, 201, 167, 0.24)' 
+                        ? '0 12px 32px rgba(0, 145, 255, 0.22)' 
                         : '0 8px 24px rgba(0, 0, 0, 0.05)',
                       transform: isMobile 
                         ? (isActive ? 'scale(1.04)' : 'scale(1)') 
@@ -521,7 +622,7 @@ export default function Hero({ onOpenDialer }) {
                       width: '38px',
                       height: '38px',
                       borderRadius: '12px',
-                      backgroundColor: isActive ? '#DCFAF3' : '#F5FBF8',
+                      backgroundColor: isActive ? '#EFF6FF' : '#F5FBF8',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -532,7 +633,7 @@ export default function Hero({ onOpenDialer }) {
                     <div>
                       <p style={{
                         fontSize: '13.5px',
-                        fontWeight: 700,
+                        fontWeight: isActive ? 800 : 700,
                         color: isActive ? '#0A2520' : '#334155',
                         margin: 0,
                         lineHeight: 1.3,
@@ -892,9 +993,9 @@ export default function Hero({ onOpenDialer }) {
                       backgroundColor: 'rgba(255, 255, 255, 0.88)',
                       backdropFilter: 'blur(16px)',
                       WebkitBackdropFilter: 'blur(16px)',
-                      border: isActive ? '2px solid #00C9A7' : '1px solid rgba(255, 255, 255, 0.95)',
+                      border: isActive ? '2px solid #0091FF' : '1px solid rgba(255, 255, 255, 0.95)',
                       boxShadow: isActive 
-                        ? '0 12px 32px rgba(0, 201, 167, 0.24)' 
+                        ? '0 12px 32px rgba(0, 145, 255, 0.22)' 
                         : '0 8px 24px rgba(0, 0, 0, 0.05)',
                       transform: isMobile 
                         ? (isActive ? 'scale(1.04)' : 'scale(1)') 
@@ -910,7 +1011,7 @@ export default function Hero({ onOpenDialer }) {
                       width: '38px',
                       height: '38px',
                       borderRadius: '12px',
-                      backgroundColor: isActive ? '#DCFAF3' : '#F5FBF8',
+                      backgroundColor: isActive ? '#EFF6FF' : '#F5FBF8',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -921,7 +1022,7 @@ export default function Hero({ onOpenDialer }) {
                     <div>
                       <p style={{
                         fontSize: '13.5px',
-                        fontWeight: 700,
+                        fontWeight: isActive ? 800 : 700,
                         color: isActive ? '#0A2520' : '#334155',
                         margin: 0,
                         lineHeight: 1.3,

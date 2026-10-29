@@ -1,275 +1,395 @@
 import React, { useState } from 'react';
-import { AlertCircle, Phone, Mail, MapPin, CheckCircle2, Send } from 'lucide-react';
-import { submitCallbackRequest } from '../api/client';
+import { 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Send, 
+  CheckCircle2, 
+  Plus 
+} from 'lucide-react';
+import careconnectFooterLogo from '../assets/careconnect-logo-white-text.png';
+
+/* ── Social Vector Icons ── */
+
+const FacebookIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+  </svg>
+);
+
+const InstagramIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+  </svg>
+);
+
+const LinkedinIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+  </svg>
+);
 
 export default function Footer() {
-  const [cbName, setCbName] = useState('');
-  const [cbPhone, setCbPhone] = useState('');
-  const [cbTime, setCbTime] = useState('Morning (10:00 AM - 01:00 PM)');
-  const [cbSubmitted, setCbSubmitted] = useState(false);
-  const [cbLoading, setCbLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
 
-  const handleCallbackSubmit = async (e) => {
+  const handleSubscribe = (e) => {
     e.preventDefault();
-    if (!cbName.trim() || !cbPhone.trim()) return;
-    setCbLoading(true);
-    try {
-      await submitCallbackRequest({
-        name: cbName,
-        phone: cbPhone,
-        preferred_time: cbTime,
-        preferred_language: 'English',
-        enquiry_topic: 'Front-desk callback request from landing page'
-      });
-      setCbSubmitted(true);
-    } catch (err) {
-      setCbSubmitted(true);
-    } finally {
-      setCbLoading(false);
-    }
+    if (!email.trim()) return;
+    setSubscribed(true);
   };
 
   return (
     <footer style={{
-      background: 'linear-gradient(180deg, rgba(250, 248, 245, 0.6) 0%, #F1F6F3 100%)',
-      borderTop: '1px solid rgba(10, 37, 32, 0.08)',
+      backgroundColor: '#0A231C',
+      color: '#FFFFFF',
       paddingTop: '60px',
-      paddingBottom: '40px',
-      position: 'relative'
+      paddingBottom: '36px',
+      position: 'relative',
+      fontFamily: 'Inter, sans-serif',
+      borderTop: '1px solid rgba(0, 201, 167, 0.15)'
     }}>
-      
-      {/* Medical Emergency Disclaimer Glass Banner */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto 50px auto', padding: '0 24px' }}>
-        <div style={{
-          padding: '20px 24px',
-          borderRadius: '18px',
-          background: 'rgba(255, 255, 255, 0.88)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(0, 201, 167, 0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          boxShadow: '0 4px 18px rgba(10, 37, 32, 0.03)'
-        }}>
-          <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
-            background: '#EAF6F3',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0
-          }}>
-            <AlertCircle size={22} color="#0F5B4C" />
-          </div>
-          <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#0A2520', margin: '0 0 4px 0', fontFamily: 'Manrope, sans-serif' }}>
-              Important Emergency Disclaimer
-            </h4>
-            <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: 1.5, fontFamily: 'Inter, sans-serif' }}>
-              CareConnect AI is an administrative telephony and appointment scheduling platform. It does <strong>not</strong> provide medical triage, emergency services, or diagnostic consultations. If you or someone you are calling for is experiencing a medical emergency, please call <strong>112</strong> (National Emergency Helpline) or visit the nearest emergency medical facility immediately.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 24px' }}>
         
+        {/* 4-Column Footer Grid matching Reference */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
           gap: '40px',
           marginBottom: '50px'
         }}>
           
-          {/* Col 1: Brand Info */}
+          {/* Column 1: Brand Info & Contact */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <svg width="30" height="30" viewBox="0 0 36 36" fill="none">
-                <path d="M14 6C14 4.89543 14.8954 4 16 4H20C21.1046 4 22 4.89543 22 6V14H30C31.1046 14 32 14.8954 32 16V20C32 21.1046 31.1046 22 30 22H22V30C22 31.1046 21.1046 32 20 32H16C14.8954 32 14 31.1046 14 30V22H6C4.89543 22 4 21.1046 4 20V16C4 14.8954 4.89543 14 6 14H14V6Z" fill="#00C9A7" />
-                <circle cx="10" cy="10" r="4.5" fill="#0F5B4C" opacity="0.9" />
-                <circle cx="26" cy="10" r="4.5" fill="#00C9A7" opacity="0.9" />
-                <circle cx="10" cy="26" r="4.5" fill="#0A2520" opacity="0.9" />
-                <circle cx="26" cy="26" r="4.5" fill="#0F5B4C" opacity="0.9" />
-              </svg>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
-                  CareConnect
-                </span>
-                <span style={{ fontSize: '20px', fontWeight: 900, color: '#00C9A7', fontFamily: 'Manrope, sans-serif' }}>
-                  AI
-                </span>
+            {/* CareConnect AI Official Logo */}
+            <div style={{ marginBottom: '18px' }}>
+              <img
+                src={careconnectFooterLogo}
+                alt="CareConnect AI"
+                style={{
+                  height: '36px',
+                  width: 'auto',
+                  display: 'block',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+
+            <p style={{
+              fontSize: '13.5px',
+              color: '#B0C4BF',
+              lineHeight: 1.6,
+              marginBottom: '22px'
+            }}>
+              Compassionate, modern healthcare communication for every patient — backed by experienced specialists and round-the-clock support.
+            </p>
+
+            {/* Contact Rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', fontSize: '13px', color: '#B0C4BF' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <MapPin size={16} color="#00C9A7" style={{ flexShrink: 0 }} />
+                <span>100ft Road, Indiranagar, Bengaluru, KA 560038</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Phone size={16} color="#00C9A7" style={{ flexShrink: 0 }} />
+                <span>+91 80 4125 7800</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Mail size={16} color="#00C9A7" style={{ flexShrink: 0 }} />
+                <span>care@careconnect.ai</span>
               </div>
             </div>
-            
-            <p style={{ fontSize: '13.5px', color: '#64748B', lineHeight: 1.6, marginBottom: '20px', fontFamily: 'Inter, sans-serif' }}>
-              AI-powered multilingual voice receptionist for modern clinics. Automating patient enquiries, verified appointment bookings, and warm human handoffs.
-            </p>
           </div>
 
-          {/* Col 2: Partner Clinic Locations */}
+          {/* Column 2: Quick Links */}
           <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#0A2520', marginBottom: '16px', fontFamily: 'Manrope, sans-serif' }}>
-              Partner Clinic Locations
+            <h4 style={{
+              fontSize: '15px',
+              fontWeight: 800,
+              color: '#FFFFFF',
+              marginBottom: '18px',
+              fontFamily: 'Plus Jakarta Sans, sans-serif'
+            }}>
+              Quick Links
             </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <MapPin size={16} color="#00C9A7" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span><strong style={{ color: '#0A2520' }}>Apollo Clinic:</strong> 100ft Road, Indiranagar, Bengaluru</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <MapPin size={16} color="#0F5B4C" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span><strong style={{ color: '#0A2520' }}>CareFirst Multi-Speciality:</strong> 4th Block, Jayanagar, Bengaluru</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <MapPin size={16} color="#00C9A7" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span><strong style={{ color: '#0A2520' }}>MetroCare Family Health:</strong> 5th Block, Koramangala, Bengaluru</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: Direct Clinic Lines */}
-          <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#0A2520', marginBottom: '16px', fontFamily: 'Manrope, sans-serif' }}>
-              Priya Voice Numbers
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>
-              <a href="tel:+918041257800" style={{ color: '#475569', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.2s' }}>
-                <Phone size={15} color="#00C9A7" />
-                <span>+91 80 4125 7800 (Indiranagar)</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13.5px' }}>
+              <a href="#" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Home
               </a>
-              <a href="tel:+918026639922" style={{ color: '#475569', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.2s' }}>
-                <Phone size={15} color="#0F5B4C" />
-                <span>+91 80 2663 9922 (Jayanagar)</span>
+              <a href="#features" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Services
               </a>
-              <a href="mailto:support@careconnect.ai" style={{ color: '#475569', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.2s' }}>
-                <Mail size={15} color="#00C9A7" />
-                <span>support@careconnect.ai</span>
+              <a href="#how-it-works" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Doctors
+              </a>
+              <a href="#about" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                About
+              </a>
+              <a href="#contact" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Contact
               </a>
             </div>
           </div>
 
-          {/* Col 4: Request Front-Desk Callback (Glass Card) */}
-          <div className="glass-card" style={{
-            padding: '24px',
-            borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(10, 37, 32, 0.08)',
-            boxShadow: '0 8px 30px rgba(10, 37, 32, 0.04)',
-          }}>
-            <h4 style={{ fontSize: '14.5px', fontWeight: 800, color: '#0A2520', marginBottom: '6px', fontFamily: 'Manrope, sans-serif' }}>
-              Request a Human Callback
+          {/* Column 3: Services */}
+          <div>
+            <h4 style={{
+              fontSize: '15px',
+              fontWeight: 800,
+              color: '#FFFFFF',
+              marginBottom: '18px',
+              fontFamily: 'Plus Jakarta Sans, sans-serif'
+            }}>
+              Services
             </h4>
-            <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '14px', fontFamily: 'Inter, sans-serif' }}>
-              Prefer our human clinic team to ring you? Leave your phone number:
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13.5px' }}>
+              <a href="#features" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Emergency Care
+              </a>
+              <a href="#features" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Cardiology
+              </a>
+              <a href="#features" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Pediatrics
+              </a>
+              <a href="#features" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Laboratory
+              </a>
+              <a href="#features" style={{ color: '#B0C4BF', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#00C9A7'} onMouseLeave={e => e.currentTarget.style.color = '#B0C4BF'}>
+                Surgery
+              </a>
+            </div>
+          </div>
+
+          {/* Column 4: Stay Informed & Emergency Hotline */}
+          <div>
+            <h4 style={{
+              fontSize: '15px',
+              fontWeight: 800,
+              color: '#FFFFFF',
+              marginBottom: '8px',
+              fontFamily: 'Plus Jakarta Sans, sans-serif'
+            }}>
+              Stay informed
+            </h4>
+            <p style={{ fontSize: '13px', color: '#B0C4BF', marginBottom: '16px', lineHeight: 1.5 }}>
+              Subscribe for wellness tips, hospital news, and seasonal health guidance.
             </p>
 
-            {cbSubmitted ? (
+            {/* Newsletter Pill Input */}
+            {subscribed ? (
               <div style={{
-                padding: '12px',
-                borderRadius: '10px',
-                background: '#E6F6F1',
-                color: '#0F5B4C',
-                fontSize: '12px',
+                padding: '10px 14px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(0, 201, 167, 0.15)',
+                border: '1px solid #00C9A7',
+                color: '#00C9A7',
+                fontSize: '12.5px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontWeight: 600,
-                fontFamily: 'Inter, sans-serif',
+                fontWeight: 600
               }}>
-                <CheckCircle2 size={16} color="#00C9A7" />
-                <span>Callback registered! Staff will contact you shortly.</span>
+                <CheckCircle2 size={15} />
+                <span>Subscribed! Thank you.</span>
               </div>
             ) : (
-              <form onSubmit={handleCallbackSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <form onSubmit={handleSubscribe} style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '999px',
+                padding: '4px 5px 4px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px'
+              }}>
                 <input
-                  type="text"
+                  type="email"
                   required
-                  placeholder="Your Name"
-                  value={cbName}
-                  onChange={e => setCbName(e.target.value)}
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    color: '#0A2520',
-                    fontSize: '12.5px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
                     outline: 'none',
-                    fontFamily: 'Inter, sans-serif',
-                  }}
-                />
-                <input
-                  type="tel"
-                  required
-                  placeholder="Phone Number"
-                  value={cbPhone}
-                  onChange={e => setCbPhone(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    color: '#0A2520',
-                    fontSize: '12.5px',
-                    outline: 'none',
-                    fontFamily: 'Inter, sans-serif',
+                    color: '#FFFFFF',
+                    fontSize: '13px',
+                    width: '100%',
+                    fontFamily: 'Inter, sans-serif'
                   }}
                 />
                 <button
                   type="submit"
-                  disabled={cbLoading}
                   style={{
-                    padding: '9px 12px',
+                    backgroundColor: '#00C9A7',
+                    color: '#0A231C',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '8px 16px',
                     fontSize: '12.5px',
                     fontWeight: 700,
-                    borderRadius: '8px',
-                    background: 'linear-gradient(135deg, #0A2520 0%, #0F5B4C 100%)',
-                    color: '#FFFFFF',
-                    border: 'none',
                     cursor: 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
                     gap: '6px',
-                    boxShadow: '0 4px 12px rgba(10, 37, 32, 0.25)',
-                    fontFamily: 'Inter, sans-serif',
+                    flexShrink: 0,
+                    transition: 'opacity 0.2s'
                   }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
-                  <Send size={13} />
-                  <span>{cbLoading ? 'Queueing...' : 'Request Callback'}</span>
+                  <Send size={12} />
+                  <span>Subscribe</span>
                 </button>
               </form>
             )}
+
+            {/* Emergency Hotline Card */}
+            <div style={{
+              marginTop: '16px',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '16px',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(0, 201, 167, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Phone size={17} color="#00C9A7" />
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', color: '#8DA39D', fontWeight: 600 }}>
+                  Emergency hotline
+                </div>
+                <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#FFFFFF', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  +1 (800) 911-0000
+                </div>
+              </div>
+            </div>
+
           </div>
 
         </div>
 
-        {/* Bottom Bar: Copyright & Policies */}
+        {/* Bottom Bar: Copyright & Social Links */}
         <div style={{
           paddingTop: '24px',
-          borderTop: '1px solid rgba(226, 232, 240, 0.8)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '16px',
-          fontSize: '12px',
-          color: '#64748B',
-          fontFamily: 'Inter, sans-serif',
+          fontSize: '12.5px',
+          color: '#8DA39D'
         }}>
           <div>
-            © {new Date().getFullYear()} careconnect .ai. All rights reserved.
+            © 2026 CareConnect AI. All rights reserved.
           </div>
 
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <a href="#trust" style={{ color: '#64748B', textDecoration: 'none' }}>Privacy Policy</a>
-            <a href="#trust" style={{ color: '#64748B', textDecoration: 'none' }}>Terms of Service</a>
-            <a href="#faqs" style={{ color: '#64748B', textDecoration: 'none' }}>Clinical Safety Guardrails</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <a 
+              href="https://facebook.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              aria-label="Facebook"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: '#B0C4BF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = '#00C9A7';
+                e.currentTarget.style.color = '#0A231C';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.color = '#B0C4BF';
+              }}
+            >
+              <FacebookIcon />
+            </a>
+
+            <a 
+              href="https://instagram.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              aria-label="Instagram"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: '#B0C4BF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = '#00C9A7';
+                e.currentTarget.style.color = '#0A231C';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.color = '#B0C4BF';
+              }}
+            >
+              <InstagramIcon />
+            </a>
+
+            <a 
+              href="https://linkedin.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              aria-label="LinkedIn"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: '#B0C4BF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = '#00C9A7';
+                e.currentTarget.style.color = '#0A231C';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.color = '#B0C4BF';
+              }}
+            >
+              <LinkedinIcon />
+            </a>
           </div>
         </div>
 

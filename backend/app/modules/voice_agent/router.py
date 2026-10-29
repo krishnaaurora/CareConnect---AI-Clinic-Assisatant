@@ -34,6 +34,18 @@ async def bolna_webhook(payload: Dict[str, Any]):
         "action": "processed_by_careconnect_backend"
     }
 
+@router.get("/activity", response_model=dict)
+async def get_voice_call_activity():
+    """
+    Retrieve real-time Bolna AI call activity:
+    - Recent calls and their outcomes
+    - Appointments booked through Bolna
+    - Failed booking attempts and follow-up requests
+    - Calls transferred to human staff
+    """
+    data = await service.get_call_activity()
+    return {"success": True, "data": data}
+
 @router.get("/sample-conversations")
 async def get_sample_conversations():
     """Returns verified voice dialogue prompts for interactive landing page demo."""

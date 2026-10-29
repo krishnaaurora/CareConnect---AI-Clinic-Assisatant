@@ -1,46 +1,41 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Phone, CalendarCheck, CheckSquare, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Phone, CalendarCheck, CheckSquare, ChevronRight, Check } from 'lucide-react';
 
 const KEYFRAMES = `
-@keyframes wfFadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes acousticRing {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.55); opacity: 0; }
 }
-@keyframes wfPulseRing {
-  0%   { box-shadow: 0 0 0 0 rgba(0, 201, 167, 0.5); }
-  70%  { box-shadow: 0 0 0 14px rgba(0, 201, 167, 0); }
+
+@keyframes pulseGlowRing {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 201, 167, 0.45); }
+  70%  { box-shadow: 0 0 0 16px rgba(0, 201, 167, 0); }
   100% { box-shadow: 0 0 0 0 rgba(0, 201, 167, 0); }
 }
-@keyframes phoneWiggle {
-  0%, 100% { transform: rotate(-10deg) scale(1); }
-  12%, 36% { transform: rotate(-22deg) scale(1.1); }
-  24%, 48% { transform: rotate(-2deg) scale(1.1); }
-  60%      { transform: rotate(-10deg) scale(1); }
-}
-@keyframes waveBar1 { 0%, 100% { height: 5px; } 50% { height: 16px; } }
-@keyframes waveBar2 { 0%, 100% { height: 11px; } 50% { height: 21px; } }
-@keyframes waveBar3 { 0%, 100% { height: 19px; } 50% { height: 8px; } }
-@keyframes waveBar4 { 0%, 100% { height: 9px; } 50% { height: 19px; } }
-@keyframes waveBar5 { 0%, 100% { height: 5px; } 50% { height: 13px; } }
-@keyframes signalTravel {
+
+@keyframes signalBeam {
   0%   { left: 0%; opacity: 0; transform: translateY(-50%) scale(0.6); }
-  20%  { opacity: 1; transform: translateY(-50%) scale(1); }
-  80%  { opacity: 1; transform: translateY(-50%) scale(1); }
+  15%  { opacity: 1; transform: translateY(-50%) scale(1); }
+  85%  { opacity: 1; transform: translateY(-50%) scale(1); }
   100% { left: 100%; opacity: 0; transform: translateY(-50%) scale(0.6); }
 }
-@keyframes chevronPulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50%      { transform: translate(-50%, -50%) scale(1.22); }
-}
+
+@keyframes waveOscillate1 { 0%, 100% { height: 6px; } 50% { height: 20px; } }
+@keyframes waveOscillate2 { 0%, 100% { height: 14px; } 50% { height: 26px; } }
+@keyframes waveOscillate3 { 0%, 100% { height: 22px; } 50% { height: 12px; } }
+@keyframes waveOscillate4 { 0%, 100% { height: 12px; } 50% { height: 24px; } }
+@keyframes waveOscillate5 { 0%, 100% { height: 6px; } 50% { height: 18px; } }
+
 @media (max-width: 860px) {
   .wf-steps-container {
     flex-direction: column !important;
     align-items: center !important;
-    gap: 36px !important;
+    gap: 16px !important;
   }
   .wf-connector {
     width: 2px !important;
-    height: 44px !important;
+    height: 48px !important;
     flex-direction: column !important;
     margin: 8px 0 !important;
   }
@@ -50,6 +45,10 @@ const KEYFRAMES = `
   }
   .wf-node {
     max-width: 320px !important;
+    width: 100% !important;
+  }
+  .wf-chevron-pill {
+    transform: translate(-50%, -50%) rotate(90deg) !important;
   }
 }
 `;
@@ -58,10 +57,10 @@ const STEPS = [
   {
     num: 1,
     title: 'Patient Calls',
-    desc: 'A patient calls your clinic with a question or appointment request.',
+    desc: 'Patient calls your clinic with question or appointment request.',
     iconColor: '#0F5B4C',
     bgColor: '#EAF6F3',
-    glowColor: 'rgba(15, 91, 76, 0.22)',
+    glowColor: 'rgba(15, 91, 76, 0.25)',
   },
   {
     num: 2,
@@ -69,7 +68,7 @@ const STEPS = [
     desc: 'Understands intent, detects language, and responds naturally.',
     iconColor: '#00C9A7',
     bgColor: '#EDFDF9',
-    glowColor: 'rgba(0, 201, 167, 0.25)',
+    glowColor: 'rgba(0, 201, 167, 0.3)',
   },
   {
     num: 3,
@@ -77,7 +76,7 @@ const STEPS = [
     desc: 'Validates calendar schedules or retrieves verified clinic info.',
     iconColor: '#0A2520',
     bgColor: '#EBF4F1',
-    glowColor: 'rgba(10, 37, 32, 0.22)',
+    glowColor: 'rgba(10, 37, 32, 0.25)',
   },
   {
     num: 4,
@@ -85,36 +84,40 @@ const STEPS = [
     desc: 'Confirms booking or initiates a warm handoff to your team.',
     iconColor: '#00C9A7',
     bgColor: '#DCFAF3',
-    glowColor: 'rgba(0, 201, 167, 0.3)',
+    glowColor: 'rgba(0, 201, 167, 0.35)',
   },
 ];
 
+const STEP_DURATION = 1300; // Fast and dynamic 1.3s step flow animation
+
 export default function HowItWorks() {
-  const sectionRef = useRef(null);
-  const [visible, setVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [stepProgress, setStepProgress] = useState(0);
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) setVisible(true);
-    }, { threshold: 0.15 });
-
-    if (sectionRef.current) obs.observe(sectionRef.current);
-    return () => obs.disconnect();
-  }, []);
-
-  /* Sequential auto-advancing step animation */
+  // Auto-advance loop with smooth progress tracking
   useEffect(() => {
     if (isPaused) return;
-    const interval = setInterval(() => {
-      setActiveStep(prev => (prev + 1) % STEPS.length);
-    }, 2400);
-    return () => clearInterval(interval);
-  }, [isPaused]);
 
-  const anim = (delay = 0) =>
-    visible ? { animation: `wfFadeUp 0.65s cubic-bezier(0.16,1,0.3,1) ${delay}s both` } : { opacity: 0 };
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / STEP_DURATION) * 100, 100);
+      setStepProgress(progress);
+
+      if (elapsed >= STEP_DURATION) {
+        setActiveStep((prev) => (prev + 1) % STEPS.length);
+        setStepProgress(0);
+      }
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [activeStep, isPaused]);
+
+  const handleStepClick = (idx) => {
+    setActiveStep(idx);
+    setStepProgress(0);
+  };
 
   return (
     <>
@@ -122,10 +125,10 @@ export default function HowItWorks() {
 
       <section
         id="how-it-works"
-        ref={sectionRef}
         style={{
-          padding: '90px 0 100px',
-          background: 'transparent',
+          padding: '96px 0 108px',
+          background: '#F8FAFC',
+          borderBottom: '1px solid #E2E8F0',
           position: 'relative',
           overflow: 'hidden',
           textAlign: 'center',
@@ -134,38 +137,69 @@ export default function HowItWorks() {
       >
         <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '0 24px' }}>
 
-          {/* ── Main Heading ── */}
-          <h2
-            id="wf-heading"
-            style={{
-              fontSize: 'clamp(2.2rem, 3.8vw, 3.2rem)',
-              fontWeight: 900,
-              color: '#0A2520',
-              lineHeight: 1.15,
-              letterSpacing: '-0.03em',
-              marginBottom: '14px',
-              fontFamily: 'Manrope, sans-serif',
-              ...anim(0.05),
-            }}
+          {/* ── Scroll-Triggered Header Block ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           >
-            From patient call to <span style={{ color: '#00C9A7' }}>clear next step</span>
-          </h2>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 16px',
+              borderRadius: '999px',
+              backgroundColor: '#DCFAF3',
+              color: '#007A65',
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              marginBottom: '14px',
+              border: '1px solid rgba(0, 135, 108, 0.15)'
+            }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#007A65', display: 'inline-block' }} />
+              HOW IT WORKS
+            </div>
 
-          {/* ── Subtitle ── */}
-          <p style={{
-            fontSize: '16.5px',
-            color: '#64748B',
-            lineHeight: 1.6,
-            maxWidth: '680px',
-            margin: '0 auto 64px',
-            fontFamily: 'Inter, sans-serif',
-            ...anim(0.12),
-          }}>
-            CareConnect AI handles the entire flow, from answering the call to taking the right action.
-          </p>
+            {/* ── Main Heading ── */}
+            <h2
+              id="wf-heading"
+              style={{
+                fontSize: 'clamp(2.2rem, 3.8vw, 3.2rem)',
+                fontWeight: 900,
+                color: '#0A2520',
+                lineHeight: 1.15,
+                letterSpacing: '-0.03em',
+                marginBottom: '14px',
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+              }}
+            >
+              From patient call to <span style={{ color: '#00876C' }}>clear next step</span>
+            </h2>
 
-          {/* ── 4-Step Interactive Workflow Row ── */}
-          <div
+            {/* ── Subtitle ── */}
+            <p
+              style={{
+                fontSize: '16.5px',
+                color: '#64748B',
+                lineHeight: 1.6,
+                maxWidth: '680px',
+                margin: '0 auto 64px',
+                fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              CareConnect AI handles the entire flow, from answering the call to taking the right action.
+            </p>
+          </motion.div>
+
+          {/* ── 4-Step Interactive Workflow Pipeline Row ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
             className="wf-steps-container"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
@@ -174,79 +208,125 @@ export default function HowItWorks() {
               alignItems: 'flex-start',
               justifyContent: 'center',
               position: 'relative',
-              ...anim(0.2),
             }}
           >
             {STEPS.map((step, idx) => {
               const isActive = activeStep === idx;
+              const isPast = idx < activeStep;
               const hasConnector = idx < STEPS.length - 1;
 
+              // Render Icons matching the reference image precisely
               const renderStepIcon = () => {
                 if (step.num === 1) {
                   return (
-                    <Phone 
-                      size={25} 
-                      color={step.iconColor} 
-                      strokeWidth={2.2} 
-                      style={{ 
-                        animation: isActive ? 'phoneWiggle 1.8s infinite ease-in-out' : 'none',
-                        transform: isActive ? 'none' : 'rotate(-10deg)',
-                        transition: 'all 0.3s ease',
-                      }} 
-                    />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {/* Acoustic radiating ring ripples when active */}
+                      {isActive && (
+                        <>
+                          <span
+                            style={{
+                              position: 'absolute',
+                              width: '56px',
+                              height: '56px',
+                              borderRadius: '50%',
+                              border: '2px solid rgba(0, 201, 167, 0.6)',
+                              animation: 'acousticRing 1.4s infinite cubic-bezier(0.2, 0.8, 0.4, 1)',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                          <span
+                            style={{
+                              position: 'absolute',
+                              width: '74px',
+                              height: '74px',
+                              borderRadius: '50%',
+                              border: '1.5px solid rgba(0, 201, 167, 0.35)',
+                              animation: 'acousticRing 1.4s infinite cubic-bezier(0.2, 0.8, 0.4, 1) 0.4s',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                        </>
+                      )}
+                      <Phone
+                        size={25}
+                        color={step.iconColor}
+                        strokeWidth={2.3}
+                        style={{
+                          transform: isActive ? 'rotate(-6deg) scale(1.08)' : 'rotate(-10deg)',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        }}
+                      />
+                    </div>
                   );
                 }
+
                 if (step.num === 2) {
                   return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3.5px', height: '22px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3.5px', height: '24px' }}>
                       {[1, 2, 3, 4, 5].map((bar) => (
                         <span
                           key={bar}
                           style={{
                             width: '3.5px',
                             backgroundColor: step.iconColor,
-                            borderRadius: '2px',
-                            animation: isActive ? `waveBar${bar} 1.1s infinite ease-in-out` : 'none',
-                            height: isActive ? undefined : (bar === 3 ? '18px' : bar === 2 || bar === 4 ? '12px' : '6px'),
-                            transition: 'height 0.2s ease',
+                            borderRadius: '3px',
+                            animation: isActive ? `waveOscillate${bar} 0.75s infinite ease-in-out` : 'none',
+                            height: isActive
+                              ? undefined
+                              : bar === 3
+                              ? '20px'
+                              : bar === 2 || bar === 4
+                              ? '13px'
+                              : '7px',
+                            transition: 'height 0.25s ease',
                           }}
                         />
                       ))}
                     </div>
                   );
                 }
+
                 if (step.num === 3) {
                   return (
-                    <CalendarCheck 
-                      size={25} 
-                      color={step.iconColor} 
-                      strokeWidth={2.2} 
-                      style={{
-                        transform: isActive ? 'scale(1.14)' : 'scale(1)',
-                        transition: 'transform 0.3s ease',
-                      }}
-                    />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CalendarCheck
+                        size={25}
+                        color={step.iconColor}
+                        strokeWidth={2.3}
+                        style={{
+                          transform: isActive ? 'scale(1.12)' : 'scale(1)',
+                          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        }}
+                      />
+                    </div>
                   );
                 }
+
+                // Step 4: CheckSquare / Checkbox with checkmark
                 return (
-                  <CheckSquare 
-                    size={25} 
-                    color={step.iconColor} 
-                    strokeWidth={2.2} 
-                    style={{
-                      transform: isActive ? 'scale(1.14)' : 'scale(1)',
-                      transition: 'transform 0.3s ease',
-                    }}
-                  />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckSquare
+                      size={25}
+                      color={step.iconColor}
+                      strokeWidth={2.4}
+                      style={{
+                        transform: isActive ? 'scale(1.14)' : 'scale(1)',
+                        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      }}
+                    />
+                  </div>
                 );
               };
 
+              // Step 4 in the image has an iconic outer concentric ring
+              const isStep4 = step.num === 4;
+
               return (
                 <React.Fragment key={step.num}>
-                  {/* Step Node */}
+                  {/* Step Interactive Node */}
                   <div
                     className="wf-node"
-                    onClick={() => setActiveStep(idx)}
+                    onClick={() => handleStepClick(idx)}
                     style={{
                       flex: '1 1 0',
                       maxWidth: '220px',
@@ -255,39 +335,80 @@ export default function HowItWorks() {
                       alignItems: 'center',
                       textAlign: 'center',
                       cursor: 'pointer',
+                      userSelect: 'none',
                     }}
                   >
                     {/* Circle Icon Container with Number Badge */}
                     <div style={{ position: 'relative', marginBottom: '22px' }}>
-                      {/* Pastel Glow Circle with Glass border */}
-                      <div
-                        style={{
-                          width: '78px',
-                          height: '78px',
-                          borderRadius: '50%',
-                          backgroundColor: step.bgColor,
-                          boxShadow: isActive 
-                            ? `0 12px 32px ${step.glowColor}, 0 0 0 3px #00C9A7` 
-                            : `0 8px 24px ${step.glowColor}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: isActive ? '2px solid #00C9A7' : '1px solid rgba(255, 255, 255, 0.9)',
-                          transform: isActive ? 'scale(1.1) translateY(-4px)' : 'scale(1)',
-                          animation: isActive ? 'wfPulseRing 2s infinite' : 'none',
-                          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                        }}
-                      >
-                        {renderStepIcon()}
-                      </div>
+                      {isStep4 ? (
+                        // Step 4: Double Concentric Ring (outer ring + inner circle)
+                        <div
+                          style={{
+                            width: '92px',
+                            height: '92px',
+                            borderRadius: '50%',
+                            border: isActive ? '2.5px solid #00C9A7' : '2px solid rgba(0, 201, 167, 0.85)',
+                            backgroundColor: isActive ? 'rgba(0, 201, 167, 0.08)' : 'rgba(0, 201, 167, 0.03)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: isActive
+                              ? '0 12px 36px rgba(0, 201, 167, 0.32), 0 0 0 4px rgba(0, 201, 167, 0.15)'
+                              : '0 6px 20px rgba(0, 201, 167, 0.12)',
+                            transform: isActive ? 'scale(1.08) translateY(-4px)' : 'scale(1)',
+                            animation: isActive ? 'pulseGlowRing 1.8s infinite' : 'none',
+                            transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                          }}
+                        >
+                          {/* Inner Circle */}
+                          <div
+                            style={{
+                              width: '70px',
+                              height: '70px',
+                              borderRadius: '50%',
+                              backgroundColor: step.bgColor,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '1.5px solid rgba(255, 255, 255, 0.9)',
+                            }}
+                          >
+                            {renderStepIcon()}
+                          </div>
+                        </div>
+                      ) : (
+                        // Step 1, 2, 3: Single Rounded Pastel Card
+                        <div
+                          style={{
+                            width: '78px',
+                            height: '78px',
+                            borderRadius: '50%',
+                            backgroundColor: step.bgColor,
+                            boxShadow: isActive
+                              ? `0 12px 32px ${step.glowColor}, 0 0 0 3px #00C9A7`
+                              : isPast
+                              ? '0 6px 18px rgba(0, 201, 167, 0.16)'
+                              : `0 6px 18px ${step.glowColor}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: isActive ? '2px solid #00C9A7' : '1.5px solid rgba(255, 255, 255, 0.95)',
+                            transform: isActive ? 'scale(1.1) translateY(-4px)' : 'scale(1)',
+                            animation: isActive ? 'pulseGlowRing 1.8s infinite' : 'none',
+                            transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                          }}
+                        >
+                          {renderStepIcon()}
+                        </div>
+                      )}
 
                       {/* Number Badge at bottom of circle */}
                       <div
                         style={{
                           position: 'absolute',
-                          bottom: '-8px',
+                          bottom: isStep4 ? '-6px' : '-8px',
                           left: '50%',
-                          transform: isActive ? 'translateX(-50%) scale(1.12)' : 'translateX(-50%) scale(1)',
+                          transform: isActive ? 'translateX(-50%) scale(1.15)' : 'translateX(-50%) scale(1)',
                           width: '23px',
                           height: '23px',
                           borderRadius: '50%',
@@ -299,12 +420,15 @@ export default function HowItWorks() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           border: '2px solid #FFFFFF',
-                          boxShadow: isActive ? '0 2px 10px rgba(10, 37, 32, 0.45)' : '0 2px 6px rgba(0, 201, 167, 0.35)',
+                          boxShadow: isActive
+                            ? '0 2px 10px rgba(10, 37, 32, 0.45)'
+                            : '0 2px 6px rgba(0, 201, 167, 0.35)',
                           fontFamily: 'Inter, sans-serif',
                           transition: 'all 0.3s ease',
+                          zIndex: 3,
                         }}
                       >
-                        {step.num}
+                        {isPast ? <Check size={12} strokeWidth={3} /> : step.num}
                       </div>
                     </div>
 
@@ -315,7 +439,7 @@ export default function HowItWorks() {
                         fontWeight: isActive ? 900 : 800,
                         color: isActive ? '#0A2520' : '#334155',
                         margin: '0 0 6px',
-                        fontFamily: 'Manrope, sans-serif',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
                         transition: 'color 0.3s ease',
                       }}
                     >
@@ -351,37 +475,52 @@ export default function HowItWorks() {
                         marginTop: '38px',
                       }}
                     >
-                      {/* Connecting line */}
+                      {/* Background Track Line */}
                       <div
                         className="wf-connector-line"
                         style={{
                           width: '100%',
                           height: '2px',
-                          background: idx < activeStep 
-                            ? 'linear-gradient(90deg, #00C9A7 0%, #059669 100%)' 
-                            : 'repeating-linear-gradient(90deg, #00C9A7 0, #00C9A7 5px, transparent 5px, transparent 9px)',
-                          opacity: idx <= activeStep ? 1 : 0.4,
-                          transition: 'all 0.4s ease',
+                          backgroundColor: '#CCF2E9',
+                          position: 'relative',
+                          overflow: 'hidden',
                         }}
-                      />
+                      >
+                        {/* Progress line filling up */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: idx < activeStep ? '100%' : idx === activeStep ? `${stepProgress}%` : '0%',
+                            backgroundColor: '#00C9A7',
+                            boxShadow: '0 0 8px #00C9A7',
+                            transition: idx === activeStep ? 'none' : 'width 0.4s ease',
+                          }}
+                        />
+                      </div>
 
-                      {/* Flowing animated light beam signal */}
+                      {/* Traveling Luminous Signal Beam */}
                       {idx === activeStep && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '50%',
-                          width: '16px',
-                          height: '4px',
-                          borderRadius: '3px',
-                          backgroundColor: '#00C9A7',
-                          boxShadow: '0 0 10px #00C9A7, 0 0 18px rgba(0, 201, 167, 0.9)',
-                          animation: 'signalTravel 1.4s infinite linear',
-                          zIndex: 2,
-                        }} />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            width: '18px',
+                            height: '4px',
+                            borderRadius: '3px',
+                            backgroundColor: '#00C9A7',
+                            boxShadow: '0 0 12px #00C9A7, 0 0 20px rgba(0, 201, 167, 0.9)',
+                            animation: 'signalBeam 0.65s infinite ease-in-out',
+                            zIndex: 2,
+                          }}
+                        />
                       )}
 
-                      {/* Small badge in center of line with subtle chevron */}
+                      {/* Small Circular Badge in center of line with chevron '>' */}
                       <div
+                        className="wf-chevron-pill"
                         style={{
                           position: 'absolute',
                           top: '50%',
@@ -390,23 +529,29 @@ export default function HowItWorks() {
                           width: '20px',
                           height: '20px',
                           borderRadius: '50%',
-                          backgroundColor: idx <= activeStep ? '#00C9A7' : '#E2E8F0',
+                          backgroundColor: idx <= activeStep ? '#00C9A7' : '#CCF2E9',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           boxShadow: idx <= activeStep ? '0 2px 8px rgba(0, 201, 167, 0.45)' : 'none',
-                          animation: idx === activeStep ? 'chevronPulse 1.4s infinite ease-in-out' : 'none',
+                          transformOrigin: 'center center',
                           transition: 'all 0.3s ease',
+                          zIndex: 2,
                         }}
                       >
-                        <ChevronRight size={12} color={idx <= activeStep ? '#FFFFFF' : '#64748B'} strokeWidth={3} style={{ marginLeft: '1px' }} />
+                        <ChevronRight
+                          size={12}
+                          color={idx <= activeStep ? '#FFFFFF' : '#0F5B4C'}
+                          strokeWidth={3}
+                          style={{ marginLeft: '1px' }}
+                        />
                       </div>
                     </div>
                   )}
                 </React.Fragment>
               );
             })}
-          </div>
+          </motion.div>
 
         </div>
       </section>
