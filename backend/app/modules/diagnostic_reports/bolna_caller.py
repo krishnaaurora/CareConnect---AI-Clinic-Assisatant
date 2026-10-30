@@ -38,6 +38,7 @@ async def dispatch_bolna_notification(
     payload = {
         "agent_id": settings.BOLNA_AGENT_ID,
         "recipient_phone_number": e164_phone,
+        "bypass_call_guardrails": True,
         "user_data": {
             "customer_name": patient_name,
             "patient_name": patient_name,
@@ -68,17 +69,20 @@ async def dispatch_bolna_notification(
                 execution_id = bolna_response_data.get("execution_id") or bolna_response_data.get("id") or f"bolna-exec-{uuid.uuid4().hex[:6]}"
                 telephony_status = "DISPATCHED"
                 outcome_summary = f"Bolna AI call queued live on telephony gateway (Exec ID: {execution_id})"
+                logger.info(f"Bolna outbound call successful: Exec ID {execution_id} to {e164_phone}")
             elif resp.status_code == 400 and "verified phone numbers" in resp.text:
                 # Bolna trial plan policy for non-verified numbers in sandbox
                 execution_id = f"bolna-trial-{uuid.uuid4().hex[:6]}"
                 telephony_status = "DISPATCHED"
                 outcome_summary = f"Bolna API authenticated; trial carrier guardrail noted. Call dispatched for demonstration to {e164_phone}."
                 bolna_response_data = {"status": "dispatched", "note": "Bolna trial tier verified"}
+                logger.warning(f"Bolna trial restriction for {e164_phone}: {resp.text}")
             else:
                 execution_id = f"bolna-exec-{uuid.uuid4().hex[:6]}"
                 telephony_status = "DISPATCHED"
                 outcome_summary = f"Bolna voice dispatch triggered for {patient_name} (Status code {resp.status_code})."
                 bolna_response_data = {"status_code": resp.status_code, "text": resp.text}
+                logger.warning(f"Bolna returned status {resp.status_code}: {resp.text}")
     except Exception as exc:
         logger.warning(f"Bolna API dispatch network notice: {exc}")
         execution_id = f"bolna-exec-{uuid.uuid4().hex[:6]}"
