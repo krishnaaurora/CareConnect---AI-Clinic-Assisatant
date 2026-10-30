@@ -27,9 +27,11 @@ class Settings(BaseSettings):
     SARVAM_WORKSPACE_ID: str = os.getenv("SARVAM_WORKSPACE_ID", "019e90ca-b3fb-7068-87b1-86581ef98843")
     SARVAM_API_BASE_URL: str = os.getenv("SARVAM_API_BASE_URL", "https://apps.sarvam.ai/api")
     SARVAM_WEBHOOK_URL: str = os.getenv("SARVAM_WEBHOOK_URL", "")
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "https://careconnect-ai-clinic-assisatant.onrender.com")
 
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()

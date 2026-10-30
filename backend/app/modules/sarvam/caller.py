@@ -58,7 +58,7 @@ class SarvamVoiceClient:
         Only configured input variables are sent. Output variables are never sent.
         """
         formatted_phone = self.format_phone_number(recipient_phone)
-        wh_url = webhook_override_url or self.webhook_url or "https://careconnect-ai.onrender.com/api/voice/sarvam/webhook"
+        wh_url = webhook_override_url or self.webhook_url or f"{settings.BACKEND_URL.rstrip('/')}/api/voice/sarvam/webhook"
 
         payload = {
             "app_config": {
