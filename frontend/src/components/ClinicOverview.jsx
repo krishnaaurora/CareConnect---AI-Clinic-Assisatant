@@ -224,7 +224,7 @@ export default function ClinicOverview() {
               margin: '0 0 8px',
               fontFamily: 'Manrope, sans-serif'
             }}>
-              Clinic Overview
+              Clinic Dashboard
             </h2>
             <p style={{ fontSize: '15px', color: '#64748B', margin: 0, fontFamily: 'Inter, sans-serif' }}>
               Real-time daily roster, automated voice booking pipelines, on-duty doctors, and patient triage.

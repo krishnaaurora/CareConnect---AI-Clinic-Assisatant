@@ -20,3 +20,4 @@ class ReportStatusUpdateRequest(BaseModel):
 
 class FollowupResolveRequest(BaseModel):
     notes: Optional[str] = "Marked resolved by clinic staff"
+

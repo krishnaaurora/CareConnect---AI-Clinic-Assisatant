@@ -19,19 +19,12 @@ import {
   X,
   Radio,
   ChevronRight,
-  Shield,
-  FileText
+  Shield
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
-import DoctorManagement from './DoctorManagement';
-import ScheduleCalendar from './ScheduleCalendar';
-import AppointmentManagement from './AppointmentManagement';
-import AICallActivity from './AICallActivity';
-import ClinicSettingsSecurity from './ClinicSettingsSecurity';
-import ReportsFollowups from './ReportsFollowups';
 
 export default function AdminPage({ onNavigateHome }) {
-  const [adminTab, setAdminTab] = useState('overview'); // 'overview' | 'doctors' | 'calendar' | 'appointments' | 'calls' | 'settings'
+  const [adminTab, setAdminTab] = useState('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -43,57 +36,15 @@ export default function AdminPage({ onNavigateHome }) {
 
   const NAV_ITEMS = [
     {
-      id: 'overview',
+      id: 'dashboard',
       num: '1',
-      label: 'Clinic Overview',
+      label: 'Dashboard',
       icon: LayoutDashboard,
       badge: 'Live'
-    },
-    {
-      id: 'doctors',
-      num: '2',
-      label: 'Doctor Management',
-      icon: Stethoscope,
-      badge: null
-    },
-    {
-      id: 'calendar',
-      num: '3',
-      label: 'Schedule Calendar',
-      icon: Calendar,
-      badge: null
-    },
-    {
-      id: 'appointments',
-      num: '4',
-      label: 'Appointment Management',
-      icon: Layers,
-      badge: null
-    },
-    {
-      id: 'calls',
-      num: '5',
-      label: 'AI Call Activity',
-      icon: Activity,
-      badge: 'Real-Time'
-    },
-    {
-      id: 'settings',
-      num: '6',
-      label: 'Clinic Settings & Security',
-      icon: ShieldCheck,
-      badge: null
-    },
-    {
-      id: 'reports',
-      num: '7',
-      label: 'Reports & Follow-ups',
-      icon: FileText,
-      badge: 'New'
     }
   ];
 
-  const currentNav = NAV_ITEMS.find(item => item.id === adminTab) || NAV_ITEMS[0];
+  const currentNav = NAV_ITEMS[0];
 
   return (
     <div style={{ 
@@ -564,10 +515,10 @@ export default function AdminPage({ onNavigateHome }) {
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
                 letterSpacing: '-0.025em'
               }}>
-                Clinic Administration & Voice Reception Console
+                Clinic Administration Dashboard
               </h1>
               <p style={{ fontSize: '13.5px', color: '#A7F3D0', margin: 0, lineHeight: 1.5 }}>
-                Unrestricted clinical dashboard: live bookings, waitlist queues, doctor rosters, and schedule verification.
+                Real-time operational dashboard: live bookings, waitlist queues, doctor rosters, and schedule verification.
               </p>
             </div>
 
@@ -601,7 +552,7 @@ export default function AdminPage({ onNavigateHome }) {
           </div>
         </header>
 
-        {/* ── Active Tab Component View ── */}
+        {/* ── Active Tab Component View: Dashboard ── */}
         <main style={{ 
           maxWidth: '1360px', 
           width: '100%', 
@@ -609,13 +560,7 @@ export default function AdminPage({ onNavigateHome }) {
           padding: '28px 32px 64px',
           boxSizing: 'border-box'
         }}>
-          {adminTab === 'overview' && <ClinicOverview />}
-          {adminTab === 'doctors' && <DoctorManagement />}
-          {adminTab === 'calendar' && <ScheduleCalendar />}
-          {adminTab === 'appointments' && <AppointmentManagement />}
-          {adminTab === 'calls' && <AICallActivity />}
-          {adminTab === 'settings' && <ClinicSettingsSecurity />}
-          {adminTab === 'reports' && <ReportsFollowups />}
+          <ClinicOverview />
         </main>
       </div>
 

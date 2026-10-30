@@ -147,3 +147,4 @@ class ReportService:
                 user="Front Desk Executive"
             )
         return success
+

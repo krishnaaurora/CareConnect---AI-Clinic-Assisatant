@@ -2192,3 +2192,4 @@ export default function ReportsFollowups() {
     </div>
   );
 }
+

@@ -61,3 +61,4 @@ async def resolve_followup_route(followup_id: str, payload: FollowupResolveReque
     if not success:
         raise HTTPException(status_code=404, detail="Follow-up task not found")
     return {"success": True, "message": f"Follow-up {followup_id} marked as resolved."}
+

@@ -61,3 +61,4 @@ class ReportRepository:
             {"$set": update_data}
         )
         return res.modified_count > 0
+
