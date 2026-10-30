@@ -30,7 +30,7 @@ import {
 } from '../api/client';
 
 export default function ClinicOverview() {
-  const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'pending' | 'cancellations' | 'doctors' | 'schedule'
+  const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'cancellations' | 'doctors' | 'schedule'
   const [overviewData, setOverviewData] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [clinics, setClinics] = useState([]);
@@ -77,7 +77,7 @@ export default function ClinicOverview() {
     loadData();
   }, []);
 
-  // Handle Status Update (Confirm / Cancel / Complete)
+  // Handle Status Update (Cancel / Complete)
   const handleStatusChange = async (referenceId, newStatus) => {
     try {
       await updateAppointmentStatus(referenceId, newStatus);
@@ -87,18 +87,12 @@ export default function ClinicOverview() {
         const updateList = (list) =>
           list.map(item => item.reference_id === referenceId ? { ...item, status: newStatus } : item);
         
-        let pending = prev.pending_requests || [];
         let upcoming = prev.upcoming_bookings || [];
         let cancellations = prev.cancellations || [];
         let today = prev.today_appointments || [];
 
-        if (newStatus === 'VERIFIED_CONFIRMED') {
-          const item = pending.find(p => p.reference_id === referenceId);
-          pending = pending.filter(p => p.reference_id !== referenceId);
-          if (item) upcoming = [{ ...item, status: newStatus }, ...upcoming];
-        } else if (newStatus === 'CANCELLED') {
-          const item = [...pending, ...upcoming, ...today].find(p => p.reference_id === referenceId);
-          pending = pending.filter(p => p.reference_id !== referenceId);
+        if (newStatus === 'CANCELLED') {
+          const item = [...upcoming, ...today].find(p => p.reference_id === referenceId);
           upcoming = upcoming.filter(p => p.reference_id !== referenceId);
           today = today.filter(p => p.reference_id !== referenceId);
           if (item) cancellations = [{ ...item, status: 'CANCELLED' }, ...cancellations];
@@ -106,15 +100,14 @@ export default function ClinicOverview() {
 
         return {
           ...prev,
-          pending_requests: pending,
-          upcoming_bookings: upcoming,
+          upcoming_bookings: updateList(upcoming),
           cancellations: cancellations,
           today_appointments: updateList(today),
           metrics: {
             ...prev.metrics,
-            pending_count: pending.length,
             cancellations_count: cancellations.length,
             upcoming_count: upcoming.length,
+            today_count: today.length,
           }
         };
       });
@@ -181,7 +174,6 @@ export default function ClinicOverview() {
   const metrics = overviewData?.metrics || {
     today_count: 14,
     upcoming_count: 38,
-    pending_count: 6,
     cancellations_count: 2
   };
 
@@ -387,14 +379,14 @@ export default function ClinicOverview() {
             </p>
           </div>
 
-          {/* Card 3: Pending Requests */}
+          {/* Card 3: Doctors on Duty */}
           <div 
-            onClick={() => setActiveTab('pending')}
+            onClick={() => setActiveTab('doctors')}
             style={{
               padding: '24px',
               borderRadius: '18px',
-              backgroundColor: activeTab === 'pending' ? '#FFFBEB' : '#FAF8F5',
-              border: activeTab === 'pending' ? '2px solid #F59E0B' : '1px solid rgba(15, 91, 76, 0.1)',
+              backgroundColor: activeTab === 'doctors' ? '#EDFDF9' : '#FAF8F5',
+              border: activeTab === 'doctors' ? '2px solid #00C9A7' : '1px solid rgba(15, 91, 76, 0.1)',
               boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -402,22 +394,22 @@ export default function ClinicOverview() {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Pending Requests
+                Doctors on Duty
               </span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <AlertCircle size={18} color="#D97706" />
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Stethoscope size={18} color="#00C9A7" />
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-              <span style={{ fontSize: '34px', fontWeight: 900, color: '#B45309', fontFamily: 'Manrope, sans-serif' }}>
-                {metrics.pending_count}
+              <span style={{ fontSize: '34px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
+                {doctors.length}
               </span>
-              <span style={{ fontSize: '12px', color: '#B45309', fontWeight: 700, backgroundColor: '#FDE68A', padding: '2px 8px', borderRadius: '999px' }}>
-                Needs Staff Action
+              <span style={{ fontSize: '12px', color: '#0F5B4C', fontWeight: 700, backgroundColor: 'rgba(0, 201, 167, 0.15)', padding: '2px 8px', borderRadius: '999px' }}>
+                Active Specialists
               </span>
             </div>
             <p style={{ fontSize: '12.5px', color: '#64748B', margin: '8px 0 0', fontFamily: 'Inter, sans-serif' }}>
-              Warm handoffs & priority waitlists
+              Available across verified clinic OPDs
             </p>
           </div>
 
@@ -469,9 +461,8 @@ export default function ClinicOverview() {
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
             {[
               { id: 'bookings', label: "Today & Upcoming Bookings", count: metrics.today_count + metrics.upcoming_count },
-              { id: 'pending', label: 'Pending Requests', count: metrics.pending_count, alert: true },
-              { id: 'cancellations', label: 'Cancellations', count: metrics.cancellations_count },
               { id: 'doctors', label: 'Doctors on Duty', count: doctors.length },
+              { id: 'cancellations', label: 'Cancellations', count: metrics.cancellations_count },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -662,108 +653,7 @@ export default function ClinicOverview() {
           </div>
         )}
 
-        {/* 2. Pending Requests Tab */}
-        {activeTab === 'pending' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
-            {(overviewData?.pending_requests || []).length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', backgroundColor: '#FAF8F5', borderRadius: '16px' }}>
-                <CheckCircle2 size={36} color="#00C9A7" style={{ marginBottom: '12px' }} />
-                <h4 style={{ margin: '0 0 6px', color: '#0A2520', fontWeight: 800 }}>All Caught Up!</h4>
-                <p style={{ margin: 0, color: '#64748B', fontSize: '14px' }}>No pending verification or human-handoff requests.</p>
-              </div>
-            ) : (
-              (overviewData?.pending_requests || []).map(p => (
-                <div 
-                  key={p.reference_id}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                    boxShadow: '0 4px 16px rgba(245, 158, 11, 0.08)',
-                    padding: '20px',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: '999px',
-                      backgroundColor: '#FEF3C7',
-                      color: '#B45309',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      <AlertCircle size={12} />
-                      <span>{p.status === 'ROUTED_TO_HUMAN_DESK' ? 'Human Desk Escalation' : 'Waitlist Verification'}</span>
-                    </span>
-                    <span style={{ fontSize: '11px', color: '#94A3B8' }}>{p.source || 'Voice AI'}</span>
-                  </div>
 
-                  <h4 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 800, color: '#0A2520' }}>{p.patient_name}</h4>
-                  <div style={{ fontSize: '13px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                    <Phone size={13} color="#0F5B4C" />
-                    <span>{p.phone}</span>
-                  </div>
-
-                  <div style={{ padding: '12px', backgroundColor: '#FAF8F5', borderRadius: '10px', fontSize: '12.5px', color: '#475569', marginBottom: '14px' }}>
-                    <div style={{ fontWeight: 700, color: '#0F5B4C', marginBottom: '2px' }}>{p.doctor_name} ({p.specialty})</div>
-                    <div>Requested: <strong>{p.preferred_date}</strong> at <strong>{p.preferred_time}</strong></div>
-                    {p.verification_message && (
-                      <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#D97706', fontStyle: 'italic' }}>
-                        "{p.verification_message}"
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusChange(p.reference_id, 'VERIFIED_CONFIRMED')}
-                      style={{
-                        flex: 1,
-                        padding: '9px 12px',
-                        backgroundColor: '#0F5B4C',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: 700,
-                        fontSize: '12.5px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Check size={14} />
-                      <span>Confirm Booking</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleStatusChange(p.reference_id, 'CANCELLED')}
-                      style={{
-                        padding: '9px 12px',
-                        backgroundColor: '#F1F5F9',
-                        color: '#64748B',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: 600,
-                        fontSize: '12.5px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Decline
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
 
         {/* 3. Cancellations Tab */}
         {activeTab === 'cancellations' && (

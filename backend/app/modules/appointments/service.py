@@ -179,25 +179,21 @@ class AppointmentService:
 
     async def get_overview(self) -> Dict[str, Any]:
         today_str = datetime.utcnow().strftime("%Y-%m-%d")
-        metrics = await self.repo.get_overview_counts(today_str)
         recent = await self.repo.get_recent_appointments(limit=100)
         
-        # Categorize
-        today_appointments = [a for a in recent if a.get("preferred_date") == today_str]
-        upcoming = [a for a in recent if a.get("preferred_date", "") >= today_str and a.get("status") == "VERIFIED_CONFIRMED"]
-        pending = [a for a in recent if a.get("status") in ["PENDING_STAFF_FOLLOWUP", "ROUTED_TO_HUMAN_DESK"]]
+        # Categorize confirmed appointments (no manual approval queue needed)
+        today_appointments = [a for a in recent if a.get("preferred_date") == today_str and a.get("status") != "CANCELLED"]
+        upcoming = [a for a in recent if a.get("preferred_date", "") > today_str and a.get("status") != "CANCELLED"]
         cancellations = [a for a in recent if a.get("status") == "CANCELLED"]
 
         return {
             "metrics": {
                 "today_count": len(today_appointments),
                 "upcoming_count": len(upcoming),
-                "pending_count": len(pending),
                 "cancellations_count": len(cancellations),
             },
             "today_appointments": today_appointments,
             "upcoming_bookings": upcoming,
-            "pending_requests": pending,
             "cancellations": cancellations,
             "all_recent": recent
         }
