@@ -441,48 +441,15 @@ export default function PatientRegistry() {
         </div>
       )}
 
-      {/* ── Section Header & Title ── */}
+      {/* ── Top Actions Bar (Clean, no duplicate headings) ── */}
       <div style={{
         display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
         flexWrap: 'wrap',
-        gap: '20px',
-        marginBottom: '28px'
+        gap: '10px',
+        marginBottom: '22px'
       }}>
-        <div>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '5px 12px',
-            borderRadius: '999px',
-            backgroundColor: '#EDFDF9',
-            border: '1px solid rgba(0, 201, 167, 0.3)',
-            marginBottom: '10px'
-          }}>
-            <Users size={13} color="#0F5B4C" />
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              CareConnect AI Clinical Registry
-            </span>
-          </div>
-
-          <h1 style={{
-            margin: '0 0 6px',
-            fontSize: '28px',
-            fontWeight: 900,
-            color: '#0A2520',
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            letterSpacing: '-0.02em'
-          }}>
-            Patients Management
-          </h1>
-          <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
-            Comprehensive patient directory with unique IDs, demographics, verified appointment history, laboratory reports, and DPDP-compliant voice consent.
-          </p>
-        </div>
-
-        {/* Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <button
             type="button"

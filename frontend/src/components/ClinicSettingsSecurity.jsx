@@ -217,38 +217,7 @@ export default function ClinicSettingsSecurity() {
       )}
 
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-        marginBottom: '26px'
-      }}>
-        <div>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '4px 12px',
-            borderRadius: '999px',
-            backgroundColor: '#EDFDF9',
-            border: '1px solid rgba(0, 201, 167, 0.3)',
-            marginBottom: '8px'
-          }}>
-            <ShieldCheck size={13} color="#0F5B4C" />
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Governance & Configuration
-            </span>
-          </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#0A2520', margin: '0 0 4px', fontFamily: 'Manrope, sans-serif' }}>
-            Clinic Settings & Security Command
-          </h2>
-          <p style={{ fontSize: '14px', color: '#64748B', margin: 0 }}>
-            Manage clinic identity, voice receptionist greeting, role-based access control (RBAC), and booking audit trails.
-          </p>
-        </div>
-      </div>
+
 
       {/* Navigation Sub-Tabs */}
       <div style={{

@@ -59,50 +59,43 @@ export default function AdminPage({ onNavigateHome }) {
       id: 'dashboard',
       num: '1',
       label: 'Dashboard',
-      icon: LayoutDashboard,
-      badge: null
+      icon: LayoutDashboard
     },
     {
       id: 'doctors',
       num: '2',
       label: 'Doctors',
-      icon: Stethoscope,
-      badge: null
+      icon: Stethoscope
     },
     {
       id: 'patients',
       num: '3',
       label: 'Patients',
-      icon: Users,
-      badge: null
+      icon: Users
     },
     {
       id: 'appointments',
       num: '4',
       label: 'Appointments',
-      icon: Calendar,
-      badge: null
+      icon: Calendar
     },
     {
       id: 'diagnostic_reports',
       num: '5',
       label: 'Diagnostic Reports',
-      icon: FileText,
-      badge: null
+      icon: FileText
     },
     {
       id: 'call_history',
       num: '6',
       label: 'Call History',
-      icon: PhoneCall,
-      badge: null
+      icon: PhoneCall
     },
     {
       id: 'clinic_settings',
       num: '7',
       label: 'Clinic Settings',
-      icon: Settings,
-      badge: null
+      icon: Settings
     }
   ];
 
@@ -470,22 +463,6 @@ export default function AdminPage({ onNavigateHome }) {
                         </span>
                       </div>
                     </div>
-
-                    {item.badge && (
-                      <span style={{
-                        fontSize: '9px',
-                        fontWeight: 800,
-                        backgroundColor: isActive ? '#DCFAF3' : '#F1F5F9',
-                        color: isActive ? '#007A65' : '#64748B',
-                        padding: '1px 5px',
-                        borderRadius: '4px',
-                        letterSpacing: '0.03em',
-                        textTransform: 'uppercase',
-                        flexShrink: 0
-                      }}>
-                        {item.badge}
-                      </span>
-                    )}
                   </button>
                 );
               })}

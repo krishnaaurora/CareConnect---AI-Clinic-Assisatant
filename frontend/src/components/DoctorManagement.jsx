@@ -828,40 +828,16 @@ export default function DoctorManagement() {
         </div>
       )}
 
-      {/* ── SECTION 1: HEADER & KPI CARDS ── */}
+      {/* ── SECTION 1: ACTIONS & KPI CARDS (Clean, no duplicate headings) ── */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           flexWrap: 'wrap',
-          gap: '16px',
-          marginBottom: '22px'
+          gap: '10px',
+          marginBottom: '20px'
         }}>
-          <div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 12px',
-              borderRadius: '999px',
-              backgroundColor: '#EDFDF9',
-              border: '1px solid rgba(0, 201, 167, 0.3)',
-              marginBottom: '8px'
-            }}>
-              <Stethoscope size={13} color="#0F5B4C" />
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Section 2 • Clinical Practice Administration
-              </span>
-            </div>
-            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#0A2520', margin: '0 0 4px', letterSpacing: '-0.025em' }}>
-              Doctor & Department Roster Management
-            </h2>
-            <p style={{ fontSize: '14px', color: '#64748B', margin: 0 }}>
-              Physician credentials, operational consultation shifts, break rules, planned leaves, and Priya Voice AI integration.
-            </p>
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               type="button"

@@ -229,47 +229,15 @@ export default function AICallActivity() {
         </div>
       )}
 
-      {/* ── Section Header ── */}
+      {/* ── Top Actions Bar (Clean, no duplicate headings) ── */}
       <div style={{
         display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
         flexWrap: 'wrap',
-        gap: '20px',
-        marginBottom: '26px'
+        gap: '10px',
+        marginBottom: '22px'
       }}>
-        <div>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '5px 12px',
-            borderRadius: '999px',
-            backgroundColor: '#EDFDF9',
-            border: '1px solid rgba(0, 201, 167, 0.3)',
-            marginBottom: '8px'
-          }}>
-            <PhoneCall size={13} color="#0F5B4C" />
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Telephony AI Intelligence & Logs
-            </span>
-          </div>
-
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: 900,
-            color: '#0A2520',
-            margin: '0 0 6px',
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            letterSpacing: '-0.02em'
-          }}>
-            Call History
-          </h1>
-          <p style={{ fontSize: '14px', color: '#64748B', margin: 0 }}>
-            Real-time logs of all inbound & outbound Priya Voice AI calls, conversational transcripts, callback queues, and retry recovery.
-          </p>
-        </div>
-
         {/* Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <button

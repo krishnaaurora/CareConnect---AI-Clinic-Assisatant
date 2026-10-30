@@ -297,129 +297,60 @@ export default function DiagnosticReports() {
       )}
 
       {/* ── Page Header ── */}
+      {/* ── Top Actions Bar (Clean, no duplicate headings) ── */}
       <div style={{
         display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '20px',
-        marginBottom: '28px'
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        marginBottom: '22px'
       }}>
-        <div>
-          <div style={{
+        <button
+          type="button"
+          onClick={loadData}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '9px 14px',
+            borderRadius: '10px',
+            backgroundColor: '#FFFFFF',
+            color: '#475569',
+            border: '1px solid #E2E8F0',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}
+        >
+          <RefreshCw size={13} />
+          <span>Refresh</span>
+        </button>
+
+        {/* 2. Upload Report Functionality Button */}
+        <button
+          type="button"
+          onClick={() => setIsUploadModalOpen(true)}
+          style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '5px 12px',
-            borderRadius: '999px',
-            backgroundColor: '#EDFDF9',
-            border: '1px solid rgba(0, 201, 167, 0.3)',
-            marginBottom: '10px'
-          }}>
-            <FileText size={13} color="#0F5B4C" />
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              Automated Diagnostic Telephony
-            </span>
-          </div>
-
-          <h1 style={{
-            margin: '0 0 6px',
-            fontSize: '28px',
-            fontWeight: 900,
-            color: '#0A2520',
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            letterSpacing: '-0.02em'
-          }}>
-            Diagnostic Reports
-          </h1>
-          <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
-            Upload patient reports and monitor automated Priya Voice patient notification alerts. Zero manual follow-up required.
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={loadData}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '9px 14px',
-              borderRadius: '10px',
-              backgroundColor: '#FFFFFF',
-              color: '#475569',
-              border: '1px solid #E2E8F0',
-              fontSize: '12.5px',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            <RefreshCw size={13} />
-            <span>Refresh</span>
-          </button>
-
-          {/* 2. Upload Report Functionality Button */}
-          <button
-            type="button"
-            onClick={() => setIsUploadModalOpen(true)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '10px',
-              backgroundColor: '#0F5B4C',
-              color: '#FFFFFF',
-              border: 'none',
-              fontSize: '13px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0A4337'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F5B4C'}
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            <span>Upload New Report</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── Workflow Architecture Pipeline Banner ── */}
-      <div style={{
-        backgroundColor: '#071F1B',
-        borderRadius: '16px',
-        padding: '18px 22px',
-        color: '#FFFFFF',
-        marginBottom: '28px',
-        boxShadow: '0 6px 20px rgba(7, 31, 27, 0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: 'rgba(0, 201, 167, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PhoneCall size={20} color="#00C9A7" />
-          </div>
-          <div>
-            <div style={{ fontSize: '14.5px', fontWeight: 800, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Automated Clinical Telephony Engine
-            </div>
-            <div style={{ fontSize: '12px', color: '#A7F3D0', marginTop: '2px' }}>
-              Select Patient → Upload PDF → Mark READY → Consent Verified → Priya Voice Outbound Call → Call Outcome Logged
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(255, 255, 255, 0.08)', padding: '6px 12px', borderRadius: '8px', fontSize: '11.5px', fontWeight: 700 }}>
-          <Sparkles size={14} color="#00C9A7" />
-          <span>Agent: Careconnect Receptionist (v4)</span>
-        </div>
+            padding: '10px 18px',
+            borderRadius: '10px',
+            backgroundColor: '#0F5B4C',
+            color: '#FFFFFF',
+            border: 'none',
+            fontSize: '13px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0A4337'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F5B4C'}
+        >
+          <Plus size={16} strokeWidth={2.5} />
+          <span>Upload New Report</span>
+        </button>
       </div>
 
       {/* ── Operational Summary Cards ── */}
@@ -1367,7 +1298,7 @@ export default function DiagnosticReports() {
                     </div>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '11.5px', color: '#64748B' }}>
-                      <div><strong>Agent:</strong> Careconnect Receptionist (v4)</div>
+                      <div><strong>Voice Engine:</strong> Priya Clinical Assistant</div>
                       <div><strong>Caller ID:</strong> +918064269783</div>
                       <div><strong>Recipient:</strong> {selectedReport.masked_phone || selectedReport.patient_phone}</div>
                       {sarvamCall.attempt_id && (
