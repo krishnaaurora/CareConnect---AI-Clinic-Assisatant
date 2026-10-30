@@ -31,7 +31,7 @@ import {
   updateAppointmentStatus 
 } from '../api/client';
 
-export default function ClinicOverview({ onNavigateToPatients, onNavigateToReports }) {
+export default function ClinicOverview({ onNavigateToPatients, onNavigateToReports, onNavigateToDoctors }) {
   const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'cancellations' | 'doctors' | 'schedule'
   const [overviewData, setOverviewData] = useState(null);
   const [doctors, setDoctors] = useState([]);
@@ -281,6 +281,33 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
               </button>
             )}
 
+            {onNavigateToDoctors && (
+              <button
+                type="button"
+                onClick={onNavigateToDoctors}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  backgroundColor: '#EDFDF9',
+                  color: '#0F5B4C',
+                  border: '1px solid rgba(0, 201, 167, 0.4)',
+                  fontWeight: 700,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFAF3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EDFDF9'}
+              >
+                <Stethoscope size={16} color="#007A65" />
+                <span>Doctor Management</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setIsAddDoctorOpen(true)}
@@ -437,7 +464,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
 
           {/* Card 3: Doctors on Duty */}
           <div 
-            onClick={() => setActiveTab('doctors')}
+            onClick={onNavigateToDoctors || (() => setActiveTab('doctors'))}
             style={{
               padding: '24px',
               borderRadius: '18px',

@@ -68,7 +68,7 @@ export default function AdminPage({ onNavigateHome }) {
       num: '2',
       label: 'Doctors',
       icon: Stethoscope,
-      badge: null
+      badge: 'Roster'
     },
     {
       id: 'patients',
@@ -660,6 +660,7 @@ export default function AdminPage({ onNavigateHome }) {
         }}>
           {adminTab === 'dashboard' && (
             <ClinicOverview 
+              onNavigateToDoctors={() => handleSelectTab('doctors')}
               onNavigateToPatients={() => handleSelectTab('patients')} 
               onNavigateToReports={() => handleSelectTab('diagnostic_reports')} 
             />
