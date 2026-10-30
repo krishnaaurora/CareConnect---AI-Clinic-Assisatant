@@ -29,7 +29,12 @@ class SarvamVoiceClient:
 
     @staticmethod
     def format_phone_number(raw_phone: str) -> str:
-        """Ensure phone number is in strict E.164 format (+91XXXXXXXXXX)."""
+        """
+        Normalizes patient phone number to strict E.164 format for India (+91XXXXXXXXXX).
+        Blocks invalid numbers with less than 10 digits without substituting any default.
+        """
+        if not raw_phone or not str(raw_phone).strip():
+            raise ValueError("Phone number is empty or missing")
         digits = "".join(filter(str.isdigit, str(raw_phone)))
         if len(digits) == 10:
             return f"+91{digits}"
@@ -37,7 +42,7 @@ class SarvamVoiceClient:
             return f"+{digits}"
         elif len(digits) > 10:
             return f"+91{digits[-10:]}"
-        return f"+91{digits}"
+        raise ValueError(f"Phone number '{raw_phone}' has only {len(digits)} digits; expected a valid 10-digit Indian mobile number")
 
     def build_payload(
         self,

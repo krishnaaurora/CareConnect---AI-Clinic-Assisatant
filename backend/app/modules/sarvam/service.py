@@ -103,13 +103,24 @@ class SarvamService:
         if not self.is_within_calling_hours():
             logger.warning(f"Notice: Outbound call for {report_id} requested outside standard clinic hours (08:00 AM - 08:30 PM IST).")
 
-        # 6. Prepare Outbound Payload Parameters
-        recipient_phone = patient.get("phone") or report.get("patient_phone")
-        if not recipient_phone:
-            raise HTTPException(status_code=400, detail="Patient phone number is missing.")
-
+        # 6. Validate & Normalize Registered Patient Mobile Number
         patient_name = patient.get("name") or report.get("patient_name") or "Patient"
         test_name = report.get("report_type") or "Diagnostic Lab Report"
+
+        raw_phone = patient.get("phone") or report.get("patient_phone")
+        if not raw_phone or not str(raw_phone).strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Automated call blocked: Patient '{patient_name}' (ID: {patient_id}) has no registered mobile number in MongoDB."
+            )
+
+        try:
+            recipient_phone = self.caller.format_phone_number(raw_phone)
+        except ValueError as val_err:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Automated call blocked: Invalid mobile number for patient '{patient_name}'. {str(val_err)}"
+            )
 
         # 7. Dispatch through Sarvam Voice Client
         call_response = await self.caller.create_outbound_call(
