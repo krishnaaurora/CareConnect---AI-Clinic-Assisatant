@@ -67,6 +67,64 @@ export async function fetchAppointmentsOverview() {
   return json.data;
 }
 
+export async function fetchSlotGrid(doctorName, date, clinicCode = 'CARE-IND-01') {
+  try {
+    const params = new URLSearchParams({
+      doctor_name: doctorName,
+      date: date,
+      clinic_code: clinicCode
+    });
+    const res = await fetch(`${API_BASE_URL}/appointments/slots?${params.toString()}`);
+    if (!res.ok) throw new Error('Failed to fetch slot availability');
+    const json = await res.json();
+    return json.data;
+  } catch (err) {
+    console.warn('Slot grid fallback:', err);
+    return null;
+  }
+}
+
+export async function sendAppointmentReminder(referenceId, payload = {}) {
+  const res = await fetch(`${API_BASE_URL}/appointments/${referenceId}/remind`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to dispatch appointment reminder');
+  }
+  return await res.json();
+}
+
+export async function batchSendReminders(targetDate = null) {
+  const url = targetDate 
+    ? `${API_BASE_URL}/appointments/batch-remind?target_date=${encodeURIComponent(targetDate)}`
+    : `${API_BASE_URL}/appointments/batch-remind`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to dispatch batch reminders');
+  }
+  return await res.json();
+}
+
+export async function cancelAppointment(referenceId, reason = 'Cancelled via clinic administration console.') {
+  const res = await fetch(`${API_BASE_URL}/appointments/${referenceId}/cancel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to cancel appointment');
+  }
+  return await res.json();
+}
+
 export async function updateAppointmentStatus(referenceId, status, notes = '') {
   const res = await fetch(`${API_BASE_URL}/appointments/${referenceId}/status`, {
     method: 'PATCH',

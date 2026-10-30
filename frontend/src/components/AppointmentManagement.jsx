@@ -20,16 +20,31 @@ import {
   Layers, 
   ArrowRight,
   ShieldCheck,
-  CheckCheck
+  CheckCheck,
+  Plus,
+  Send,
+  PhoneCall,
+  RefreshCw,
+  Activity,
+  AlertTriangle,
+  FileText,
+  CalendarCheck2
 } from 'lucide-react';
 import { 
   fetchAllAppointments, 
+  fetchAppointmentsOverview,
   updateAppointmentStatus, 
   rescheduleAppointment,
-  fetchDoctorsOnDuty
+  cancelAppointment,
+  fetchDoctorsOnDuty,
+  fetchPatients,
+  createAppointment,
+  fetchSlotGrid,
+  sendAppointmentReminder,
+  batchSendReminders
 } from '../api/client';
 
-const TIME_SLOTS = [
+const STANDARD_SLOTS = [
   '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
   '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM',
   '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
@@ -40,45 +55,80 @@ const TIME_SLOTS = [
 export default function AppointmentManagement() {
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'VERIFIED_CONFIRMED' | 'PENDING' | 'COMPLETED' | 'CANCELLED'
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'CONFIRMED' | 'IN_CONSULTATION' | 'PENDING' | 'COMPLETED' | 'CANCELLED'
   const [sourceFilter, setSourceFilter] = useState('ALL'); // 'ALL' | 'AI' | 'STAFF'
+  const [dateFilter, setDateFilter] = useState('ALL'); // 'ALL' | 'TODAY' | 'UPCOMING'
 
-  // Reschedule Modal
+  // Modals state
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [rescheduleModalItem, setRescheduleModalItem] = useState(null);
+  const [cancelModalItem, setCancelModalItem] = useState(null);
+  const [reminderModalItem, setReminderModalItem] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Book Appointment Form State
+  const [patientMode, setPatientMode] = useState('existing'); // 'existing' | 'new'
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [bookForm, setBookForm] = useState({
+    patient_name: '',
+    phone: '',
+    email: '',
+    age: '',
+    gender: 'Male',
+    clinic_code: 'CARE-IND-01',
+    doctor_name: '',
+    preferred_date: new Date().toISOString().split('T')[0],
+    preferred_time: '10:00 AM',
+    visit_type: 'In-Person Consultation',
+    notes: '',
+    booking_source: 'Clinic Console / Staff'
+  });
+  const [availableSlotsGrid, setAvailableSlotsGrid] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [doctorAvailabilityReason, setDoctorAvailabilityReason] = useState(null);
+
+  // Reschedule Form State
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('11:00 AM');
   const [rescheduleDoctor, setRescheduleDoctor] = useState('');
+  const [rescheduleReason, setRescheduleReason] = useState('Patient request');
   const [rescheduleError, setRescheduleError] = useState('');
-  const [rescheduling, setRescheduling] = useState(false);
+  const [rescheduleSlotsGrid, setRescheduleSlotsGrid] = useState([]);
 
-  // Cancel Modal
-  const [cancelModalItem, setCancelModalItem] = useState(null);
-  const [cancelReason, setCancelReason] = useState('Patient requested cancellation');
+  // Cancel Form State
+  const [cancelReasonText, setCancelReasonText] = useState('Patient requested cancellation');
 
-  // Copy Feedback
+  // Copy Feedback & Notification Banner
   const [copiedRef, setCopiedRef] = useState('');
-  const [notification, setNotification] = useState('');
+  const [toastMessage, setToastMessage] = useState(null);
 
-  const showNotification = (msg) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(''), 3000);
+  const showToast = (text, isError = false) => {
+    setToastMessage({ text, isError });
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [appts, docs] = await Promise.all([
+      const [appts, docs, pts] = await Promise.all([
         fetchAllAppointments(),
-        fetchDoctorsOnDuty()
+        fetchDoctorsOnDuty(),
+        fetchPatients()
       ]);
       setAppointments(appts || []);
       setDoctors(docs || []);
+      setPatients(pts || []);
+
+      if (docs && docs.length > 0 && !bookForm.doctor_name) {
+        setBookForm(prev => ({ ...prev, doctor_name: docs[0].name }));
+      }
     } catch (err) {
-      console.error('Failed to load appointments:', err);
+      console.error('Failed to load appointments data:', err);
     } finally {
       setLoading(false);
     }
@@ -88,39 +138,145 @@ export default function AppointmentManagement() {
     loadData();
   }, []);
 
-  const handleCopy = (refId) => {
-    navigator.clipboard.writeText(refId);
-    setCopiedRef(refId);
-    showNotification(`Copied ticket reference: ${refId}`);
-    setTimeout(() => setCopiedRef(''), 2000);
-  };
-
   // Status mapping
   const normalizeStatus = (status) => {
     if (!status) return 'CONFIRMED';
     const s = status.toUpperCase();
     if (s.includes('CONFIRM')) return 'CONFIRMED';
+    if (s.includes('IN_CONSULTATION') || s.includes('CONSULTING')) return 'IN_CONSULTATION';
     if (s.includes('PENDING') || s.includes('HUMAN_DESK')) return 'PENDING';
     if (s.includes('COMPLETE')) return 'COMPLETED';
     if (s.includes('CANCEL')) return 'CANCELLED';
+    if (s.includes('NO_SHOW')) return 'NO_SHOW';
     return s;
+  };
+
+  // Fetch slot availability grid for Book Modal
+  const loadSlotsForDoctorDate = async (doctorName, date) => {
+    if (!doctorName || !date) return;
+    setSlotsLoading(true);
+    setDoctorAvailabilityReason(null);
+    try {
+      const gridData = await fetchSlotGrid(doctorName, date);
+      if (gridData && gridData.slots) {
+        setAvailableSlotsGrid(gridData.slots);
+        if (!gridData.is_day_available) {
+          setDoctorAvailabilityReason(`${doctorName} is not available on this date (${gridData.day_of_week || ''}).`);
+        }
+      } else {
+        // Fallback default grid
+        setAvailableSlotsGrid(STANDARD_SLOTS.map(t => ({ time: t, available: true, label: 'Available' })));
+      }
+    } catch {
+      setAvailableSlotsGrid(STANDARD_SLOTS.map(t => ({ time: t, available: true, label: 'Available' })));
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  // Fetch slot availability grid for Reschedule Modal
+  const loadRescheduleSlots = async (doctorName, date) => {
+    if (!doctorName || !date) return;
+    try {
+      const gridData = await fetchSlotGrid(doctorName, date);
+      if (gridData && gridData.slots) {
+        setRescheduleSlotsGrid(gridData.slots);
+      }
+    } catch {
+      setRescheduleSlotsGrid(STANDARD_SLOTS.map(t => ({ time: t, available: true, label: 'Available' })));
+    }
+  };
+
+  // When patient selection changes in Book Modal
+  const handleSelectPatient = (patientId) => {
+    setSelectedPatientId(patientId);
+    const p = patients.find(item => item.id === patientId);
+    if (p) {
+      setBookForm(prev => ({
+        ...prev,
+        patient_name: p.name || '',
+        phone: p.phone || '',
+        email: p.email || '',
+        age: p.age || '',
+        gender: p.gender || 'Male',
+        patient_id: p.id
+      }));
+    }
+  };
+
+  // Open Book Modal
+  const handleOpenBookModal = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const initialDoctor = doctors[0]?.name || '';
+    setBookForm({
+      patient_name: '',
+      phone: '',
+      email: '',
+      age: '',
+      gender: 'Male',
+      clinic_code: 'CARE-IND-01',
+      doctor_name: initialDoctor,
+      preferred_date: today,
+      preferred_time: '10:00 AM',
+      visit_type: 'In-Person Consultation',
+      notes: '',
+      booking_source: 'Clinic Console / Staff'
+    });
+    setSelectedPatientId('');
+    setPatientMode('existing');
+    setIsBookModalOpen(true);
+    if (initialDoctor) {
+      loadSlotsForDoctorDate(initialDoctor, today);
+    }
   };
 
   // Open Reschedule Modal
   const handleOpenReschedule = (appt) => {
     setRescheduleModalItem(appt);
-    setRescheduleDate(appt.preferred_date || new Date().toISOString().split('T')[0]);
+    const date = appt.preferred_date || new Date().toISOString().split('T')[0];
+    const doc = appt.doctor_name || doctors[0]?.name || '';
+    setRescheduleDate(date);
     setRescheduleTime(appt.preferred_time || '11:00 AM');
-    setRescheduleDoctor(appt.doctor_name || doctors[0]?.name || '');
+    setRescheduleDoctor(doc);
+    setRescheduleReason('Patient requested change of appointment time');
     setRescheduleError('');
+    loadRescheduleSlots(doc, date);
   };
 
-  // Execute Reschedule
+  // Submit Book Appointment
+  const handleBookSubmit = async (e) => {
+    e.preventDefault();
+    if (!bookForm.patient_name.trim() || !bookForm.phone.trim()) {
+      showToast('Patient name and contact phone are required.', true);
+      return;
+    }
+    if (!bookForm.doctor_name) {
+      showToast('Please select an attending physician.', true);
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await createAppointment({
+        ...bookForm,
+        age: bookForm.age ? parseInt(bookForm.age, 10) : undefined
+      });
+      showToast(res.message || `Appointment ${res.data?.reference_id} confirmed successfully!`);
+      setIsBookModalOpen(false);
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Failed to book appointment', true);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Submit Reschedule
   const handleConfirmReschedule = async (e) => {
     e.preventDefault();
     if (!rescheduleModalItem || !rescheduleDate || !rescheduleTime) return;
 
-    setRescheduling(true);
+    setActionLoading(true);
     setRescheduleError('');
 
     try {
@@ -128,7 +284,8 @@ export default function AppointmentManagement() {
         rescheduleModalItem.reference_id,
         rescheduleDate,
         rescheduleTime,
-        rescheduleDoctor
+        rescheduleDoctor,
+        rescheduleReason
       );
 
       setAppointments(prev => prev.map(a => {
@@ -138,46 +295,93 @@ export default function AppointmentManagement() {
             preferred_date: rescheduleDate,
             preferred_time: rescheduleTime,
             doctor_name: rescheduleDoctor,
-            status: 'VERIFIED_CONFIRMED'
+            status: 'VERIFIED_CONFIRMED',
+            notes: rescheduleReason
           };
         }
         return a;
       }));
 
-      showNotification(`Appointment ${rescheduleModalItem.reference_id} rescheduled to ${rescheduleDate} at ${rescheduleTime}!`);
+      showToast(`Appointment ${rescheduleModalItem.reference_id} rescheduled to ${rescheduleDate} at ${rescheduleTime}!`);
       setRescheduleModalItem(null);
     } catch (err) {
       setRescheduleError(err.message || 'Failed to reschedule. Possible slot conflict.');
     } finally {
-      setRescheduling(false);
+      setActionLoading(false);
     }
   };
 
-  // Execute Cancel
+  // Submit Cancel
   const handleConfirmCancel = async (e) => {
     e.preventDefault();
     if (!cancelModalItem) return;
 
+    setActionLoading(true);
     try {
-      await updateAppointmentStatus(cancelModalItem.reference_id, 'CANCELLED', cancelReason);
+      await cancelAppointment(cancelModalItem.reference_id, cancelReasonText);
       setAppointments(prev => prev.map(a => {
         if (a.reference_id === cancelModalItem.reference_id) {
           return {
             ...a,
             status: 'CANCELLED',
-            notes: cancelReason
+            notes: cancelReasonText
           };
         }
         return a;
       }));
-      showNotification(`Appointment ${cancelModalItem.reference_id} cancelled. Slot freed.`);
+      showToast(`Appointment ${cancelModalItem.reference_id} cancelled. Doctor slot released.`);
       setCancelModalItem(null);
     } catch (err) {
-      console.error('Failed to cancel appointment:', err);
+      showToast(err.message || 'Failed to cancel appointment', true);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  // Quick Status Transition (e.g. Mark Completed or Confirm Pending)
+  // Submit Priya Voice AI Reminder
+  const handleSendReminder = async () => {
+    if (!reminderModalItem) return;
+    setActionLoading(true);
+    try {
+      const res = await sendAppointmentReminder(reminderModalItem.reference_id);
+      showToast(res.message || `Priya Voice AI reminder dispatched to ${reminderModalItem.patient_name}!`);
+      setAppointments(prev => prev.map(a => {
+        if (a.reference_id === reminderModalItem.reference_id) {
+          return {
+            ...a,
+            reminder_sent: true,
+            reminder_sent_at: new Date().toISOString()
+          };
+        }
+        return a;
+      }));
+      setReminderModalItem(null);
+    } catch (err) {
+      showToast(err.message || 'Failed to send reminder', true);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Batch Reminder trigger
+  const handleBatchReminders = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    if (!window.confirm(`Dispatch automated Priya Voice AI reminders to all confirmed patients for today (${today})?`)) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await batchSendReminders(today);
+      showToast(res.message || `Reminders batch complete: ${res.data?.dispatched_count} calls dispatched.`);
+      loadData();
+    } catch (err) {
+      showToast(err.message || 'Batch reminder failed', true);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Quick Status Transition
   const handleQuickStatus = async (referenceId, nextStatus) => {
     try {
       await updateAppointmentStatus(referenceId, nextStatus);
@@ -187,16 +391,28 @@ export default function AppointmentManagement() {
         }
         return a;
       }));
-      showNotification(`Appointment marked as ${nextStatus === 'COMPLETED' ? 'Completed' : 'Confirmed'}.`);
+      showToast(`Status updated to ${nextStatus}.`);
     } catch (err) {
-      console.error('Failed to update status:', err);
+      showToast(err.message || 'Status update failed', true);
     }
   };
 
-  // Counts
+  const handleCopy = (refId) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(refId);
+      setCopiedRef(refId);
+      showToast(`Copied booking reference: ${refId}`);
+      setTimeout(() => setCopiedRef(''), 2000);
+    }
+  };
+
+  // Counts for KPI Cards
+  const todayStr = new Date().toISOString().split('T')[0];
   const counts = {
     total: appointments.length,
+    today: appointments.filter(a => a.preferred_date === todayStr && normalizeStatus(a.status) !== 'CANCELLED').length,
     confirmed: appointments.filter(a => normalizeStatus(a.status) === 'CONFIRMED').length,
+    inConsult: appointments.filter(a => normalizeStatus(a.status) === 'IN_CONSULTATION').length,
     pending: appointments.filter(a => normalizeStatus(a.status) === 'PENDING').length,
     completed: appointments.filter(a => normalizeStatus(a.status) === 'COMPLETED').length,
     cancelled: appointments.filter(a => normalizeStatus(a.status) === 'CANCELLED').length,
@@ -206,7 +422,6 @@ export default function AppointmentManagement() {
 
   // Filter Appointments
   const filteredAppointments = appointments.filter(appt => {
-    // Search
     const q = searchQuery.toLowerCase();
     const matchesSearch = !q ||
       appt.patient_name?.toLowerCase().includes(q) ||
@@ -215,56 +430,60 @@ export default function AppointmentManagement() {
       appt.doctor_name?.toLowerCase().includes(q) ||
       appt.specialty?.toLowerCase().includes(q);
 
-    // Status
     const norm = normalizeStatus(appt.status);
     let matchesStatus = true;
     if (statusFilter === 'CONFIRMED') matchesStatus = norm === 'CONFIRMED';
+    if (statusFilter === 'IN_CONSULTATION') matchesStatus = norm === 'IN_CONSULTATION';
     if (statusFilter === 'PENDING') matchesStatus = norm === 'PENDING';
     if (statusFilter === 'COMPLETED') matchesStatus = norm === 'COMPLETED';
     if (statusFilter === 'CANCELLED') matchesStatus = norm === 'CANCELLED';
 
-    // Source
     let matchesSource = true;
     const isAi = (appt.source || '').toLowerCase().includes('ai') || (appt.source || '').toLowerCase().includes('priya');
     if (sourceFilter === 'AI') matchesSource = isAi;
     if (sourceFilter === 'STAFF') matchesSource = !isAi;
 
-    return matchesSearch && matchesStatus && matchesSource;
+    let matchesDate = true;
+    if (dateFilter === 'TODAY') matchesDate = appt.preferred_date === todayStr;
+    if (dateFilter === 'UPCOMING') matchesDate = (appt.preferred_date || '') >= todayStr;
+
+    return matchesSearch && matchesStatus && matchesSource && matchesDate;
   });
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', paddingBottom: '60px' }}>
 
-      {/* Toast Notification */}
-      {notification && (
+      {/* ── Toast Notification ── */}
+      {toastMessage && (
         <div style={{
           position: 'fixed',
-          bottom: '24px',
+          top: '24px',
           right: '24px',
-          backgroundColor: '#0F5B4C',
-          color: '#FFFFFF',
-          padding: '12px 20px',
+          backgroundColor: toastMessage.isError ? '#FEF2F2' : '#0F5B4C',
+          color: toastMessage.isError ? '#DC2626' : '#FFFFFF',
+          border: toastMessage.isError ? '1px solid #FECACA' : '1px solid #00C9A7',
+          padding: '14px 22px',
           borderRadius: '12px',
-          boxShadow: '0 8px 24px rgba(15, 91, 76, 0.3)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.16)',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          zIndex: 1100,
+          gap: '10px',
+          zIndex: 9999,
           fontWeight: 700,
           fontSize: '13.5px'
         }}>
-          <CheckCircle2 size={16} color="#00C9A7" />
-          <span>{notification}</span>
+          {toastMessage.isError ? <AlertCircle size={18} /> : <CheckCircle2 size={18} color="#00C9A7" />}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px',
+        gap: '20px',
         marginBottom: '26px'
       }}>
         <div>
@@ -272,132 +491,202 @@ export default function AppointmentManagement() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '4px 12px',
+            padding: '5px 12px',
             borderRadius: '999px',
             backgroundColor: '#EDFDF9',
             border: '1px solid rgba(0, 201, 167, 0.3)',
             marginBottom: '8px'
           }}>
-            <Layers size={13} color="#0F5B4C" />
+            <CalendarCheck2 size={13} color="#0F5B4C" />
             <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Patient Booking Management
+              Clinical Scheduling Console
             </span>
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#0A2520', margin: '0 0 4px', fontFamily: 'Manrope, sans-serif' }}>
-            Appointments Directory & Status Control
-          </h2>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: 900,
+            color: '#0A2520',
+            margin: '0 0 6px',
+            fontFamily: 'Plus Jakarta Sans, sans-serif',
+            letterSpacing: '-0.02em'
+          }}>
+            Appointments Management
+          </h1>
           <p style={{ fontSize: '14px', color: '#64748B', margin: 0 }}>
-            Unified patient log: verify booking references, review booking channels (AI vs Staff), execute reschedules, and monitor lifecycle.
+            Real-time slot availability, double-booking prevention, automated Priya Voice AI reminder dispatch, and appointment lifecycle tracking.
           </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleBatchReminders}
+            disabled={actionLoading}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              backgroundColor: '#FFFFFF',
+              color: '#0F5B4C',
+              border: '1.5px solid #00C9A7',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              cursor: actionLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <Bot size={15} color="#00C9A7" />
+            <span>Send Today's Priya Reminders</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={loadData}
+            title="Refresh appointments"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              backgroundColor: '#FFFFFF',
+              color: '#475569',
+              border: '1px solid #CBD5E1',
+              fontSize: '12.5px',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenBookModal}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              backgroundColor: '#0F5B4C',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
+            }}
+          >
+            <Plus size={16} />
+            <span>Book Appointment</span>
+          </button>
         </div>
       </div>
 
-      {/* Stat Counter Pills */}
+      {/* ── Summary KPI Cards ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
         gap: '14px',
         marginBottom: '24px'
       }}>
-        <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>All Bookings</div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif', marginTop: '4px' }}>
+        {/* Card 1: Total Bookings */}
+        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>All Bookings</div>
+          <div style={{ fontSize: '26px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.total}
           </div>
         </div>
 
-        <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid rgba(0, 201, 167, 0.3)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F5B4C', textTransform: 'uppercase' }}>Confirmed</div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#0F5B4C', fontFamily: 'Manrope, sans-serif', marginTop: '4px' }}>
+        {/* Card 2: Today's OPD */}
+        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#EDFDF9', border: '1px solid rgba(0, 201, 167, 0.4)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase' }}>Today's OPD</div>
+          <div style={{ fontSize: '26px', fontWeight: 900, color: '#0F5B4C', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
+            {counts.today}
+          </div>
+        </div>
+
+        {/* Card 3: Confirmed */}
+        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#007A65', textTransform: 'uppercase' }}>Confirmed</div>
+          <div style={{ fontSize: '26px', fontWeight: 900, color: '#007A65', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.confirmed}
           </div>
         </div>
 
-        <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid rgba(245, 158, 11, 0.3)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#B45309', textTransform: 'uppercase' }}>Pending Review</div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#B45309', fontFamily: 'Manrope, sans-serif', marginTop: '4px' }}>
-            {counts.pending}
+        {/* Card 4: In Consultation */}
+        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#7C3AED', textTransform: 'uppercase' }}>In OPD Doctor</div>
+          <div style={{ fontSize: '26px', fontWeight: 900, color: '#7C3AED', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
+            {counts.inConsult}
           </div>
         </div>
 
-        <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid rgba(59, 130, 246, 0.3)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#1D4ED8', textTransform: 'uppercase' }}>Completed</div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#1D4ED8', fontFamily: 'Manrope, sans-serif', marginTop: '4px' }}>
+        {/* Card 5: Completed */}
+        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase' }}>Completed</div>
+          <div style={{ fontSize: '26px', fontWeight: 900, color: '#1D4ED8', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.completed}
           </div>
         </div>
 
-        <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid rgba(239, 68, 68, 0.3)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Cancelled</div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#DC2626', fontFamily: 'Manrope, sans-serif', marginTop: '4px' }}>
+        {/* Card 6: Cancelled / Released */}
+        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#DC2626', textTransform: 'uppercase' }}>Cancelled</div>
+          <div style={{ fontSize: '26px', fontWeight: 900, color: '#DC2626', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.cancelled}
-          </div>
-        </div>
-
-        <div style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FAF8F5', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Channel Distribution</div>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '4px' }}>
-            <span style={{ color: '#0F5B4C' }}>AI Voice: {counts.ai}</span> · <span>Staff: {counts.staff}</span>
           </div>
         </div>
       </div>
 
-      {/* Filter Toolbar */}
+      {/* ── Search & Filter Toolbar ── */}
       <div style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         padding: '16px 20px',
-        border: '1px solid rgba(15, 91, 76, 0.1)',
-        boxShadow: '0 2px 10px rgba(10, 37, 32, 0.03)',
+        border: '1px solid #E2E8F0',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '14px',
-        marginBottom: '24px'
+        marginBottom: '20px'
       }}>
         {/* Search */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 14px',
-          borderRadius: '10px',
-          backgroundColor: '#FAF8F5',
-          border: '1px solid #E2E8F0',
-          minWidth: '260px',
-          flex: '1 1 260px'
-        }}>
-          <Search size={15} color="#64748B" />
+        <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '380px' }}>
+          <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
             placeholder="Search by patient, phone, doctor or Ref ID..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{
-              border: 'none',
-              backgroundColor: 'transparent',
-              outline: 'none',
-              fontSize: '13.5px',
+              width: '100%',
+              padding: '9px 14px 9px 38px',
+              borderRadius: '10px',
+              border: '1px solid #CBD5E1',
+              fontSize: '13px',
               color: '#0A2520',
-              width: '100%'
+              outline: 'none',
+              boxSizing: 'border-box'
             }}
           />
-          {searchQuery && (
-            <button type="button" onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <X size={14} color="#64748B" />
-            </button>
-          )}
         </div>
 
-        {/* Status Tabs */}
+        {/* Status Filter Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {[
             { id: 'ALL', label: 'All Status' },
             { id: 'CONFIRMED', label: 'Confirmed' },
+            { id: 'IN_CONSULTATION', label: 'In OPD' },
             { id: 'PENDING', label: 'Pending' },
             { id: 'COMPLETED', label: 'Completed' },
-            { id: 'CANCELLED', label: 'Cancelled' },
+            { id: 'CANCELLED', label: 'Cancelled' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -420,56 +709,88 @@ export default function AppointmentManagement() {
           ))}
         </div>
 
-        {/* Channel / Source Dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Bot size={15} color="#0F5B4C" />
+        {/* Date & Source Dropdowns */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Date Selector */}
+          <select
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
+            style={{
+              padding: '7px 10px',
+              borderRadius: '8px',
+              border: '1px solid #CBD5E1',
+              backgroundColor: '#FFFFFF',
+              fontSize: '12px',
+              color: '#0A2520',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            <option value="ALL">All Dates</option>
+            <option value="TODAY">Today Only</option>
+            <option value="UPCOMING">Upcoming & Today</option>
+          </select>
+
+          {/* Booking Source */}
           <select
             value={sourceFilter}
             onChange={e => setSourceFilter(e.target.value)}
             style={{
-              padding: '6px 10px',
+              padding: '7px 10px',
               borderRadius: '8px',
               border: '1px solid #CBD5E1',
               backgroundColor: '#FFFFFF',
-              fontSize: '12.5px',
+              fontSize: '12px',
               color: '#0A2520',
-              fontWeight: 600,
-              cursor: 'pointer',
-              outline: 'none'
+              fontWeight: 700,
+              cursor: 'pointer'
             }}
           >
-            <option value="ALL">All Booking Sources</option>
-            <option value="AI">AI Receptionist (Priya Voice)</option>
-            <option value="STAFF">Staff / Clinic Desk</option>
+            <option value="ALL">All Booking Channels</option>
+            <option value="AI">Priya Voice AI Bookings</option>
+            <option value="STAFF">Staff / Reception Desk</option>
           </select>
         </div>
       </div>
 
-      {/* Appointments List / Table */}
+      {/* ── Appointments Directory Table ── */}
       <div style={{
         backgroundColor: '#FFFFFF',
-        borderRadius: '20px',
-        border: '1px solid rgba(15, 91, 76, 0.1)',
-        boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+        borderRadius: '16px',
+        border: '1px solid #E2E8F0',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
         overflow: 'hidden'
       }}>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
             <thead>
-              <tr style={{ backgroundColor: '#EAF6F3', borderBottom: '1px solid rgba(15, 91, 76, 0.1)', color: '#0F5B4C', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <th style={{ padding: '16px 20px' }}>Reference & Patient</th>
-                <th style={{ padding: '16px 20px' }}>Doctor & Specialty</th>
-                <th style={{ padding: '16px 20px' }}>Date & Time Slot</th>
-                <th style={{ padding: '16px 20px' }}>Status</th>
-                <th style={{ padding: '16px 20px' }}>Booking Source</th>
-                <th style={{ padding: '16px 20px', textAlign: 'right' }}>Actions</th>
+              <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569', fontSize: '11.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <th style={{ padding: '14px 18px' }}>Reference & Patient</th>
+                <th style={{ padding: '14px 18px' }}>Physician & Department</th>
+                <th style={{ padding: '14px 18px' }}>Date & Time Slot</th>
+                <th style={{ padding: '14px 18px' }}>Status</th>
+                <th style={{ padding: '14px 18px' }}>Priya Reminder</th>
+                <th style={{ padding: '14px 18px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredAppointments.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '50px 20px', textAlign: 'center', color: '#64748B' }}>
-                    No appointments matching your criteria.
+                  <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#64748B' }}>
+                    <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', display: 'block', color: '#0F5B4C' }} />
+                    <span style={{ fontSize: '14px', fontWeight: 600 }}>Loading clinic appointments...</span>
+                  </td>
+                </tr>
+              ) : filteredAppointments.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#64748B' }}>
+                    <Calendar size={32} style={{ margin: '0 auto 12px', display: 'block', color: '#94A3B8' }} />
+                    <div style={{ fontSize: '16px', fontWeight: 800, color: '#0A2520', marginBottom: '4px' }}>
+                      No appointments matching criteria
+                    </div>
+                    <div style={{ fontSize: '13px' }}>
+                      Try adjusting your search query, status tabs, or click "Book Appointment" to add one.
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -478,23 +799,27 @@ export default function AppointmentManagement() {
                   const isAi = (appt.source || '').toLowerCase().includes('ai') || (appt.source || '').toLowerCase().includes('priya');
 
                   return (
-                    <tr 
-                      key={appt.reference_id} 
-                      style={{ borderBottom: '1px solid rgba(15, 91, 76, 0.06)', transition: 'background-color 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FAF8F5'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    <tr
+                      key={appt.reference_id}
+                      style={{
+                        borderBottom: '1px solid #F1F5F9',
+                        transition: 'background-color 0.15s ease'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FFFFFF'}
                     >
-                      {/* Patient & Reference ID */}
-                      <td style={{ padding: '16px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                      {/* Patient & Ref ID */}
+                      <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
                           <span style={{
                             fontSize: '11px',
                             fontWeight: 800,
                             fontFamily: 'monospace',
                             color: '#0F5B4C',
-                            backgroundColor: '#EAF6F3',
+                            backgroundColor: '#EDFDF9',
                             padding: '2px 6px',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
+                            border: '1px solid rgba(0, 201, 167, 0.25)'
                           }}>
                             {appt.reference_id}
                           </span>
@@ -506,45 +831,53 @@ export default function AppointmentManagement() {
                           >
                             {copiedRef === appt.reference_id ? <Check size={12} color="#00C9A7" /> : <Copy size={12} />}
                           </button>
+                          {isAi ? (
+                            <span style={{ fontSize: '10px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', backgroundColor: '#EDFDF9', color: '#0F5B4C' }}>
+                              Voice AI
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#64748B' }}>
+                              Staff
+                            </span>
+                          )}
                         </div>
 
-                        <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14.5px' }}>
+                        <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14px' }}>
                           {appt.patient_name}
                         </div>
 
-                        {/* Contact details only as needed */}
-                        <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                        <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
                           <Phone size={11} color="#00C9A7" />
-                          <span>{appt.phone}</span>
+                          <span style={{ fontFamily: 'monospace' }}>{appt.phone}</span>
                         </div>
 
                         {appt.notes && (
-                          <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '3px', fontStyle: 'italic', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '3px', fontStyle: 'italic', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             "{appt.notes}"
                           </div>
                         )}
                       </td>
 
-                      {/* Doctor & Clinic */}
-                      <td style={{ padding: '16px 20px' }}>
+                      {/* Doctor & Specialty */}
+                      <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
                         <div style={{ fontWeight: 700, color: '#0A2520', fontSize: '13.5px' }}>
                           {appt.doctor_name}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#00C9A7', fontWeight: 600 }}>
-                          {appt.specialty}
+                        <div style={{ fontSize: '12px', color: '#0F5B4C', fontWeight: 600 }}>
+                          {appt.specialty || 'General OPD'}
                         </div>
                         <div style={{ fontSize: '11px', color: '#94A3B8' }}>
-                          {appt.clinic_name || "CareConnect Partner Clinic"}
+                          {appt.clinic_name || 'Apex Care Clinic & Diagnostics'}
                         </div>
                       </td>
 
-                      {/* Date & Time */}
-                      <td style={{ padding: '16px 20px' }}>
-                        <div style={{ fontWeight: 700, color: '#0A2520', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {/* Date & Time Slot */}
+                      <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                        <div style={{ fontWeight: 700, color: '#0A2520', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                           <Calendar size={13} color="#0F5B4C" />
                           <span>{appt.preferred_date}</span>
                         </div>
-                        <div style={{ fontSize: '12.5px', color: '#00C9A7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                        <div style={{ fontSize: '12px', color: '#00C9A7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                           <Clock size={12} />
                           <span>{appt.preferred_time}</span>
                         </div>
@@ -554,21 +887,38 @@ export default function AppointmentManagement() {
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '16px 20px' }}>
+                      <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
                         {norm === 'CONFIRMED' && (
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
+                            gap: '4px',
+                            padding: '3px 9px',
                             borderRadius: '999px',
                             fontSize: '11.5px',
                             fontWeight: 800,
-                            backgroundColor: '#DCFAF3',
-                            color: '#0F5B4C'
+                            backgroundColor: '#EDFDF9',
+                            color: '#007A65'
                           }}>
-                            <CheckCircle2 size={13} color="#00C9A7" />
+                            <CheckCircle2 size={12} color="#00C9A7" />
                             <span>Confirmed</span>
+                          </span>
+                        )}
+
+                        {norm === 'IN_CONSULTATION' && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 9px',
+                            borderRadius: '999px',
+                            fontSize: '11.5px',
+                            fontWeight: 800,
+                            backgroundColor: '#F5F3FF',
+                            color: '#7C3AED'
+                          }}>
+                            <Activity size={12} color="#8B5CF6" />
+                            <span>In Consultation</span>
                           </span>
                         )}
 
@@ -576,15 +926,15 @@ export default function AppointmentManagement() {
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
+                            gap: '4px',
+                            padding: '3px 9px',
                             borderRadius: '999px',
                             fontSize: '11.5px',
                             fontWeight: 800,
                             backgroundColor: '#FEF3C7',
                             color: '#B45309'
                           }}>
-                            <AlertCircle size={13} color="#F59E0B" />
+                            <AlertCircle size={12} color="#D97706" />
                             <span>Pending</span>
                           </span>
                         )}
@@ -593,15 +943,15 @@ export default function AppointmentManagement() {
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
+                            gap: '4px',
+                            padding: '3px 9px',
                             borderRadius: '999px',
                             fontSize: '11.5px',
                             fontWeight: 800,
                             backgroundColor: '#EFF6FF',
                             color: '#1D4ED8'
                           }}>
-                            <CheckCheck size={13} color="#3B82F6" />
+                            <CheckCheck size={12} color="#3B82F6" />
                             <span>Completed</span>
                           </span>
                         )}
@@ -610,68 +960,63 @@ export default function AppointmentManagement() {
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
+                            gap: '4px',
+                            padding: '3px 9px',
                             borderRadius: '999px',
                             fontSize: '11.5px',
                             fontWeight: 800,
                             backgroundColor: '#FEE2E2',
                             color: '#DC2626'
                           }}>
-                            <XCircle size={13} color="#DC2626" />
+                            <XCircle size={12} color="#DC2626" />
                             <span>Cancelled</span>
                           </span>
                         )}
                       </td>
 
-                      {/* Booking Source (AI receptionist or staff) */}
-                      <td style={{ padding: '16px 20px' }}>
-                        {isAi ? (
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            backgroundColor: '#EAF6F3',
-                            color: '#0F5B4C',
-                            border: '1px solid rgba(0, 201, 167, 0.3)'
-                          }}>
-                            <Bot size={13} color="#00C9A7" />
-                            <span>AI Receptionist</span>
-                          </span>
+                      {/* Priya Reminder Status */}
+                      <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                        {appt.reminder_sent ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '6px', backgroundColor: '#EDFDF9', color: '#0F5B4C', fontSize: '11px', fontWeight: 800, border: '1px solid rgba(0, 201, 167, 0.3)' }}>
+                            <Bot size={12} color="#00C9A7" />
+                            <span>Priya Reminder Sent</span>
+                          </div>
+                        ) : norm === 'CONFIRMED' ? (
+                          <button
+                            type="button"
+                            onClick={() => setReminderModalItem(appt)}
+                            style={{
+                              padding: '5px 9px',
+                              borderRadius: '6px',
+                              border: '1px solid #CBD5E1',
+                              backgroundColor: '#FFFFFF',
+                              color: '#0F5B4C',
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Send size={11} color="#00C9A7" />
+                            <span>Send Reminder</span>
+                          </button>
                         ) : (
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            backgroundColor: '#F1F5F9',
-                            color: '#475569',
-                            border: '1px solid #E2E8F0'
-                          }}>
-                            <UserCheck size={13} color="#64748B" />
-                            <span>Staff Desk</span>
-                          </span>
+                          <span style={{ fontSize: '11px', color: '#94A3B8' }}>—</span>
                         )}
                       </td>
 
-                      {/* Actions: Reschedule & Cancel */}
-                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                      {/* Actions */}
+                      <td style={{ padding: '14px 18px', verticalAlign: 'middle', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                          
                           {norm !== 'CANCELLED' && norm !== 'COMPLETED' && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => handleOpenReschedule(appt)}
                                 style={{
-                                  padding: '6px 12px',
+                                  padding: '6px 10px',
                                   fontSize: '12px',
                                   fontWeight: 700,
                                   color: '#0F5B4C',
@@ -683,7 +1028,7 @@ export default function AppointmentManagement() {
                                   alignItems: 'center',
                                   gap: '4px'
                                 }}
-                                title="Reschedule to new date or time"
+                                title="Reschedule to new date or slot"
                               >
                                 <RotateCcw size={12} />
                                 <span>Reschedule</span>
@@ -702,33 +1047,34 @@ export default function AppointmentManagement() {
                                   borderRadius: '6px',
                                   cursor: 'pointer'
                                 }}
-                                title="Cancel appointment"
+                                title="Cancel booking"
                               >
                                 Cancel
                               </button>
                             </>
                           )}
 
-                          {norm === 'PENDING' && (
+                          {norm === 'CONFIRMED' && (
                             <button
                               type="button"
-                              onClick={() => handleQuickStatus(appt.reference_id, 'VERIFIED_CONFIRMED')}
+                              onClick={() => handleQuickStatus(appt.reference_id, 'IN_CONSULTATION')}
                               style={{
                                 padding: '6px 10px',
                                 fontSize: '12px',
                                 fontWeight: 700,
-                                color: '#FFFFFF',
-                                backgroundColor: '#0F5B4C',
-                                border: 'none',
+                                color: '#7C3AED',
+                                backgroundColor: '#F5F3FF',
+                                border: '1px solid #DDD6FE',
                                 borderRadius: '6px',
                                 cursor: 'pointer'
                               }}
+                              title="Patient arrived and in consultation"
                             >
-                              Confirm
+                              In OPD
                             </button>
                           )}
 
-                          {norm === 'CONFIRMED' && (
+                          {(norm === 'CONFIRMED' || norm === 'IN_CONSULTATION') && (
                             <button
                               type="button"
                               onClick={() => handleQuickStatus(appt.reference_id, 'COMPLETED')}
@@ -748,6 +1094,25 @@ export default function AppointmentManagement() {
                             </button>
                           )}
 
+                          {norm === 'PENDING' && (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickStatus(appt.reference_id, 'VERIFIED_CONFIRMED')}
+                              style={{
+                                padding: '6px 10px',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                color: '#FFFFFF',
+                                backgroundColor: '#0F5B4C',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Confirm
+                            </button>
+                          )}
+
                           {norm === 'CANCELLED' && (
                             <span style={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic' }}>
                               Slot Released
@@ -764,14 +1129,15 @@ export default function AppointmentManagement() {
         </div>
       </div>
 
-      {/* ── MODAL 1: RESCHEDULE APPOINTMENT ── */}
-      {rescheduleModalItem && (
+      {/* ── MODAL 1: BOOK NEW APPOINTMENT ── */}
+      {isBookModalOpen && (
         <div style={{
           position: 'fixed',
           inset: 0,
           backgroundColor: 'rgba(10, 37, 32, 0.65)',
-          backdropFilter: 'blur(6px)',
-          zIndex: 1000,
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+          zIndex: 2000,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -780,7 +1146,376 @@ export default function AppointmentManagement() {
           <div style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '24px',
-            maxWidth: '500px',
+            maxWidth: '680px',
+            width: '100%',
+            padding: '28px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25)',
+            maxHeight: '92vh',
+            overflowY: 'auto',
+            position: 'relative'
+          }}>
+            <button
+              type="button"
+              onClick={() => setIsBookModalOpen(false)}
+              style={{ position: 'absolute', top: '22px', right: '22px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Plus size={22} color="#00C9A7" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Book Clinical Appointment
+                </h3>
+                <p style={{ margin: 0, fontSize: '12.5px', color: '#64748B' }}>
+                  Select patient, physician, date, and verified real-time available time slot.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleBookSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Patient Selection Mode Toggle */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#0A2520', marginBottom: '6px' }}>
+                  Patient Selection
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPatientMode('existing')}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: patientMode === 'existing' ? '2px solid #00C9A7' : '1px solid #CBD5E1',
+                      backgroundColor: patientMode === 'existing' ? '#EDFDF9' : '#FFFFFF',
+                      color: patientMode === 'existing' ? '#0F5B4C' : '#64748B',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Existing Registered Patient ({patients.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPatientMode('new');
+                      setSelectedPatientId('');
+                      setBookForm(prev => ({ ...prev, patient_name: '', phone: '', email: '', patient_id: null }));
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: patientMode === 'new' ? '2px solid #00C9A7' : '1px solid #CBD5E1',
+                      backgroundColor: patientMode === 'new' ? '#EDFDF9' : '#FFFFFF',
+                      color: patientMode === 'new' ? '#0F5B4C' : '#64748B',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    + New Patient Entry
+                  </button>
+                </div>
+              </div>
+
+              {patientMode === 'existing' ? (
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Select Patient from Directory *
+                  </label>
+                  <select
+                    required
+                    value={selectedPatientId}
+                    onChange={e => handleSelectPatient(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px',
+                      backgroundColor: '#FFFFFF',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">-- Choose Patient --</option>
+                    {patients.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.id}) · {p.phone} · {p.gender || 'Patient'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                      Patient Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Sumanth Varma"
+                      value={bookForm.patient_name}
+                      onChange={e => setBookForm({ ...bookForm, patient_name: e.target.value })}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                      Phone (10 digits) *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 9876543210"
+                      value={bookForm.phone}
+                      onChange={e => setBookForm({ ...bookForm, phone: e.target.value })}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Doctor & Date Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Attending Physician *
+                  </label>
+                  <select
+                    required
+                    value={bookForm.doctor_name}
+                    onChange={e => {
+                      const doc = e.target.value;
+                      setBookForm({ ...bookForm, doctor_name: doc });
+                      loadSlotsForDoctorDate(doc, bookForm.preferred_date);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px',
+                      backgroundColor: '#FFFFFF',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    {doctors.map(d => (
+                      <option key={d.id || d.name} value={d.name}>
+                        {d.name} ({d.specialty}) · ₹{d.consultation_fee || 800}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Appointment Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                    value={bookForm.preferred_date}
+                    onChange={e => {
+                      const d = e.target.value;
+                      setBookForm({ ...bookForm, preferred_date: d });
+                      loadSlotsForDoctorDate(bookForm.doctor_name, d);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Doctor Unavailable Alert */}
+              {doctorAvailabilityReason && (
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  backgroundColor: '#FEF3C7',
+                  border: '1px solid #FDE68A',
+                  color: '#B45309',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <AlertTriangle size={16} />
+                  <span>{doctorAvailabilityReason}</span>
+                </div>
+              )}
+
+              {/* Real-Time Interactive Slot Grid */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#0A2520' }}>
+                    Select Consultation Slot *
+                  </label>
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>
+                    Selected: <strong style={{ color: '#0F5B4C' }}>{bookForm.preferred_time}</strong>
+                  </span>
+                </div>
+
+                {slotsLoading ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#64748B', fontSize: '12.5px' }}>
+                    <RefreshCw size={16} className="animate-spin" style={{ margin: '0 auto 6px', display: 'block', color: '#00C9A7' }} />
+                    Checking doctor schedule in MongoDB...
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(95px, 1fr))',
+                    gap: '6px',
+                    maxHeight: '140px',
+                    overflowY: 'auto',
+                    padding: '4px',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0'
+                  }}>
+                    {availableSlotsGrid.map(slot => {
+                      const isSelected = bookForm.preferred_time === slot.time;
+                      const isAvail = slot.available !== false;
+
+                      return (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={!isAvail}
+                          onClick={() => setBookForm({ ...bookForm, preferred_time: slot.time })}
+                          style={{
+                            padding: '7px 4px',
+                            borderRadius: '8px',
+                            border: isSelected ? '2px solid #00C9A7' : '1px solid #CBD5E1',
+                            backgroundColor: isSelected ? '#EDFDF9' : (isAvail ? '#FFFFFF' : '#F1F5F9'),
+                            color: isSelected ? '#0F5B4C' : (isAvail ? '#0A2520' : '#94A3B8'),
+                            fontSize: '11.5px',
+                            fontWeight: isSelected ? 800 : 600,
+                            cursor: isAvail ? 'pointer' : 'not-allowed',
+                            textDecoration: isAvail ? 'none' : 'line-through'
+                          }}
+                        >
+                          {slot.time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Visit Type & Reason */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Visit Type
+                  </label>
+                  <select
+                    value={bookForm.visit_type}
+                    onChange={e => setBookForm({ ...bookForm, visit_type: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '12.5px',
+                      backgroundColor: '#FFFFFF'
+                    }}
+                  >
+                    <option value="In-Person Consultation">In-Person Consultation</option>
+                    <option value="Routine Checkup">Routine Checkup</option>
+                    <option value="Follow-Up Review">Follow-Up Review</option>
+                    <option value="Diagnostic Review">Diagnostic Review</option>
+                    <option value="Second Opinion">Second Opinion</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Clinical Complaint / Notes
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Chief symptoms or reason for visit"
+                    value={bookForm.notes}
+                    onChange={e => setBookForm({ ...bookForm, notes: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '12.5px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              {/* Form Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsBookModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: '11px',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#64748B',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  style={{
+                    flex: 2,
+                    padding: '11px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    backgroundColor: '#0F5B4C',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    fontSize: '13.5px',
+                    cursor: actionLoading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
+                  }}
+                >
+                  {actionLoading ? 'Verifying & Booking...' : 'Confirm Appointment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 2: RESCHEDULE APPOINTMENT ── */}
+      {rescheduleModalItem && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(10, 37, 32, 0.65)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '24px',
+            maxWidth: '540px',
             width: '100%',
             padding: '30px',
             boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
@@ -789,15 +1524,7 @@ export default function AppointmentManagement() {
             <button
               type="button"
               onClick={() => setRescheduleModalItem(null)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#64748B'
-              }}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
             >
               <X size={20} />
             </button>
@@ -807,7 +1534,7 @@ export default function AppointmentManagement() {
                 <RotateCcw size={20} color="#00C9A7" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
+                <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 900, color: '#0A2520' }}>
                   Reschedule Appointment
                 </h3>
                 <p style={{ margin: 0, fontSize: '12.5px', color: '#64748B' }}>
@@ -825,18 +1552,21 @@ export default function AppointmentManagement() {
 
             <form onSubmit={handleConfirmReschedule} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                   Assigned Physician
                 </label>
                 <select
                   value={rescheduleDoctor}
-                  onChange={e => setRescheduleDoctor(e.target.value)}
+                  onChange={e => {
+                    setRescheduleDoctor(e.target.value);
+                    loadRescheduleSlots(e.target.value, rescheduleDate);
+                  }}
                   style={{
                     width: '100%',
-                    padding: '10px 12px',
+                    padding: '9px 12px',
                     borderRadius: '10px',
                     border: '1px solid #CBD5E1',
-                    fontSize: '13.5px',
+                    fontSize: '13px',
                     backgroundColor: '#FFFFFF',
                     boxSizing: 'border-box'
                   }}
@@ -849,27 +1579,31 @@ export default function AppointmentManagement() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                    New Appointment Date *
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    New Date *
                   </label>
                   <input
                     type="date"
                     required
+                    min={new Date().toISOString().split('T')[0]}
                     value={rescheduleDate}
-                    onChange={e => setRescheduleDate(e.target.value)}
+                    onChange={e => {
+                      setRescheduleDate(e.target.value);
+                      loadRescheduleSlots(rescheduleDoctor, e.target.value);
+                    }}
                     style={{
                       width: '100%',
                       padding: '9px 12px',
                       borderRadius: '10px',
                       border: '1px solid #CBD5E1',
-                      fontSize: '13.5px',
+                      fontSize: '13px',
                       boxSizing: 'border-box'
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                     New Time Slot *
                   </label>
                   <select
@@ -880,20 +1614,32 @@ export default function AppointmentManagement() {
                       padding: '9px 12px',
                       borderRadius: '10px',
                       border: '1px solid #CBD5E1',
-                      fontSize: '13.5px',
+                      fontSize: '13px',
                       backgroundColor: '#FFFFFF',
                       boxSizing: 'border-box'
                     }}
                   >
-                    {TIME_SLOTS.map(t => (
+                    {STANDARD_SLOTS.map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Reschedule Reason / Audit Note
+                </label>
+                <input
+                  type="text"
+                  value={rescheduleReason}
+                  onChange={e => setRescheduleReason(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+              </div>
+
               <div style={{ backgroundColor: '#FAF8F5', borderRadius: '10px', padding: '10px 12px', fontSize: '11.5px', color: '#64748B' }}>
-                The previous slot will be automatically freed and reassigned to waitlisted patients.
+                The prior time slot will be automatically released back to the clinic's availability matrix.
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
@@ -915,7 +1661,7 @@ export default function AppointmentManagement() {
                 </button>
                 <button
                   type="submit"
-                  disabled={rescheduling}
+                  disabled={actionLoading}
                   style={{
                     flex: 2,
                     padding: '11px',
@@ -923,13 +1669,12 @@ export default function AppointmentManagement() {
                     border: 'none',
                     backgroundColor: '#0F5B4C',
                     color: '#FFFFFF',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    cursor: rescheduling ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
+                    fontWeight: 800,
+                    fontSize: '13.5px',
+                    cursor: actionLoading ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {rescheduling ? 'Verifying Slot...' : 'Confirm Reschedule'}
+                  {actionLoading ? 'Verifying Slot...' : 'Confirm Reschedule'}
                 </button>
               </div>
             </form>
@@ -937,14 +1682,14 @@ export default function AppointmentManagement() {
         </div>
       )}
 
-      {/* ── MODAL 2: CANCEL APPOINTMENT ── */}
+      {/* ── MODAL 3: CANCEL APPOINTMENT ── */}
       {cancelModalItem && (
         <div style={{
           position: 'fixed',
           inset: 0,
           backgroundColor: 'rgba(10, 37, 32, 0.65)',
           backdropFilter: 'blur(6px)',
-          zIndex: 1000,
+          zIndex: 2000,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -962,15 +1707,7 @@ export default function AppointmentManagement() {
             <button
               type="button"
               onClick={() => setCancelModalItem(null)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#64748B'
-              }}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
             >
               <X size={20} />
             </button>
@@ -995,14 +1732,14 @@ export default function AppointmentManagement() {
                   Cancellation Reason
                 </label>
                 <select
-                  value={cancelReason}
-                  onChange={e => setCancelReason(e.target.value)}
+                  value={cancelReasonText}
+                  onChange={e => setCancelReasonText(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '10px',
                     border: '1px solid #CBD5E1',
-                    fontSize: '13.5px',
+                    fontSize: '13px',
                     backgroundColor: '#FFFFFF',
                     boxSizing: 'border-box'
                   }}
@@ -1034,6 +1771,7 @@ export default function AppointmentManagement() {
                 </button>
                 <button
                   type="submit"
+                  disabled={actionLoading}
                   style={{
                     flex: 2,
                     padding: '10px',
@@ -1041,15 +1779,116 @@ export default function AppointmentManagement() {
                     border: 'none',
                     backgroundColor: '#DC2626',
                     color: '#FFFFFF',
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: '13.5px',
-                    cursor: 'pointer'
+                    cursor: actionLoading ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  Confirm Cancellation
+                  {actionLoading ? 'Cancelling...' : 'Confirm Cancellation'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 4: DISPATCH PRIYA VOICE REMINDER ── */}
+      {reminderModalItem && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(10, 37, 32, 0.65)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '24px',
+            maxWidth: '500px',
+            width: '100%',
+            padding: '28px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+            position: 'relative'
+          }}>
+            <button
+              type="button"
+              onClick={() => setReminderModalItem(null)}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+              <Bot size={24} color="#00C9A7" />
+            </div>
+
+            <h3 style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: 900, color: '#0A2520' }}>
+              Dispatch Priya Voice AI Reminder?
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748B', lineHeight: 1.5 }}>
+              Trigger automated multilingual outbound reminder call to <strong>{reminderModalItem.patient_name}</strong> for their upcoming appointment with <strong>{reminderModalItem.doctor_name}</strong>.
+            </p>
+
+            <div style={{ padding: '14px', borderRadius: '12px', backgroundColor: '#FAF8F5', border: '1px solid #E2E8F0', marginBottom: '18px', fontSize: '12.5px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: '#64748B' }}>Recipient Number:</span>
+                <strong style={{ fontFamily: 'monospace' }}>{reminderModalItem.phone}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: '#64748B' }}>Consultation Date & Slot:</span>
+                <strong style={{ color: '#0F5B4C' }}>{reminderModalItem.preferred_date} at {reminderModalItem.preferred_time}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748B' }}>Channel:</span>
+                <strong>Priya Voice AI & SMS</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setReminderModalItem(null)}
+                style={{
+                  flex: 1,
+                  padding: '11px',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  color: '#64748B',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSendReminder}
+                disabled={actionLoading}
+                style={{
+                  flex: 2,
+                  padding: '11px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: '#0F5B4C',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '13.5px',
+                  cursor: actionLoading ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <PhoneCall size={15} />
+                <span>{actionLoading ? 'Dispatching...' : 'Dispatch Priya Call'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
