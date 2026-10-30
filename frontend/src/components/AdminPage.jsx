@@ -112,21 +112,21 @@ export default function AdminPage({ onNavigateHome }) {
   const getTabDescription = (tabId) => {
     switch (tabId) {
       case 'dashboard':
-        return 'Welcome back to your clinic administration dashboard';
+        return 'Welcome back to your clinic dashboard';
       case 'doctors':
-        return 'Verified physician directory, consultation shifts, department rosters, and active duty management.';
+        return 'Physician directory, operating shifts & leaves';
       case 'patients':
-        return 'Comprehensive patient registry, demographic records, electronic health details, and communication preferences.';
+        return 'Patient registry, electronic health & consent';
       case 'appointments':
-        return 'Clinical appointment management, slot verification, conflict prevention, and schedule handling.';
+        return 'Clinical scheduling, conflict checks & bookings';
       case 'diagnostic_reports':
-        return 'Diagnostic laboratory repository, verified report uploads, and automated patient voice notifications.';
+        return 'Laboratory report repository & voice dispatch';
       case 'call_history':
-        return 'Telephony ledger & live transcripts, conversational streaming, call logs, and front-desk resolutions.';
+        return 'Telephony ledger, transcripts & call activity';
       case 'clinic_settings':
-        return 'Practice administration, clinic configuration, operating hours, staff role permissions, and audit logs.';
+        return 'Practice administration & facility governance';
       default:
-        return 'Welcome back to your clinic administration dashboard';
+        return 'Welcome back to your dashboard';
     }
   };
 
@@ -531,38 +531,51 @@ export default function AdminPage({ onNavigateHome }) {
           backgroundColor: '#F8FAFC'
         }}
       >
-        {/* ── Top Header (Clean Light 21st.dev / Sera Style) ── */}
+        {/* ── Top Header (Clean Light 21st.dev / Sera Style, Sticky Top Navbar) ── */}
         <header style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid #E2E8F0',
-          padding: '20px 32px',
+          padding: '14px 32px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px'
+          flexWrap: 'nowrap',
+          gap: '16px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
         }}>
-          <div>
+          <div style={{ minWidth: 0, flexShrink: 1 }}>
             <h1 style={{ 
-              fontSize: '24px', 
+              fontSize: '20px', 
               fontWeight: 900, 
-              margin: '0 0 4px', 
+              margin: 0, 
               color: '#0A2520',
               fontFamily: 'Plus Jakarta Sans, sans-serif',
-              letterSpacing: '-0.025em'
+              letterSpacing: '-0.02em',
+              lineHeight: 1.2
             }}>
               {currentNav.label === 'Dashboard' ? 'Dashboard' : currentNav.label}
             </h1>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
+            <p style={{ 
+              fontSize: '12px', 
+              color: '#64748B', 
+              margin: '2px 0 0',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
               {currentNav.label === 'Dashboard' ? 'Welcome back to your dashboard' : getTabDescription(adminTab)}
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Right Group: Pinned in Top Navbar across every section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             {/* Notifications Bell with unread dot */}
             <div style={{
-              width: '38px',
-              height: '38px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               backgroundColor: '#F8FAFC',
               border: '1px solid #E2E8F0',
@@ -573,7 +586,7 @@ export default function AdminPage({ onNavigateHome }) {
               position: 'relative',
               cursor: 'pointer'
             }}>
-              <Bell size={17} />
+              <Bell size={16} />
               <span style={{
                 position: 'absolute',
                 top: '7px',
@@ -591,12 +604,12 @@ export default function AdminPage({ onNavigateHome }) {
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px', 
-              fontSize: '12.5px', 
+              fontSize: '12px', 
               color: '#475569', 
               backgroundColor: '#F8FAFC',
               border: '1px solid #E2E8F0',
-              padding: '8px 14px',
-              borderRadius: '10px',
+              padding: '7px 12px',
+              borderRadius: '8px',
               fontWeight: 600
             }}>
               <Calendar size={13} color="#00C9A7" />
@@ -608,14 +621,14 @@ export default function AdminPage({ onNavigateHome }) {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '6px 14px 6px 6px',
-              borderRadius: '10px',
+              padding: '5px 12px 5px 6px',
+              borderRadius: '8px',
               backgroundColor: '#F8FAFC',
               border: '1px solid #E2E8F0'
             }}>
               <div style={{
-                width: '28px',
-                height: '28px',
+                width: '26px',
+                height: '26px',
                 borderRadius: '50%',
                 backgroundColor: '#EDFDF9',
                 color: '#007A65',
@@ -628,7 +641,7 @@ export default function AdminPage({ onNavigateHome }) {
                 AD
               </div>
               <span style={{
-                fontSize: '12.5px',
+                fontSize: '12px',
                 fontWeight: 800,
                 color: '#0A2520'
               }}>
