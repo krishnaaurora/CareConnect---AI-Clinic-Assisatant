@@ -233,3 +233,4 @@ class DiagnosticReportService:
 
         await self.repo.update(report_id, updates)
         return await self.repo.get_by_id(report_id)
+

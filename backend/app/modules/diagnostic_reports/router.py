@@ -91,3 +91,4 @@ async def update_report_status(report_id: str, payload: DiagnosticReportStatusUp
         "message": f"Report {report_id} updated to {payload.status}.",
         "data": updated
     }
+

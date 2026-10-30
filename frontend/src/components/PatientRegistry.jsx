@@ -566,7 +566,7 @@ export default function PatientRegistry() {
           <Search size={16} color="#94A3B8" />
           <input
             type="text"
-            placeholder="Search patient name, phone (e.g. 98XXXXXX10), or ID..."
+            placeholder="Search patient name, phone (e.g. 88XXXXXX42), or ID..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{
@@ -1017,7 +1017,7 @@ export default function PatientRegistry() {
                   <input
                     type="tel"
                     required
-                    placeholder="e.g. 9876543210"
+                    placeholder="e.g. 8897371942"
                     value={addForm.phone}
                     onChange={e => setAddForm({ ...addForm, phone: e.target.value })}
                     style={{

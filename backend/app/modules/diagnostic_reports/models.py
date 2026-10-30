@@ -13,3 +13,4 @@ class DiagnosticReportCreateRequest(BaseModel):
 class DiagnosticReportStatusUpdate(BaseModel):
     status: str  # Ready, Processing
     notes: Optional[str] = None
+
