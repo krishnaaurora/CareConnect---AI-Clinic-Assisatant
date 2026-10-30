@@ -55,7 +55,7 @@ async def root():
         "service": settings.PROJECT_NAME,
         "status": "online",
         "documentation": "/docs",
-        "voice_agent": settings.BOLNA_AGENT_NAME,
+        "voice_agent": "Priya (CareConnect AI Receptionist)",
         "supported_languages": settings.SUPPORTED_LANGUAGES,
         "architecture": "Modular Monolithic"
     }
@@ -68,6 +68,5 @@ async def health_check():
         "status": "healthy",
         "database": mongo_status,
         "database_name": settings.DATABASE_NAME,
-        "voice_engine": "Bolna AI Telephony Bridge",
-        "modules": ["clinics", "appointments", "voice_agent", "enquiries"]
+        "modules": ["clinics", "appointments", "voice_agent", "enquiries", "patients", "diagnostic_reports"]
     }

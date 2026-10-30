@@ -50,24 +50,12 @@ async def get_diagnostic_report_by_id(report_id: str):
 @router.post("", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
 async def upload_diagnostic_report(payload: DiagnosticReportCreateRequest):
     """
-    Upload a diagnostic report with the Automatic Notification Workflow:
-    - Select patient
-    - Upload diagnostic report
-    - Save report successfully
-    - If status == 'Ready' and consent is verified:
-      -> Triggers Bolna Voice AI API automatically
-      -> Priya AI calls patient
-      -> Patient responds
-      -> Saves call outcome
+    Upload a diagnostic report:
+    - Validates patient exists
+    - Saves report to MongoDB with status (Ready or Processing)
     """
     created = await service.upload_report(payload)
-    workflow_status = created.get("bolna_call", {}).get("status", "NOT_TRIGGERED")
-    msg = f"Diagnostic report {created['id']} saved successfully."
-    if workflow_status in ["DISPATCHED", "COMPLETED"]:
-        msg += f" Automated Priya AI voice notification triggered via Bolna API for {created['patient_name']}!"
-    elif workflow_status == "BLOCKED_NO_PATIENT_CONSENT":
-        msg += " Automated call withheld due to pending patient consent."
-
+    msg = f"Diagnostic report {created['id']} saved successfully for {created['patient_name']}."
     return {
         "success": True,
         "message": msg,
@@ -78,7 +66,6 @@ async def upload_diagnostic_report(payload: DiagnosticReportCreateRequest):
 async def update_report_status(report_id: str, payload: DiagnosticReportStatusUpdate):
     """
     Update status of a diagnostic report (e.g. from Processing to Ready).
-    If transitioned to Ready, automatically initiates the Bolna AI notification workflow.
     """
     updated = await service.update_status(report_id, payload)
     if not updated:
