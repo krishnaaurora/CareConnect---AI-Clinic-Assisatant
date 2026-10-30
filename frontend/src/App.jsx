@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import VoiceInfraPartners from './components/VoiceInfraPartners';
 import PartnerClinics from './components/PartnerClinics';
 import About from './components/About';
 import Features from './components/Features';
@@ -115,9 +116,10 @@ export default function App() {
         onNavigateAdmin={() => navigateTo('admin')} 
       />
 
-      {/* Main Sections: Hero → Partners → About → Features → How It Works → Trust & Privacy → FAQs */}
+      {/* Main Sections: Hero → Voice Infra Partners → Partner Clinics → About → Features → How It Works → Trust & Privacy → FAQs */}
       <main>
         <Hero onOpenDialer={() => setDialerOpen(true)} />
+        <VoiceInfraPartners />
         <PartnerClinics />
         <About />
         <Features />
