@@ -190,9 +190,18 @@ export default function AdminPage({ onNavigateHome }) {
             display: none !important;
           }
           .admin-sidebar {
-            position: sticky !important;
+            position: fixed !important;
             top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            width: 232px !important;
             height: 100vh !important;
+            z-index: 90 !important;
+          }
+          .admin-main-panel {
+            margin-left: 232px !important;
+            width: calc(100% - 232px) !important;
+            min-width: 0 !important;
           }
         }
       `}</style>
@@ -298,6 +307,7 @@ export default function AdminPage({ onNavigateHome }) {
         className={`admin-sidebar no-scrollbar ${mobileNavOpen ? 'open' : ''}`}
         style={{
           width: '232px',
+          height: '100vh',
           flexShrink: 0,
           backgroundColor: '#FFFFFF',
           borderRight: '1px solid #E2E8F0',
@@ -307,8 +317,7 @@ export default function AdminPage({ onNavigateHome }) {
           overflowY: 'auto',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
-          boxShadow: '1px 0 6px rgba(0, 0, 0, 0.02)',
-          position: 'relative'
+          boxShadow: '1px 0 6px rgba(0, 0, 0, 0.02)'
         }}
       >
         {/* Subtle Sera UI Pattern for Light Sidebar */}
