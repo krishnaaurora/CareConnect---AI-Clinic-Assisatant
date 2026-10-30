@@ -135,6 +135,69 @@ class ClinicRepository:
             "blocked_slots": clinic.get("blocked_slots", [])
         }
 
+    async def get_clinic_information(self, clinic_code: Optional[str] = None) -> Optional[dict]:
+        """
+        Retrieves full verified clinic profile, address, emergency contact, departments, and doctors.
+        Used by Sarvam Inbound tool 'get_clinic_information'.
+        """
+        if not clinic_code or not str(clinic_code).strip():
+            raise ValueError("Missing clinic_code parameter. An explicit, valid clinic_code is required.")
+        
+        clean_code = str(clinic_code).strip()
+        if clean_code in ["{clinic_code}", ":clinic_code", "<clinic_code>", "null", "undefined"]:
+            raise ValueError(f"Invalid placeholder clinic_code '{clean_code}'. Please provide an explicit clinic identifier.")
+
+        clinic = await self.clinics_col.find_one(
+            {"code": {"$regex": f"^{clean_code}$", "$options": "i"}},
+            {"_id": 0}
+        )
+        if not clinic:
+            return None
+
+        settings_doc = await self.settings_col.find_one({"clinic_code": clinic.get("code")}, {"_id": 0}) or {}
+
+        doctors = clinic.get("doctors", [])
+        departments = list(set([d.get("department") or d.get("specialty") for d in doctors if d.get("department") or d.get("specialty")]))
+        doctor_names = [d.get("name") for d in doctors if d.get("is_active", True)]
+
+        cfg = clinic.get("schedule_config", {})
+        open_time = cfg.get("opening_time", "08:30 AM")
+        close_time = cfg.get("closing_time", "08:30 PM")
+
+        address = settings_doc.get("branch") or clinic.get("branch", "")
+        phone = settings_doc.get("phone") or clinic.get("phone", "")
+        emergency_phone = settings_doc.get("emergency_phone", "+91 80 4125 7899")
+        email = settings_doc.get("email", "support@careconnect.ai")
+        emergency_opd = settings_doc.get("emergency_opd", clinic.get("emergency_available", False))
+        timings = f"{open_time} - {close_time} (Monday - Saturday)"
+        clinic_name = clinic.get("name", "")
+        code = clinic.get("code", "")
+
+        summary = (
+            f"{clinic_name} is located at {address}. "
+            f"Contact Phone: {phone}. Emergency Helpline: {emergency_phone}. "
+            f"Operating hours are {timings}. "
+            f"Active departments include: {', '.join(departments)}. "
+            f"Doctors currently on staff: {', '.join(doctor_names)}."
+        )
+
+        return {
+            "clinic_code": code,
+            "clinic_name": clinic_name,
+            "address": address,
+            "branch": clinic.get("branch", address),
+            "phone": phone,
+            "email": email,
+            "emergency_phone": emergency_phone,
+            "emergency_available": emergency_opd,
+            "operating_hours": timings,
+            "departments": departments,
+            "doctors_count": len(doctors),
+            "doctors_on_staff": doctor_names,
+            "ai_greeting": settings_doc.get("ai_greeting", f"Welcome to {clinic_name}."),
+            "information_summary": summary
+        }
+
     # ── Clinic Settings ──
     async def get_clinic_settings(self, clinic_code: str) -> dict:
         settings_doc = await self.settings_col.find_one({"clinic_code": clinic_code}, {"_id": 0})

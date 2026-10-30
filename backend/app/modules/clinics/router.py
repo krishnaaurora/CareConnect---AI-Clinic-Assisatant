@@ -86,6 +86,44 @@ async def get_clinic_schedule_query(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/information", response_model=dict)
+@router.get("/info", response_model=dict)
+async def get_clinic_information_query(
+    clinic_code: Optional[str] = Query(None, description="Clinic code (e.g. CARE-IND-01)")
+):
+    """
+    Retrieve full clinic profile, address, emergency contact, departments, and active doctors.
+    Used by Sarvam Inbound tool 'get_clinic_information'.
+    """
+    try:
+        info = await service.get_clinic_information(clinic_code)
+        if not info:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Clinic with code '{clinic_code}' not found."
+            )
+        return {"success": True, "data": info}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/{clinic_code}/information", response_model=dict)
+@router.get("/{clinic_code}/info", response_model=dict)
+async def get_clinic_information_path(clinic_code: str):
+    """
+    Retrieve full clinic profile, address, emergency contact, departments, and active doctors by clinic code in path.
+    Used by Sarvam Inbound tool 'get_clinic_information'.
+    """
+    try:
+        info = await service.get_clinic_information(clinic_code)
+        if not info:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Clinic with code '{clinic_code}' not found."
+            )
+        return {"success": True, "data": info}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.get("/{clinic_code}/schedule", response_model=dict)
 @router.get("/{clinic_code}/schedule-config", response_model=dict)
 async def get_clinic_schedule_path(clinic_code: str):

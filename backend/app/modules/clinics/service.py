@@ -114,8 +114,11 @@ class ClinicService:
             ]
         return filtered
 
-    async def get_schedule_config(self, clinic_code: Optional[str] = None) -> dict:
+    async def get_schedule_config(self, clinic_code: Optional[str] = None) -> Optional[dict]:
         return await self.repository.get_schedule_config(clinic_code)
+
+    async def get_clinic_information(self, clinic_code: Optional[str] = None) -> Optional[dict]:
+        return await self.repository.get_clinic_information(clinic_code)
 
     async def update_schedule_config(self, clinic_code: str, config_req: ScheduleConfigRequest) -> dict:
         cfg = config_req.model_dump()
