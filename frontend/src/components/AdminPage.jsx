@@ -31,8 +31,6 @@ import DoctorManagement from './DoctorManagement';
 import PatientRegistry from './PatientRegistry';
 import AppointmentManagement from './AppointmentManagement';
 import DiagnosticReports from './DiagnosticReports';
-import MeetPriya from './MeetPriya';
-import VirtualReceptionistDemo from './VirtualReceptionistDemo';
 import AICallActivity from './AICallActivity';
 import ClinicSettingsSecurity from './ClinicSettingsSecurity';
 
@@ -40,7 +38,7 @@ export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (['dashboard', 'doctors', 'patients', 'appointments', 'diagnostic_reports', 'voice_ai_centre', 'call_history', 'clinic_settings'].includes(hash)) {
+      if (['dashboard', 'doctors', 'patients', 'appointments', 'diagnostic_reports', 'call_history', 'clinic_settings'].includes(hash)) {
         return hash;
       }
     }
@@ -92,22 +90,15 @@ export default function AdminPage({ onNavigateHome }) {
       badge: 'Sarvam AI'
     },
     {
-      id: 'voice_ai_centre',
-      num: '6',
-      label: 'Voice AI Centre',
-      icon: Bot,
-      badge: 'Priya'
-    },
-    {
       id: 'call_history',
-      num: '7',
+      num: '6',
       label: 'Call History',
       icon: PhoneCall,
-      badge: 'Real-Time'
+      badge: 'Live Stream'
     },
     {
       id: 'clinic_settings',
-      num: '8',
+      num: '7',
       label: 'Clinic Settings',
       icon: Settings,
       badge: null
@@ -136,10 +127,8 @@ export default function AdminPage({ onNavigateHome }) {
         return 'Clinical appointment management: slot verification, conflict prevention, status tracking, and reschedule handling.';
       case 'diagnostic_reports':
         return 'Diagnostic laboratory repository: PDF report uploads and automated Sarvam Voice AI patient telephony alerts.';
-      case 'voice_ai_centre':
-        return 'Voice AI Centre: interactive testing with Priya Voice AI, 3D particle orb, and dialogue scenario validation.';
       case 'call_history':
-        return 'Telephony ledger: live incoming and outbound call logs, transcripts, patient sentiment, and AI resolutions.';
+        return 'Telephony ledger & Live Transcripts: real-time conversational streaming, call logs, patient sentiment, and AI resolutions.';
       case 'clinic_settings':
         return 'Practice administration: clinic configuration, operating hours, staff role permissions, and immutable audit logs.';
       default:
@@ -669,12 +658,6 @@ export default function AdminPage({ onNavigateHome }) {
           {adminTab === 'patients' && <PatientRegistry />}
           {adminTab === 'appointments' && <AppointmentManagement />}
           {adminTab === 'diagnostic_reports' && <DiagnosticReports />}
-          {adminTab === 'voice_ai_centre' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-              <MeetPriya onOpenDialer={() => {}} />
-              <VirtualReceptionistDemo />
-            </div>
-          )}
           {adminTab === 'call_history' && <AICallActivity />}
           {adminTab === 'clinic_settings' && <ClinicSettingsSecurity />}
         </main>

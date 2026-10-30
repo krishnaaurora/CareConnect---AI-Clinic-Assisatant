@@ -39,11 +39,13 @@ import {
   retryCall,
   updateCallbackStatus
 } from '../api/client';
+import LiveCallTranscript from './LiveCallTranscript';
 
 export default function AICallActivity() {
   const [activityData, setActivityData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all_calls'); // 'all_calls' | 'callbacks' | 'failed_retries'
+  const [activeTab, setActiveTab] = useState('all_calls'); // 'all_calls' | 'live_transcript' | 'callbacks' | 'failed_retries'
+  const [selectedTranscriptCallId, setSelectedTranscriptCallId] = useState(null);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -396,6 +398,7 @@ export default function AICallActivity() {
       }}>
         {[
           { id: 'all_calls', label: `All Calls Log (${allCalls.length})`, icon: PhoneCall },
+          { id: 'live_transcript', label: 'Live Call Transcript & Audio Stream', icon: Sparkles, isLivePill: true },
           { id: 'callbacks', label: `Callback Requests (${callbacks.length})`, icon: PhoneForwarded, badge: metrics.pending_callbacks > 0 ? metrics.pending_callbacks : null },
           { id: 'failed_retries', label: `Failed Calls & Retries (${failedCalls.length})`, icon: PhoneMissed, badge: failedCalls.length > 0 ? failedCalls.length : null }
         ].map(tab => {
@@ -423,6 +426,23 @@ export default function AICallActivity() {
             >
               <IconComp size={15} color={isActive ? '#00C9A7' : '#94A3B8'} />
               <span>{tab.label}</span>
+              {tab.isLivePill && (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '1px 6px',
+                  borderRadius: '999px',
+                  backgroundColor: '#FEE2E2',
+                  color: '#DC2626',
+                  fontSize: '10px',
+                  fontWeight: 900,
+                  letterSpacing: '0.04em'
+                }}>
+                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#DC2626' }} />
+                  LIVE
+                </span>
+              )}
               {tab.badge && (
                 <span style={{
                   padding: '1px 6px',
@@ -818,6 +838,32 @@ export default function AICallActivity() {
                                 <span>Transcript</span>
                               </button>
 
+                              {/* Open in Live Stream Monitor */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedTranscriptCallId(c.call_id);
+                                  setActiveTab('live_transcript');
+                                }}
+                                title="Open in Live Transcript & Voice Monitor"
+                                style={{
+                                  padding: '6px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  color: '#007A65',
+                                  backgroundColor: '#F0FDFA',
+                                  border: '1px solid rgba(0, 201, 167, 0.4)',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <Sparkles size={12} color="#00C9A7" />
+                                <span>Live Monitor</span>
+                              </button>
+
                               {/* Retry action for failed calls */}
                               {isFailed && (
                                 <button
@@ -880,7 +926,15 @@ export default function AICallActivity() {
         </>
       )}
 
-      {/* ── TAB 2: CALLBACK REQUESTS QUEUE ── */}
+      {/* ── TAB 2: LIVE CALL TRANSCRIPT & VOICE STREAM ── */}
+      {activeTab === 'live_transcript' && (
+        <LiveCallTranscript 
+          historicalCalls={allCalls} 
+          initialCallId={selectedTranscriptCallId} 
+        />
+      )}
+
+      {/* ── TAB 3: CALLBACK REQUESTS QUEUE ── */}
       {activeTab === 'callbacks' && (
         <div style={{
           backgroundColor: '#FFFFFF',
