@@ -57,12 +57,12 @@ class SarvamService:
         patient_id = report.get("patient_id")
         patient = await self.patient_repo.get_by_id(patient_id)
         if not patient:
-            # Fallback to embedded patient details if patient document not found
+            # Fallback to report-embedded patient metadata if standalone patient doc is missing
             patient = {
                 "id": patient_id,
                 "name": report.get("patient_name", "Patient"),
-                "phone": report.get("patient_phone", "8897371942"),
-                "communication_consent": report.get("communication_consent", {"status": "Consented"})
+                "phone": report.get("patient_phone"),
+                "communication_consent": report.get("communication_consent", {"status": "Pending"})
             }
 
         # 3. Consent Verification & Opt-Out Enforcement
@@ -211,3 +211,4 @@ class SarvamService:
             "api_key_configured": configured,
             "status": "ready" if configured else "missing_api_key"
         }
+

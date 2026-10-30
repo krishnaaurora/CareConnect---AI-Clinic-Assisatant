@@ -141,3 +141,4 @@ class SarvamCallRepository:
             logger.warning(f"Failed to append to call_logs: {log_err}")
 
         return await self.get_by_attempt_id(attempt_id)
+

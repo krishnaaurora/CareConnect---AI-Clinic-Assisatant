@@ -49,3 +49,4 @@ class ReportNotifyRequest(BaseModel):
     channel: Optional[str] = "Sarvam Voice AI Call"
     preferred_language: Optional[str] = "English"
     custom_notes: Optional[str] = None
+

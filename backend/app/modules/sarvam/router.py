@@ -58,3 +58,4 @@ async def get_sarvam_call_detail(attempt_id: str):
 async def sarvam_health_check():
     """Verify Sarvam configuration, workspace ID, agent ID and connection settings without making calls."""
     return service.check_health()
+
