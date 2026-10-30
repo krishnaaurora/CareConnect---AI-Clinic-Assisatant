@@ -646,3 +646,48 @@ export async function updateDiagnosticReportStatus(reportId, data) {
   }
   return await res.json();
 }
+
+// ── SARVAM VOICE AGENTS INTEGRATION (PRIYA) ──
+
+export async function notifyDiagnosticReport(reportId) {
+  const res = await fetch(`${API_BASE_URL}/diagnostic-reports/${reportId}/notify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to dispatch Sarvam voice call');
+  }
+  return await res.json();
+}
+
+export async function fetchSarvamCalls(limit = 50) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/sarvam/calls?limit=${limit}`);
+    if (!res.ok) throw new Error('Failed to fetch Sarvam calls');
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.warn('Sarvam calls fallback:', err);
+    return [];
+  }
+}
+
+export async function fetchSarvamCallDetail(attemptId) {
+  const res = await fetch(`${API_BASE_URL}/sarvam/calls/${attemptId}`);
+  if (!res.ok) throw new Error(`Call attempt ${attemptId} not found`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function fetchSarvamHealth() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/sarvam/health`);
+    if (!res.ok) throw new Error('Sarvam health check failed');
+    return await res.json();
+  } catch (err) {
+    console.warn('Sarvam health fallback:', err);
+    return { status: 'offline', provider: 'Sarvam AI Voice Agents' };
+  }
+}
+

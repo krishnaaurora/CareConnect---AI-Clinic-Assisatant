@@ -28,7 +28,8 @@ import {
   fetchDiagnosticReportMetrics,
   uploadDiagnosticReport,
   updateDiagnosticReportStatus,
-  fetchPatients
+  fetchPatients,
+  notifyDiagnosticReport
 } from '../api/client';
 
 export default function DiagnosticReports() {
@@ -49,6 +50,7 @@ export default function DiagnosticReports() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [callingReportId, setCallingReportId] = useState(null);
 
   // Toast / Status banner
   const [toastMessage, setToastMessage] = useState(null);
@@ -164,18 +166,42 @@ export default function DiagnosticReports() {
     }
   };
 
-  // Handle Mark Status Ready in View Modal (Triggers automatic Bolna call)
+  // Handle Mark Status Ready in View Modal
   const handleMarkAsReady = async (reportId) => {
     setSubmitting(true);
     try {
       const res = await updateDiagnosticReportStatus(reportId, { status: 'Ready' });
-      showToast(`Status updated to READY! Bolna AI Priya call triggered automatically for ${res.data?.patient_name}!`);
+      showToast(`Status updated to READY for ${res.data?.patient_name}! Click 'Notify Patient' to dispatch Priya AI call.`);
       setSelectedReport(res.data);
       loadData();
     } catch (err) {
       showToast(err.message || 'Failed to update status', false);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Trigger Sarvam Instant Outbound Voice Call (Priya)
+  const handleNotifyPatient = async (reportId) => {
+    setCallingReportId(reportId);
+    try {
+      const res = await notifyDiagnosticReport(reportId);
+      showToast(res.message || 'Priya AI voice call initiated via Sarvam Instant Outbound!', true);
+      await loadData();
+      if (selectedReport && selectedReport.id === reportId) {
+        setSelectedReport(prev => ({
+          ...prev,
+          sarvam_call: {
+            triggered: true,
+            status: 'INITIATED',
+            call_summary: 'Priya AI voice call initiated via Sarvam Instant Outbound.'
+          }
+        }));
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to dispatch Sarvam voice call', false);
+    } finally {
+      setCallingReportId(null);
     }
   };
 
@@ -663,66 +689,105 @@ export default function DiagnosticReports() {
                         </span>
                       </td>
 
-                      {/* Column: Automated Call Outcome */}
+                      {/* Column: Voice AI Call Outcome */}
                       <td style={{ padding: '16px 20px' }}>
-                        {callTriggered ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              backgroundColor: '#DCFAF3',
-                              color: '#007A65',
-                              fontSize: '11px',
-                              fontWeight: 800
-                            }}>
-                              <PhoneCall size={11} color="#007A65" />
-                              <span>AI Priya Called</span>
-                            </span>
-                            <span style={{ fontSize: '11px', color: '#64748B' }}>
-                              {r.bolna_call?.patient_response || 'Notification delivered'}
+                        {(r.sarvam_call?.triggered || r.bolna_call?.triggered) ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                backgroundColor: (r.sarvam_call?.status === 'COMPLETED' || r.bolna_call?.status === 'COMPLETED') ? '#DCFAF3' : (r.sarvam_call?.status === 'INITIATED') ? '#FEF3C7' : '#F1F5F9',
+                                color: (r.sarvam_call?.status === 'COMPLETED' || r.bolna_call?.status === 'COMPLETED') ? '#007A65' : (r.sarvam_call?.status === 'INITIATED') ? '#B45309' : '#475569',
+                                fontSize: '11px',
+                                fontWeight: 800
+                              }}>
+                                <PhoneCall size={11} />
+                                <span>{r.sarvam_call?.status === 'INITIATED' ? 'Calling...' : (r.sarvam_call?.status === 'COMPLETED' || r.bolna_call?.status === 'COMPLETED') ? 'Priya Notified' : r.sarvam_call?.status || 'Dispatched'}</span>
+                              </span>
+                              {(r.sarvam_call?.duration || r.bolna_call?.duration) && (
+                                <span style={{ fontSize: '10.5px', color: '#64748B' }}>{r.sarvam_call?.duration || r.bolna_call?.duration}</span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '11px', color: '#64748B', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {r.sarvam_call?.patient_response || r.sarvam_call?.call_summary || r.bolna_call?.patient_response || 'Notification dispatched'}
                             </span>
                           </div>
                         ) : (
                           <span style={{ fontSize: '11.5px', color: '#94A3B8', fontStyle: 'italic' }}>
-                            {isReady ? 'Consent Pending' : 'Waiting for Ready status'}
+                            {isReady ? 'Ready to notify' : 'Waiting for Ready status'}
                           </span>
                         )}
                       </td>
 
-                      {/* Column 5: Action (Exact 'View' button requested) */}
+                      {/* Column 5: Action (Notify Patient & View) */}
                       <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenView(r)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            padding: '7px 16px',
-                            borderRadius: '8px',
-                            backgroundColor: '#FFFFFF',
-                            color: '#0F5B4C',
-                            border: '1px solid rgba(15, 91, 76, 0.25)',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = '#EDFDF9';
-                            e.currentTarget.style.borderColor = '#00C9A7';
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = '#FFFFFF';
-                            e.currentTarget.style.borderColor = 'rgba(15, 91, 76, 0.25)';
-                          }}
-                        >
-                          <Eye size={13} color="#0F5B4C" />
-                          <span>View</span>
-                        </button>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                          {isReady && (
+                            <button
+                              type="button"
+                              onClick={() => handleNotifyPatient(r.id)}
+                              disabled={callingReportId === r.id}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                padding: '7px 14px',
+                                borderRadius: '8px',
+                                backgroundColor: '#0F5B4C',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                cursor: callingReportId === r.id ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.15s ease',
+                                boxShadow: '0 2px 8px rgba(15, 91, 76, 0.18)'
+                              }}
+                              onMouseEnter={e => {
+                                if (callingReportId !== r.id) e.currentTarget.style.backgroundColor = '#007A65';
+                              }}
+                              onMouseLeave={e => {
+                                if (callingReportId !== r.id) e.currentTarget.style.backgroundColor = '#0F5B4C';
+                              }}
+                            >
+                              <PhoneCall size={12} />
+                              <span>{callingReportId === r.id ? 'Calling...' : 'Notify Patient'}</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenView(r)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '7px 14px',
+                              borderRadius: '8px',
+                              backgroundColor: '#FFFFFF',
+                              color: '#0F5B4C',
+                              border: '1px solid rgba(15, 91, 76, 0.25)',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = '#EDFDF9';
+                              e.currentTarget.style.borderColor = '#00C9A7';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor = '#FFFFFF';
+                              e.currentTarget.style.borderColor = 'rgba(15, 91, 76, 0.25)';
+                            }}
+                          >
+                            <Eye size={12} color="#0F5B4C" />
+                            <span>View</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -892,8 +957,8 @@ export default function DiagnosticReports() {
                       boxSizing: 'border-box'
                     }}
                   >
-                    <option value="Ready">Ready (Auto-Calls Patient!)</option>
-                    <option value="Processing">Processing (Awaiting Lab)</option>
+                    <option value="Ready">Ready (Verified for Notification)</option>
+                    <option value="Processing">Processing (Awaiting Lab Analysis)</option>
                   </select>
                 </div>
 
@@ -918,7 +983,7 @@ export default function DiagnosticReports() {
                 </div>
               </div>
 
-              {/* Automated Notification Engine Notice */}
+              {/* Notification Notice */}
               <div style={{
                 padding: '12px 16px',
                 borderRadius: '10px',
@@ -933,8 +998,8 @@ export default function DiagnosticReports() {
                 <PhoneCall size={16} color={uploadForm.status === 'Ready' ? '#00C9A7' : '#94A3B8'} />
                 <span>
                   {uploadForm.status === 'Ready'
-                    ? 'Automatic Workflow: Bolna API will dispatch Priya AI to call this patient immediately upon save.'
-                    : 'Report will remain queued. When changed to Ready, Priya Voice AI will call automatically.'}
+                    ? 'Report ready for patient delivery. You can click "Notify Patient" in the table to initiate Priya AI voice call.'
+                    : 'Report will remain queued. When marked Ready, you can trigger Priya AI voice notification.'}
                 </span>
               </div>
 
@@ -972,7 +1037,7 @@ export default function DiagnosticReports() {
                     boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
                   }}
                 >
-                  {submitting ? 'Processing & Triggering Bolna...' : 'Save & Trigger Workflow'}
+                  {submitting ? 'Saving Diagnostic Report...' : 'Save Diagnostic Report'}
                 </button>
               </div>
             </form>
@@ -1059,61 +1124,103 @@ export default function DiagnosticReports() {
               </div>
             </div>
 
-            {/* Automated Bolna Call Details Box */}
-            <div style={{
-              padding: '18px',
-              borderRadius: '16px',
-              backgroundColor: selectedReport.bolna_call?.triggered ? '#EDFDF9' : '#FAF8F5',
-              border: selectedReport.bolna_call?.triggered ? '1px solid rgba(0, 201, 167, 0.4)' : '1px solid #E2E8F0',
-              marginBottom: '18px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <PhoneCall size={17} color={selectedReport.bolna_call?.triggered ? '#007A65' : '#64748B'} />
-                  <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#0A2520' }}>
-                    Bolna AI Voice Call Audit
-                  </span>
-                </div>
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  backgroundColor: selectedReport.bolna_call?.triggered ? '#DCFAF3' : '#F1F5F9',
-                  color: selectedReport.bolna_call?.triggered ? '#0F5B4C' : '#64748B'
-                }}>
-                  {selectedReport.bolna_call?.triggered ? 'Call Dispatched' : 'Pending Status'}
-                </span>
-              </div>
+            {/* Sarvam Voice Agent (Priya) Audit Card */}
+            {(() => {
+              const sarvamCall = selectedReport.sarvam_call || selectedReport.bolna_call || {};
+              const callStatus = (sarvamCall.status || '').toUpperCase();
+              const isInitiated = callStatus === 'INITIATED';
+              const isCompleted = callStatus === 'COMPLETED';
+              const isFailed = callStatus === 'FAILED';
+              const isNoAnswer = callStatus === 'NO_ANSWER';
 
-              <p style={{ margin: '0 0 10px', fontSize: '12.5px', color: '#334155', lineHeight: 1.5 }}>
-                {selectedReport.bolna_call?.outcome_summary || 'No automated call triggered yet.'}
-              </p>
-
-              {selectedReport.bolna_call?.transcript_snippet && (
+              return (
                 <div style={{
-                  padding: '10px 14px',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(0, 201, 167, 0.25)',
-                  fontSize: '12px',
-                  color: '#0A2520',
-                  fontStyle: 'italic',
-                  marginBottom: '10px'
+                  padding: '20px',
+                  borderRadius: '16px',
+                  backgroundColor: isCompleted ? '#EDFDF9' : isInitiated ? '#FEF3C7' : '#FAF8F5',
+                  border: isCompleted ? '1px solid rgba(0, 201, 167, 0.4)' : isInitiated ? '1px solid #FCD34D' : '1px solid #E2E8F0',
+                  marginBottom: '18px'
                 }}>
-                  "{selectedReport.bolna_call.transcript_snippet}"
-                </div>
-              )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <PhoneCall size={18} color={isCompleted ? '#007A65' : '#0F5B4C'} />
+                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#0A2520' }}>
+                        Sarvam Voice AI Call (Priya Receptionist)
+                      </span>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      padding: '3px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: isCompleted ? '#DCFAF3' : isInitiated ? '#FEF3C7' : isFailed ? '#FEE2E2' : '#F1F5F9',
+                      color: isCompleted ? '#0F5B4C' : isInitiated ? '#B45309' : isFailed ? '#DC2626' : '#64748B'
+                    }}>
+                      {isInitiated ? 'Calling Patient...' : isCompleted ? 'Call Completed' : isNoAnswer ? 'No Answer' : isFailed ? 'Call Failed' : sarvamCall.triggered ? 'Call Dispatched' : 'Ready to Notify'}
+                    </span>
+                  </div>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '11.5px', color: '#64748B' }}>
-                <div><strong>Agent:</strong> Priya (Voice AI)</div>
-                <div><strong>Recipient:</strong> {selectedReport.masked_phone || selectedReport.patient_phone}</div>
-                <div><strong>Consent:</strong> Verified (Consented)</div>
-                {selectedReport.bolna_call?.execution_id && (
-                  <div><strong>Exec ID:</strong> {selectedReport.bolna_call.execution_id}</div>
-                )}
-              </div>
-            </div>
+                  <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+                    {sarvamCall.call_summary || (selectedReport.status === 'Ready' ? 'Report is ready. Click "Notify Patient" below to initiate Priya AI voice call.' : 'Report is currently processing in lab.')}
+                  </p>
+
+                  {/* Extracted Call Variables Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Patient Response</div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                        {sarvamCall.patient_response || 'Pending response'}
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Preferred Collection Date</div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                        {sarvamCall.preferred_collection_date || 'Not specified yet'}
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Callback Requested</div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: sarvamCall.callback_requested ? '#B45309' : '#0A2520', marginTop: '2px' }}>
+                        {sarvamCall.callback_requested ? 'Yes (Reception callback needed)' : 'No'}
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Call Duration</div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                        {sarvamCall.duration || '0s'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {sarvamCall.interaction_transcript && (
+                    <div style={{
+                      padding: '10px 14px',
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0, 201, 167, 0.25)',
+                      fontSize: '12px',
+                      color: '#0A2520',
+                      fontStyle: 'italic',
+                      marginBottom: '10px'
+                    }}>
+                      "{sarvamCall.interaction_transcript}"
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '11.5px', color: '#64748B' }}>
+                    <div><strong>Agent:</strong> Careconnect Receptionist (v4)</div>
+                    <div><strong>Caller ID:</strong> +918064269783</div>
+                    <div><strong>Recipient:</strong> {selectedReport.masked_phone || selectedReport.patient_phone}</div>
+                    {sarvamCall.attempt_id && (
+                      <div><strong>Attempt ID:</strong> <span style={{ fontFamily: 'monospace' }}>{sarvamCall.attempt_id}</span></div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Document PDF Preview Container */}
             <div style={{
@@ -1159,35 +1266,55 @@ export default function DiagnosticReports() {
 
             {/* Modal Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-              {selectedReport.status === 'Processing' ? (
-                <button
-                  type="button"
-                  onClick={() => handleMarkAsReady(selectedReport.id)}
-                  disabled={submitting}
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    backgroundColor: '#0F5B4C',
-                    color: '#FFFFFF',
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
-                  }}
-                >
-                  <PhoneCall size={14} />
-                  <span>{submitting ? 'Marking & Triggering Bolna...' : 'Mark READY & Auto-Call Patient'}</span>
-                </button>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#0F5B4C', fontWeight: 800 }}>
-                  <Check size={16} color="#00C9A7" />
-                  <span>Patient Notification Completed via Bolna AI</span>
-                </div>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {selectedReport.status === 'Processing' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleMarkAsReady(selectedReport.id)}
+                    disabled={submitting}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      backgroundColor: '#0F5B4C',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      cursor: submitting ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
+                    }}
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>{submitting ? 'Updating status...' : 'Mark Report as READY'}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleNotifyPatient(selectedReport.id)}
+                    disabled={callingReportId === selectedReport.id}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      backgroundColor: '#0F5B4C',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      cursor: callingReportId === selectedReport.id ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
+                    }}
+                  >
+                    <PhoneCall size={14} />
+                    <span>{callingReportId === selectedReport.id ? 'Calling Patient...' : 'Notify Patient via Priya AI'}</span>
+                  </button>
+                )}
+              </div>
 
               <button
                 type="button"

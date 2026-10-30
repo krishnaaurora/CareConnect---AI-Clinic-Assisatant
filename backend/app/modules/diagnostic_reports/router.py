@@ -79,3 +79,14 @@ async def update_report_status(report_id: str, payload: DiagnosticReportStatusUp
         "data": updated
     }
 
+@router.post("/{report_id}/notify", response_model=Dict[str, Any])
+async def notify_diagnostic_report(report_id: str):
+    """
+    Triggers automated Priya voice call via Sarvam Instant Outbound API
+    for a verified ready diagnostic report.
+    """
+    from app.modules.sarvam.service import SarvamService
+    sarvam_svc = SarvamService()
+    return await sarvam_svc.trigger_report_ready_call(report_id)
+
+

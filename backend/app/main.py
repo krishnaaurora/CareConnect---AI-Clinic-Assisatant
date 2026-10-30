@@ -13,6 +13,8 @@ from app.modules.enquiries.router import router as enquiries_router
 from app.modules.reports.router import router as reports_router
 from app.modules.patients.router import router as patients_router
 from app.modules.diagnostic_reports.router import router as diagnostic_reports_router
+from app.modules.sarvam.router import router as sarvam_router
+from app.modules.sarvam.service import SarvamService
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("careconnect")
@@ -48,6 +50,14 @@ app.include_router(enquiries_router, prefix=settings.API_V1_STR)
 app.include_router(reports_router, prefix=settings.API_V1_STR)
 app.include_router(patients_router, prefix=settings.API_V1_STR)
 app.include_router(diagnostic_reports_router, prefix=settings.API_V1_STR)
+app.include_router(sarvam_router, prefix=settings.API_V1_STR)
+
+# Dedicated Sarvam webhook route without version prefix for instant hook compatibility
+@app.post("/api/voice/sarvam/webhook")
+async def sarvam_direct_webhook(payload: dict):
+    """Direct root webhook route for Sarvam Instant Outbound call events."""
+    service = SarvamService()
+    return await service.process_webhook(payload)
 
 @app.get("/")
 async def root():
