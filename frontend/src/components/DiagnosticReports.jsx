@@ -188,11 +188,11 @@ export default function DiagnosticReports() {
     setSubmitting(true);
     try {
       const res = await updateDiagnosticReportStatus(reportId, { status: 'Ready' });
-      showToast(`Status updated to READY for ${res.data?.patient_name}! Click 'Notify Patient' to dispatch Priya AI call.`);
+      showToast(res.message || 'Report marked as Ready!', true);
       setSelectedReport(res.data);
-      loadData();
+      await loadData();
     } catch (err) {
-      showToast(err.message || 'Failed to update status', false);
+      showToast(err.message || 'Failed to update report status', false);
     } finally {
       setSubmitting(false);
     }
@@ -685,7 +685,7 @@ export default function DiagnosticReports() {
               ) : (
                 reports.map(r => {
                   const isReady = r.status === 'Ready';
-                  const callTriggered = r.bolna_call?.triggered;
+                  const sarvamCall = r.sarvam_call || null;
 
                   return (
                     <tr

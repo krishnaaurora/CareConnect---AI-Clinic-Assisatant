@@ -1991,7 +1991,7 @@ export default function ReportsFollowups() {
                 </div>
               </div>
 
-              {/* Phase 4 Bolna Voice Notice */}
+              {/* Sarvam Voice Notice */}
               <div style={{
                 padding: '12px 14px',
                 borderRadius: '10px',
