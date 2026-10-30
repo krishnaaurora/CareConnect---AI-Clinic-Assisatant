@@ -21,14 +21,31 @@ import {
   ChevronRight,
   Shield,
   Users,
-  FileText
+  FileText,
+  Bot,
+  PhoneCall,
+  Sparkles
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
+import DoctorManagement from './DoctorManagement';
 import PatientRegistry from './PatientRegistry';
+import AppointmentManagement from './AppointmentManagement';
 import DiagnosticReports from './DiagnosticReports';
+import MeetPriya from './MeetPriya';
+import VirtualReceptionistDemo from './VirtualReceptionistDemo';
+import AICallActivity from './AICallActivity';
+import ClinicSettingsSecurity from './ClinicSettingsSecurity';
 
 export default function AdminPage({ onNavigateHome }) {
-  const [adminTab, setAdminTab] = useState('dashboard');
+  const [adminTab, setAdminTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (['dashboard', 'doctors', 'patients', 'appointments', 'diagnostic_reports', 'voice_ai_centre', 'call_history', 'clinic_settings'].includes(hash)) {
+        return hash;
+      }
+    }
+    return 'dashboard';
+  });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -47,22 +64,88 @@ export default function AdminPage({ onNavigateHome }) {
       badge: 'Live'
     },
     {
-      id: 'patients',
+      id: 'doctors',
       num: '2',
-      label: 'Patient Registry',
+      label: 'Doctors',
+      icon: Stethoscope,
+      badge: null
+    },
+    {
+      id: 'patients',
+      num: '3',
+      label: 'Patients',
       icon: Users,
-      badge: 'Directory'
+      badge: null
+    },
+    {
+      id: 'appointments',
+      num: '4',
+      label: 'Appointments',
+      icon: Calendar,
+      badge: null
     },
     {
       id: 'diagnostic_reports',
-      num: '3',
+      num: '5',
       label: 'Diagnostic Reports',
       icon: FileText,
       badge: 'Sarvam AI'
+    },
+    {
+      id: 'voice_ai_centre',
+      num: '6',
+      label: 'Voice AI Centre',
+      icon: Bot,
+      badge: 'Priya'
+    },
+    {
+      id: 'call_history',
+      num: '7',
+      label: 'Call History',
+      icon: PhoneCall,
+      badge: 'Real-Time'
+    },
+    {
+      id: 'clinic_settings',
+      num: '8',
+      label: 'Clinic Settings',
+      icon: Settings,
+      badge: null
     }
   ];
 
   const currentNav = NAV_ITEMS.find(item => item.id === adminTab) || NAV_ITEMS[0];
+
+  const handleSelectTab = (tabId) => {
+    setAdminTab(tabId);
+    setMobileNavOpen(false);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `/admin#${tabId}`);
+    }
+  };
+
+  const getTabDescription = (tabId) => {
+    switch (tabId) {
+      case 'dashboard':
+        return 'Real-time operational dashboard: live bookings, waitlist queues, doctor rosters, and schedule verification.';
+      case 'doctors':
+        return 'Verified physician directory: consult shifts, department rosters, session fees, and active duty management.';
+      case 'patients':
+        return 'Comprehensive patient registry: demographic records, electronic health details, and multi-channel communication consent.';
+      case 'appointments':
+        return 'Clinical appointment management: slot verification, conflict prevention, status tracking, and reschedule handling.';
+      case 'diagnostic_reports':
+        return 'Diagnostic laboratory repository: PDF report uploads and automated Sarvam Voice AI patient telephony alerts.';
+      case 'voice_ai_centre':
+        return 'Voice AI Centre: interactive testing with Priya Voice AI, 3D particle orb, and dialogue scenario validation.';
+      case 'call_history':
+        return 'Telephony ledger: live incoming and outbound call logs, transcripts, patient sentiment, and AI resolutions.';
+      case 'clinic_settings':
+        return 'Practice administration: clinic configuration, operating hours, staff role permissions, and immutable audit logs.';
+      default:
+        return 'Real-time operational dashboard and clinical management console.';
+    }
+  };
 
   return (
     <div style={{ 
@@ -328,10 +411,7 @@ export default function AdminPage({ onNavigateHome }) {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => {
-                      setAdminTab(item.id);
-                      setMobileNavOpen(false);
-                    }}
+                    onClick={() => handleSelectTab(item.id)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -490,7 +570,7 @@ export default function AdminPage({ onNavigateHome }) {
           backgroundColor: '#F8FAFC'
         }}
       >
-        {/* ── Top Header Banner matching Screenshot ── */}
+        {/* ── Top Header Banner ── */}
         <header style={{
           backgroundColor: '#0F5B4C',
           backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px)',
@@ -533,10 +613,10 @@ export default function AdminPage({ onNavigateHome }) {
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
                 letterSpacing: '-0.025em'
               }}>
-                Clinic Administration Dashboard
+                {currentNav.label === 'Dashboard' ? 'Clinic Administration Dashboard' : currentNav.label}
               </h1>
               <p style={{ fontSize: '13.5px', color: '#A7F3D0', margin: 0, lineHeight: 1.5 }}>
-                Real-time operational dashboard: live bookings, waitlist queues, doctor rosters, and schedule verification.
+                {getTabDescription(adminTab)}
               </p>
             </div>
 
@@ -580,12 +660,22 @@ export default function AdminPage({ onNavigateHome }) {
         }}>
           {adminTab === 'dashboard' && (
             <ClinicOverview 
-              onNavigateToPatients={() => setAdminTab('patients')} 
-              onNavigateToReports={() => setAdminTab('diagnostic_reports')} 
+              onNavigateToPatients={() => handleSelectTab('patients')} 
+              onNavigateToReports={() => handleSelectTab('diagnostic_reports')} 
             />
           )}
+          {adminTab === 'doctors' && <DoctorManagement />}
           {adminTab === 'patients' && <PatientRegistry />}
+          {adminTab === 'appointments' && <AppointmentManagement />}
           {adminTab === 'diagnostic_reports' && <DiagnosticReports />}
+          {adminTab === 'voice_ai_centre' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <MeetPriya onOpenDialer={() => {}} />
+              <VirtualReceptionistDemo />
+            </div>
+          )}
+          {adminTab === 'call_history' && <AICallActivity />}
+          {adminTab === 'clinic_settings' && <ClinicSettingsSecurity />}
         </main>
       </div>
 

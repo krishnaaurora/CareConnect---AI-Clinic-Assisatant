@@ -12,8 +12,20 @@ class SarvamVoiceClient:
     Authentication: X-API-Key header
     """
 
+    @staticmethod
+    def sanitize_api_key(raw_key: str) -> str:
+        """
+        Normalizes Sarvam API key format:
+        - Strips surrounding whitespace and quotes.
+        - Corrects accidental UI key label prefixes, e.g., 'sk_samvaad_33d0gu06_...' -> 'sk_33d0gu06_...'.
+        """
+        key = str(raw_key or "").strip().strip("'\" \r\n\t")
+        if key.startswith("sk_samvaad_"):
+            key = "sk_" + key[len("sk_samvaad_"):]
+        return key
+
     def __init__(self):
-        self.api_key = str(settings.SARVAM_API_KEY or "").strip().strip("'\"")
+        self.api_key = self.sanitize_api_key(settings.SARVAM_API_KEY)
         self.org_id = str(settings.SARVAM_ORG_ID or "").strip()
         self.workspace_id = str(settings.SARVAM_WORKSPACE_ID or "").strip()
         self.base_url = str(settings.SARVAM_API_BASE_URL or "").strip().rstrip("/")
@@ -110,9 +122,11 @@ class SarvamVoiceClient:
             webhook_override_url=webhook_override_url
         )
 
+        active_key = self.sanitize_api_key(self.api_key or settings.SARVAM_API_KEY)
         headers = {
             "Content-Type": "application/json",
-            "X-API-Key": self.api_key or settings.SARVAM_API_KEY
+            "X-API-Key": active_key,
+            "api-subscription-key": active_key
         }
 
         # Safe masked phone for logging
