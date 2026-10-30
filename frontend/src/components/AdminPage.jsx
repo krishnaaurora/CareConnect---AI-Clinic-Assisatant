@@ -33,6 +33,7 @@ import AppointmentManagement from './AppointmentManagement';
 import DiagnosticReports from './DiagnosticReports';
 import AICallActivity from './AICallActivity';
 import ClinicSettingsSecurity from './ClinicSettingsSecurity';
+import BackgroundPattern from './common/BackgroundPattern';
 
 export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState(() => {
@@ -290,17 +291,18 @@ export default function AdminPage({ onNavigateHome }) {
         style={{
           width: '280px',
           flexShrink: 0,
-          backgroundColor: '#071F1B',
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+          backgroundColor: '#051814',
           borderRight: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           overflowY: 'auto',
-          boxShadow: '4px 0 24px rgba(0, 0, 0, 0.12)',
+          boxShadow: '4px 0 24px rgba(0, 0, 0, 0.18)',
+          position: 'relative'
         }}
       >
+        {/* Sera UI Background Pattern for Sidebar */}
+        <BackgroundPattern variant="plus" dark size={32} />
         {/* Top Part: Branding + Back Button */}
         <div>
           {/* Header Brand */}
@@ -407,57 +409,61 @@ export default function AdminPage({ onNavigateHome }) {
                       justifyContent: 'space-between',
                       width: '100%',
                       padding: '11px 14px',
-                      borderRadius: '12px',
-                      border: 'none',
+                      borderRadius: '14px',
+                      border: isActive ? '1px solid rgba(0, 201, 167, 0.3)' : '1px solid transparent',
                       fontSize: '13.5px',
                       fontWeight: isActive ? 800 : 600,
                       cursor: 'pointer',
                       textAlign: 'left',
-                      backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-                      color: isActive ? '#0A2520' : 'rgba(255, 255, 255, 0.78)',
-                      boxShadow: isActive ? '0 4px 18px rgba(0, 0, 0, 0.18)' : 'none',
+                      backgroundColor: isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                      color: '#FFFFFF',
+                      backdropFilter: isActive ? 'blur(8px)' : 'none',
+                      boxShadow: isActive ? '0 4px 14px rgba(0, 0, 0, 0.2)' : 'none',
                       transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                      fontFamily: 'Inter, sans-serif'
+                      fontFamily: 'Inter, sans-serif',
+                      position: 'relative',
+                      zIndex: 1
                     }}
                     onMouseEnter={e => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                        e.currentTarget.style.color = '#FFFFFF';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!isActive) {
                         e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.78)';
                       }
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
                       <div style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '8px',
-                        backgroundColor: isActive ? '#DCFAF3' : 'rgba(255, 255, 255, 0.08)',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '10px',
+                        backgroundColor: isActive ? 'rgba(0, 201, 167, 0.16)' : 'rgba(255, 255, 255, 0.05)',
+                        border: isActive ? '1px solid rgba(0, 201, 167, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        color: isActive ? '#007A65' : '#00C9A7'
+                        color: '#00C9A7'
                       }}>
-                        <Icon size={15} strokeWidth={isActive ? 2.5 : 2} />
+                        <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ 
                           fontSize: '12px', 
                           fontWeight: 800, 
-                          color: isActive ? '#007A65' : 'rgba(255, 255, 255, 0.45)' 
+                          color: isActive ? '#00C9A7' : 'rgba(255, 255, 255, 0.45)' 
                         }}>
                           {item.num}.
                         </span>
                         <span style={{
                           fontFamily: 'Plus Jakarta Sans, sans-serif',
-                          letterSpacing: '-0.01em'
+                          letterSpacing: '-0.01em',
+                          color: '#FFFFFF',
+                          fontWeight: isActive ? 800 : 600
                         }}>
                           {item.label}
                         </span>
@@ -467,10 +473,11 @@ export default function AdminPage({ onNavigateHome }) {
                     {item.badge && (
                       <span style={{
                         fontSize: '9.5px',
-                        fontWeight: 800,
-                        backgroundColor: isActive ? '#DCFAF3' : 'rgba(0, 201, 167, 0.18)',
-                        color: isActive ? '#007A65' : '#00C9A7',
-                        padding: '2px 7px',
+                        fontWeight: 900,
+                        backgroundColor: 'rgba(0, 201, 167, 0.14)',
+                        color: '#00C9A7',
+                        border: '1px solid rgba(0, 201, 167, 0.25)',
+                        padding: '2px 8px',
                         borderRadius: '999px',
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase'
@@ -561,14 +568,17 @@ export default function AdminPage({ onNavigateHome }) {
       >
         {/* ── Top Header Banner ── */}
         <header style={{
-          backgroundColor: '#0F5B4C',
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+          backgroundColor: '#051814',
           color: '#FFFFFF',
-          padding: '24px 32px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 4px 20px rgba(10, 37, 32, 0.06)'
+          padding: '22px 32px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
+          {/* Sera UI Pattern for Executive Header */}
+          <BackgroundPattern variant="plus" dark size={32} />
+
           <div style={{
             maxWidth: '1360px',
             margin: '0 auto',
@@ -576,13 +586,15 @@ export default function AdminPage({ onNavigateHome }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '16px'
+            gap: '16px',
+            position: 'relative',
+            zIndex: 1
           }}>
             <div>
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
                 fontSize: '11px',
                 fontWeight: 800,
                 color: '#A7F3D0',
@@ -590,9 +602,20 @@ export default function AdminPage({ onNavigateHome }) {
                 textTransform: 'uppercase',
                 marginBottom: '6px'
               }}>
-                <span>Portal</span>
+                <span>Portal Console</span>
                 <span>/</span>
-                <span style={{ color: '#FFFFFF' }}>{currentNav.label}</span>
+                <span style={{ color: '#00C9A7' }}>{currentNav.label}</span>
+                <span style={{
+                  padding: '1px 6px',
+                  borderRadius: '999px',
+                  backgroundColor: 'rgba(0, 201, 167, 0.15)',
+                  border: '1px solid rgba(0, 201, 167, 0.25)',
+                  color: '#00C9A7',
+                  fontSize: '9.5px',
+                  fontWeight: 900
+                }}>
+                  ACTIVE
+                </span>
               </div>
 
               <h1 style={{ 
@@ -604,7 +627,7 @@ export default function AdminPage({ onNavigateHome }) {
               }}>
                 {currentNav.label === 'Dashboard' ? 'Clinic Administration Dashboard' : currentNav.label}
               </h1>
-              <p style={{ fontSize: '13.5px', color: '#A7F3D0', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
                 {getTabDescription(adminTab)}
               </p>
             </div>
@@ -614,26 +637,31 @@ export default function AdminPage({ onNavigateHome }) {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '6px', 
-                fontSize: '12.5px', 
+                fontSize: '12px', 
                 color: '#E2E8F0', 
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                padding: '6px 12px',
-                borderRadius: '8px'
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                padding: '7px 14px',
+                borderRadius: '10px'
               }}>
                 <Calendar size={13} color="#00C9A7" />
                 <span>{currentDate}</span>
               </div>
 
               <span style={{
-                fontSize: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '11.5px',
                 fontWeight: 800,
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                color: '#FFFFFF'
+                backgroundColor: 'rgba(0, 201, 167, 0.12)',
+                border: '1px solid rgba(0, 201, 167, 0.25)',
+                padding: '7px 14px',
+                borderRadius: '10px',
+                color: '#00C9A7'
               }}>
-                Access: Direct Admin (No Auth Required)
+                <Shield size={12} color="#00C9A7" />
+                <span>Verified Facility: Apollo Prime</span>
               </span>
             </div>
           </div>

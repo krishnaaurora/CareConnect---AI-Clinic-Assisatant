@@ -29,6 +29,7 @@ import {
   Sliders
 } from 'lucide-react';
 import priyaImg from '../assets/priya-avatar.png';
+import BackgroundPattern from './common/BackgroundPattern';
 
 export default function LiveCallTranscript({ historicalCalls = [], initialCallId = null }) {
   // Built-in live simulation scenarios powered by Priya Voice AI
@@ -314,7 +315,9 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* ── Top Control Bar: Source Switcher & Live Indicators ── */}
       <div style={{
@@ -1057,6 +1060,9 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
 
       </div>
 
+      {/* End Z-Index Wrapper */}
+      </div>
     </div>
   );
 }
+

@@ -46,6 +46,7 @@ import {
   cancelDoctorLeave,
   fetchDoctorAppointments
 } from '../api/client';
+import BackgroundPattern from './common/BackgroundPattern';
 
 const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -625,7 +626,9 @@ export default function DoctorManagement() {
   };
 
   return (
-    <div style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', color: '#0A2520' }}>
+    <div style={{ fontFamily: 'Plus Jakarta Sans, Inter, sans-serif', color: '#0A2520', position: 'relative' }}>
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       
       {/* ── Toast Notification ── */}
       {notification.text && (
@@ -2960,6 +2963,8 @@ export default function DoctorManagement() {
         </div>
       )}
 
+      {/* End Z-Index Wrapper */}
+      </div>
     </div>
   );
 }

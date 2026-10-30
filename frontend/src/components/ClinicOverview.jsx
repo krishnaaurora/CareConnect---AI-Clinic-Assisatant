@@ -21,7 +21,12 @@ import {
   Check,
   X,
   Users,
-  FileText
+  FileText,
+  PhoneCall,
+  ShieldCheck,
+  TrendingUp,
+  MapPin,
+  Clock4
 } from 'lucide-react';
 import { 
   fetchAppointmentsOverview, 
@@ -30,9 +35,10 @@ import {
   addDoctorToClinic, 
   updateAppointmentStatus 
 } from '../api/client';
+import BackgroundPattern from './common/BackgroundPattern';
 
 export default function ClinicOverview({ onNavigateToPatients, onNavigateToReports, onNavigateToDoctors }) {
-  const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'cancellations' | 'doctors' | 'schedule'
+  const [activeTab, setActiveTab] = useState('today'); // 'today' | 'upcoming' | 'cancellations' | 'doctors'
   const [overviewData, setOverviewData] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [clinics, setClinics] = useState([]);
@@ -140,7 +146,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
       const newDoc = {
         ...payload,
         id: res.data?.id || `doc-${Date.now()}`,
-        clinic_name: chosenClinic ? chosenClinic.name : "CareConnect Clinic",
+        clinic_name: chosenClinic ? chosenClinic.name : "Apex Care Clinic",
         clinic_code: newDocClinic,
         duty_status: "Available",
         current_room: "Consultation Room 3"
@@ -160,126 +166,119 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
     }
   };
 
-  // Filter Bookings by search
-  const filteredBookings = (overviewData?.today_appointments || []).concat(overviewData?.upcoming_bookings || [])
-    .filter(b => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        b.patient_name?.toLowerCase().includes(q) ||
-        b.doctor_name?.toLowerCase().includes(q) ||
-        b.reference_id?.toLowerCase().includes(q) ||
-        b.specialty?.toLowerCase().includes(q)
-      );
-    });
-
   const metrics = overviewData?.metrics || {
     today_count: 14,
     upcoming_count: 38,
     cancellations_count: 2
   };
 
+  // Determine appointments to display based on activeTab
+  const getDisplayedAppointments = () => {
+    let list = [];
+    if (activeTab === 'today') {
+      list = overviewData?.today_appointments || [];
+    } else if (activeTab === 'upcoming') {
+      list = overviewData?.upcoming_bookings || [];
+    } else if (activeTab === 'cancellations') {
+      list = overviewData?.cancellations || [];
+    } else {
+      list = (overviewData?.today_appointments || []).concat(overviewData?.upcoming_bookings || []);
+    }
+
+    if (!searchQuery) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(b => 
+      b.patient_name?.toLowerCase().includes(q) ||
+      b.doctor_name?.toLowerCase().includes(q) ||
+      b.reference_id?.toLowerCase().includes(q) ||
+      b.specialty?.toLowerCase().includes(q)
+    );
+  };
+
+  const displayedList = getDisplayedAppointments();
+
   return (
-    <section 
-      id="clinic-overview"
-      style={{
-        padding: '80px 0 90px',
-        position: 'relative',
-        backgroundColor: '#FFFFFF',
-        borderTop: '1px solid rgba(15, 91, 76, 0.08)',
-        borderBottom: '1px solid rgba(15, 91, 76, 0.08)',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+    <div style={{ position: 'relative', minHeight: '100%' }}>
+      {/* ── Sera UI Background Pattern with Radial Gradient Mask ── */}
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+
+      {/* ── Content Container ── */}
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
-        {/* Section Header */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '20px', marginBottom: '36px' }}>
+        {/* ── 21st.dev Executive Header Banner ── */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          padding: '22px 28px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '18px'
+        }}>
           <div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 14px',
-              borderRadius: '999px',
-              backgroundColor: 'rgba(235, 248, 244, 0.85)',
-              border: '1px solid rgba(0, 201, 167, 0.3)',
-              marginBottom: '12px'
-            }}>
-              <Activity size={14} color="#0F5B4C" />
-              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#0F5B4C', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>
-                Operational Command
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '3px 9px',
+                borderRadius: '999px',
+                backgroundColor: '#EDFDF9',
+                color: '#007A65',
+                fontSize: '11px',
+                fontWeight: 800,
+                border: '1px solid rgba(0, 201, 167, 0.3)'
+              }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00C9A7', animation: 'pulseDotLive 1.5s infinite' }} />
+                OPERATIONAL LIVE
+              </span>
+              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>
+                Node: <strong>Apollo Prime, Bangalore (CARE-IND-01)</strong>
               </span>
             </div>
-            <h2 style={{
-              fontSize: 'clamp(2rem, 3.2vw, 2.8rem)',
+
+            <h1 style={{
+              fontSize: '24px',
               fontWeight: 900,
               color: '#0A2520',
-              lineHeight: 1.15,
-              margin: '0 0 8px',
-              fontFamily: 'Manrope, sans-serif'
+              margin: '0 0 4px',
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+              letterSpacing: '-0.02em'
             }}>
-              Clinic Dashboard
-            </h2>
-            <p style={{ fontSize: '15px', color: '#64748B', margin: 0, fontFamily: 'Inter, sans-serif' }}>
-              Real-time daily roster, automated voice booking pipelines, on-duty doctors, and patient triage.
+              Clinical Operations Dashboard
+            </h1>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
+              Live patient queues, on-duty specialist chambers, Priya Voice AI telephony, and schedule verification.
             </p>
           </div>
 
-          {/* Quick Actions Header Toolbar */}
+          {/* Quick Header Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {onNavigateToPatients && (
-              <button
-                type="button"
-                onClick={onNavigateToPatients}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  backgroundColor: '#EDFDF9',
-                  color: '#0F5B4C',
-                  border: '1px solid rgba(0, 201, 167, 0.4)',
-                  fontWeight: 700,
-                  fontSize: '13.5px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Inter, sans-serif'
-                }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFAF3'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EDFDF9'}
-              >
-                <Users size={16} color="#007A65" />
-                <span>Patient Registry</span>
-              </button>
-            )}
-
-            {onNavigateToReports && (
-              <button
-                type="button"
-                onClick={onNavigateToReports}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  backgroundColor: '#EDFDF9',
-                  color: '#0F5B4C',
-                  border: '1px solid rgba(0, 201, 167, 0.4)',
-                  fontWeight: 700,
-                  fontSize: '13.5px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Inter, sans-serif'
-                }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFAF3'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EDFDF9'}
-              >
-                <FileText size={16} color="#007A65" />
-                <span>Diagnostic Reports</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={loadData}
+              disabled={loading}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                borderRadius: '10px',
+                backgroundColor: '#FFFFFF',
+                color: '#475569',
+                border: '1px solid #CBD5E1',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              <span>Sync Roster</span>
+            </button>
 
             {onNavigateToDoctors && (
               <button
@@ -288,23 +287,19 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '10px',
                   backgroundColor: '#EDFDF9',
                   color: '#0F5B4C',
-                  border: '1px solid rgba(0, 201, 167, 0.4)',
-                  fontWeight: 700,
-                  fontSize: '13.5px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontFamily: 'Inter, sans-serif'
+                  border: '1px solid rgba(0, 201, 167, 0.35)',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer'
                 }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFAF3'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EDFDF9'}
               >
-                <Stethoscope size={16} color="#007A65" />
-                <span>Doctor Management</span>
+                <Stethoscope size={14} color="#00C9A7" />
+                <span>Doctor Roster</span>
               </button>
             )}
 
@@ -314,909 +309,915 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
-                borderRadius: '12px',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: '10px',
                 backgroundColor: '#0F5B4C',
                 color: '#FFFFFF',
                 border: 'none',
-                fontWeight: 700,
-                fontSize: '13.5px',
+                fontSize: '12.5px',
+                fontWeight: 800,
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(15, 91, 76, 0.2)',
-                transition: 'all 0.2s',
-                fontFamily: 'Inter, sans-serif'
+                boxShadow: '0 2px 8px rgba(15, 91, 76, 0.25)'
               }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0A4337'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F5B4C'}
             >
-              <Plus size={16} strokeWidth={2.5} />
-              <span>Add Doctor</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsScheduleModalOpen(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
-                borderRadius: '12px',
-                backgroundColor: '#F1F5F9',
-                color: '#0A2520',
-                border: '1px solid rgba(15, 91, 76, 0.12)',
-                fontWeight: 700,
-                fontSize: '13.5px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontFamily: 'Inter, sans-serif'
-              }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#E2E8F0'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-            >
-              <CalendarDays size={16} color="#0F5B4C" />
-              <span>View Schedule</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('bookings')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
-                borderRadius: '12px',
-                backgroundColor: '#EDFDF9',
-                color: '#0F5B4C',
-                border: '1px solid rgba(0, 201, 167, 0.3)',
-                fontWeight: 700,
-                fontSize: '13.5px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontFamily: 'Inter, sans-serif'
-              }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFAF3'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EDFDF9'}
-            >
-              <Layers size={16} color="#00C9A7" />
-              <span>View Bookings</span>
+              <Plus size={14} strokeWidth={2.5} />
+              <span>Add Physician</span>
             </button>
           </div>
         </div>
 
-        {/* ── Metric Cards Grid ── */}
+        {/* ── 21st.dev Bento Metric Grid ── */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '20px',
-          marginBottom: '36px'
+          gap: '16px'
         }}>
           {/* Card 1: Today's Appointments */}
           <div 
-            onClick={() => setActiveTab('bookings')}
+            onClick={() => setActiveTab('today')}
             style={{
-              padding: '24px',
-              borderRadius: '18px',
-              backgroundColor: '#FAF8F5',
-              border: activeTab === 'bookings' ? '2px solid #00C9A7' : '1px solid rgba(15, 91, 76, 0.1)',
-              boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+              padding: '20px 22px',
+              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: activeTab === 'today' ? '2px solid #00C9A7' : '1px solid #E2E8F0',
+              boxShadow: activeTab === 'today' ? '0 4px 16px rgba(0, 201, 167, 0.12)' : '0 1px 3px rgba(0,0,0,0.03)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              position: 'relative'
+              transition: 'all 0.15s ease'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Today's Appointments
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Today's Consultations
               </span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#EAF6F3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Calendar size={18} color="#0F5B4C" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Calendar size={16} color="#00C9A7" />
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-              <span style={{ fontSize: '34px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '30px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 {metrics.today_count}
               </span>
-              <span style={{ fontSize: '12px', color: '#00C9A7', fontWeight: 700, backgroundColor: 'rgba(0, 201, 167, 0.12)', padding: '2px 8px', borderRadius: '999px' }}>
-                Active Today
+              <span style={{ fontSize: '11px', color: '#007A65', fontWeight: 800, backgroundColor: '#EDFDF9', padding: '2px 7px', borderRadius: '999px' }}>
+                +14% vs yesterday
               </span>
             </div>
-            <p style={{ fontSize: '12.5px', color: '#64748B', margin: '8px 0 0', fontFamily: 'Inter, sans-serif' }}>
-              Verified via Priya Voice Receptionist
-            </p>
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '6px' }}>
+              8 In-Person · 6 Priya Voice AI Booked
+            </div>
           </div>
 
           {/* Card 2: Upcoming Bookings */}
           <div 
-            onClick={() => setActiveTab('bookings')}
+            onClick={() => setActiveTab('upcoming')}
             style={{
-              padding: '24px',
-              borderRadius: '18px',
-              backgroundColor: '#FAF8F5',
-              border: activeTab === 'bookings' ? '2px solid #00C9A7' : '1px solid rgba(15, 91, 76, 0.1)',
-              boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+              padding: '20px 22px',
+              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: activeTab === 'upcoming' ? '2px solid #00C9A7' : '1px solid #E2E8F0',
+              boxShadow: activeTab === 'upcoming' ? '0 4px 16px rgba(0, 201, 167, 0.12)' : '0 1px 3px rgba(0,0,0,0.03)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.15s ease'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Upcoming Bookings
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Upcoming (7 Days)
               </span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock size={18} color="#00C9A7" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={16} color="#2563EB" />
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-              <span style={{ fontSize: '34px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '30px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 {metrics.upcoming_count}
               </span>
-              <span style={{ fontSize: '12px', color: '#0F5B4C', fontWeight: 700, backgroundColor: 'rgba(15, 91, 76, 0.1)', padding: '2px 8px', borderRadius: '999px' }}>
-                Next 7 Days
+              <span style={{ fontSize: '11px', color: '#2563EB', fontWeight: 800, backgroundColor: '#EFF6FF', padding: '2px 7px', borderRadius: '999px' }}>
+                Roster Synced
               </span>
             </div>
-            <p style={{ fontSize: '12.5px', color: '#64748B', margin: '8px 0 0', fontFamily: 'Inter, sans-serif' }}>
-              Synchronized with doctor calendars
-            </p>
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '6px' }}>
+              Verified slot allocations
+            </div>
           </div>
 
-          {/* Card 3: Doctors on Duty */}
+          {/* Card 3: Active Specialists On Duty */}
           <div 
-            onClick={onNavigateToDoctors || (() => setActiveTab('doctors'))}
+            onClick={() => setActiveTab('doctors')}
             style={{
-              padding: '24px',
-              borderRadius: '18px',
-              backgroundColor: activeTab === 'doctors' ? '#EDFDF9' : '#FAF8F5',
-              border: activeTab === 'doctors' ? '2px solid #00C9A7' : '1px solid rgba(15, 91, 76, 0.1)',
-              boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+              padding: '20px 22px',
+              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: activeTab === 'doctors' ? '2px solid #00C9A7' : '1px solid #E2E8F0',
+              boxShadow: activeTab === 'doctors' ? '0 4px 16px rgba(0, 201, 167, 0.12)' : '0 1px 3px rgba(0,0,0,0.03)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.15s ease'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Doctors on Duty
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Doctors On Duty
               </span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Stethoscope size={18} color="#00C9A7" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Stethoscope size={16} color="#00C9A7" />
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-              <span style={{ fontSize: '34px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
-                {doctors.length}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '30px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                {doctors.length || 5}
               </span>
-              <span style={{ fontSize: '12px', color: '#0F5B4C', fontWeight: 700, backgroundColor: 'rgba(0, 201, 167, 0.15)', padding: '2px 8px', borderRadius: '999px' }}>
-                Active Specialists
+              <span style={{ fontSize: '11px', color: '#0F5B4C', fontWeight: 800, backgroundColor: '#EDFDF9', padding: '2px 7px', borderRadius: '999px' }}>
+                Chambers Active
               </span>
             </div>
-            <p style={{ fontSize: '12.5px', color: '#64748B', margin: '8px 0 0', fontFamily: 'Inter, sans-serif' }}>
-              Available across verified clinic OPDs
-            </p>
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '6px' }}>
+              Medicine, Cardio, Pediatrics, ENT
+            </div>
           </div>
 
-          {/* Card 4: Cancellations */}
+          {/* Card 4: Voice AI Bookings (Priya) */}
           <div 
-            onClick={() => setActiveTab('cancellations')}
             style={{
-              padding: '24px',
-              borderRadius: '18px',
-              backgroundColor: activeTab === 'cancellations' ? '#FEF2F2' : '#FAF8F5',
-              border: activeTab === 'cancellations' ? '2px solid #EF4444' : '1px solid rgba(15, 91, 76, 0.1)',
-              boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              padding: '20px 22px',
+              borderRadius: '16px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              transition: 'all 0.15s ease'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Cancellations
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Priya AI Voice Intake
               </span>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <XCircle size={18} color="#DC2626" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FAF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Sparkles size={16} color="#7C3AED" />
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-              <span style={{ fontSize: '34px', fontWeight: 900, color: '#991B1B', fontFamily: 'Manrope, sans-serif' }}>
-                {metrics.cancellations_count}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '30px', fontWeight: 900, color: '#7C3AED', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                98.4%
               </span>
-              <span style={{ fontSize: '12px', color: '#DC2626', fontWeight: 700, backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '999px' }}>
-                Slot Freed
+              <span style={{ fontSize: '11px', color: '#7C3AED', fontWeight: 800, backgroundColor: '#FAF5FF', padding: '2px 7px', borderRadius: '999px' }}>
+                Precision
               </span>
             </div>
-            <p style={{ fontSize: '12.5px', color: '#64748B', margin: '8px 0 0', fontFamily: 'Inter, sans-serif' }}>
-              Instant slot re-opened for waitlists
-            </p>
+            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '6px' }}>
+              Zero slot collisions or double-bookings
+            </div>
           </div>
         </div>
 
-        {/* ── Navigation Tabs ── */}
+        {/* ── 21st.dev Main Split Grid: Left (Data Explorer) & Right (Clinic Command Sidebar) ── */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '2px solid #F1F5F9',
-          marginBottom: '28px',
-          gap: '16px',
-          flexWrap: 'wrap'
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 340px',
+          gap: '24px',
+          alignItems: 'start'
         }}>
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
-            {[
-              { id: 'bookings', label: "Today & Upcoming Bookings", count: metrics.today_count + metrics.upcoming_count },
-              { id: 'doctors', label: 'Doctors on Duty', count: doctors.length },
-              { id: 'cancellations', label: 'Cancellations', count: metrics.cancellations_count },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 18px',
-                  border: 'none',
-                  borderBottom: activeTab === tab.id ? '3px solid #00C9A7' : '3px solid transparent',
-                  backgroundColor: 'transparent',
-                  color: activeTab === tab.id ? '#0A2520' : '#64748B',
-                  fontWeight: activeTab === tab.id ? 800 : 600,
-                  fontSize: '14.5px',
-                  cursor: 'pointer',
-                  fontFamily: 'Manrope, sans-serif',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <span>{tab.label}</span>
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '2px 7px',
-                  borderRadius: '999px',
-                  backgroundColor: tab.alert && tab.count > 0 ? '#F59E0B' : (activeTab === tab.id ? '#0F5B4C' : '#E2E8F0'),
-                  color: tab.alert && tab.count > 0 ? '#FFFFFF' : (activeTab === tab.id ? '#FFFFFF' : '#475569'),
-                }}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Search bar inside tabs toolbar */}
-          {activeTab === 'bookings' && (
+          
+          {/* ── Left Column: Tabbed Data Explorer ── */}
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '16px',
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+            overflow: 'hidden'
+          }}>
+            {/* Tab Selection Header */}
             <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #E2E8F0',
+              backgroundColor: '#FAFAF9',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '6px 14px',
-              backgroundColor: '#F8FAFC',
-              borderRadius: '10px',
-              border: '1px solid #E2E8F0',
-              marginBottom: '8px'
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px'
             }}>
-              <Search size={15} color="#94A3B8" />
-              <input
-                type="text"
-                placeholder="Search patient, doctor, ticket..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  outline: 'none',
-                  fontSize: '13px',
-                  color: '#0A2520',
-                  fontFamily: 'Inter, sans-serif',
-                  width: '200px'
-                }}
-              />
-              {searchQuery && (
-                <button type="button" onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  <X size={14} color="#64748B" />
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[
+                  { id: 'today', label: `Today's Appointments (${metrics.today_count})` },
+                  { id: 'upcoming', label: `Upcoming Bookings (${metrics.upcoming_count})` },
+                  { id: 'cancellations', label: `Cancellations (${metrics.cancellations_count})` },
+                  { id: 'doctors', label: `Duty Roster (${doctors.length})` }
+                ].map(t => {
+                  const isCur = activeTab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setActiveTab(t.id)}
+                      style={{
+                        padding: '7px 14px',
+                        borderRadius: '8px',
+                        border: isCur ? '1px solid #00C9A7' : '1px solid transparent',
+                        backgroundColor: isCur ? '#EDFDF9' : 'transparent',
+                        color: isCur ? '#0F5B4C' : '#64748B',
+                        fontSize: '12.5px',
+                        fontWeight: isCur ? 800 : 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search Box */}
+              <div style={{ position: 'relative', width: '220px' }}>
+                <Search size={13} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="Filter queue..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '6px 10px 6px 30px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '12px',
+                    outline: 'none',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                />
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* ── TAB CONTENT ── */}
+            {/* Content view depending on active tab */}
+            {activeTab === 'doctors' ? (
+              /* Doctor Roster View */
+              <div style={{ padding: '20px' }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: '14px'
+                }}>
+                  {doctors.map((doc, idx) => (
+                    <div
+                      key={doc.id || idx}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '10px',
+                          backgroundColor: '#EDFDF9',
+                          border: '1px solid rgba(0, 201, 167, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#007A65',
+                          fontWeight: 800,
+                          fontSize: '14px'
+                        }}>
+                          {doc.name.split(' ').filter(n => !n.startsWith('Dr')).map(n => n[0]).slice(0, 2).join('') || 'DR'}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14px' }}>
+                            {doc.name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#0F5B4C', fontWeight: 600 }}>
+                            {doc.specialty}
+                          </div>
+                        </div>
+                      </div>
 
-        {/* 1. Bookings Tab */}
-        {activeTab === 'bookings' && (
-          <div>
-            <div style={{
-              backgroundColor: '#FAF8F5',
-              borderRadius: '20px',
-              border: '1px solid rgba(15, 91, 76, 0.08)',
-              overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(10, 37, 32, 0.02)'
-            }}>
+                      <div style={{ fontSize: '11.5px', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div>📍 Room: <strong>{doc.current_room || 'Consultation Room 1'}</strong></div>
+                        <div>⏱ Fee: <strong>₹{doc.consultation_fee || 700}</strong> · Exp: {doc.experience || '8+ yrs'}</div>
+                        <div style={{ marginTop: '4px' }}>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            backgroundColor: '#EDFDF9',
+                            color: '#007A65'
+                          }}>
+                            ● ON DUTY TODAY
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Appointments Table */
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#EAF6F3', borderBottom: '1px solid rgba(15, 91, 76, 0.1)', color: '#0F5B4C', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <th style={{ padding: '16px 20px' }}>Patient</th>
-                      <th style={{ padding: '16px 20px' }}>Physician & Clinic</th>
-                      <th style={{ padding: '16px 20px' }}>Date & Slot</th>
-                      <th style={{ padding: '16px 20px' }}>Visit Type</th>
-                      <th style={{ padding: '16px 20px' }}>Status</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right' }}>Actions</th>
+                    <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <th style={{ padding: '12px 18px', fontWeight: 800 }}>Time & Ref</th>
+                      <th style={{ padding: '12px 18px', fontWeight: 800 }}>Patient</th>
+                      <th style={{ padding: '12px 18px', fontWeight: 800 }}>Physician & Dept</th>
+                      <th style={{ padding: '12px 18px', fontWeight: 800 }}>Channel / Type</th>
+                      <th style={{ padding: '12px 18px', fontWeight: 800 }}>Status</th>
+                      <th style={{ padding: '12px 18px', fontWeight: 800, textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBookings.length === 0 ? (
+                    {displayedList.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '40px 20px', textAlign: 'center', color: '#64748B' }}>
-                          No bookings matching your criteria.
+                        <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#64748B' }}>
+                          <Calendar size={28} color="#94A3B8" style={{ margin: '0 auto 8px' }} />
+                          <div style={{ fontWeight: 700, color: '#0A2520' }}>No appointments match this view</div>
+                          <div style={{ fontSize: '12px', marginTop: '2px' }}>Try switching tabs or adjusting search criteria.</div>
                         </td>
                       </tr>
                     ) : (
-                      filteredBookings.map((b) => (
-                        <tr key={b.reference_id} style={{ borderBottom: '1px solid rgba(15, 91, 76, 0.06)', transition: 'background-color 0.15s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FFFFFF'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14px' }}>{b.patient_name}</div>
-                            <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                              <Phone size={11} color="#00C9A7" />
-                              <span>{b.phone}</span>
-                            </div>
-                            <span style={{ fontSize: '10.5px', color: '#94A3B8', fontFamily: 'monospace' }}>Ref: {b.reference_id}</span>
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ fontWeight: 700, color: '#0F5B4C', fontSize: '13.5px' }}>{b.doctor_name}</div>
-                            <div style={{ fontSize: '12px', color: '#64748B' }}>{b.specialty}</div>
-                            <div style={{ fontSize: '11px', color: '#94A3B8' }}>{b.clinic_name}</div>
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <div style={{ fontWeight: 700, color: '#0A2520', fontSize: '13.5px' }}>{b.preferred_date}</div>
-                            <div style={{ fontSize: '12.5px', color: '#00C9A7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Clock size={12} />
-                              <span>{b.preferred_time}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <span style={{
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              padding: '4px 10px',
-                              borderRadius: '999px',
-                              backgroundColor: '#F1F5F9',
-                              color: '#475569',
-                              display: 'inline-block'
-                            }}>
-                              {b.visit_type}
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px 20px' }}>
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '4px 10px',
-                              borderRadius: '999px',
-                              fontSize: '11.5px',
-                              fontWeight: 800,
-                              backgroundColor: b.status === 'VERIFIED_CONFIRMED' ? 'rgba(0, 201, 167, 0.15)' : 'rgba(239, 68, 68, 0.1)',
-                              color: b.status === 'VERIFIED_CONFIRMED' ? '#0F5B4C' : '#DC2626'
-                            }}>
-                              {b.status === 'VERIFIED_CONFIRMED' ? <CheckCircle2 size={13} color="#00C9A7" /> : <XCircle size={13} color="#DC2626" />}
-                              <span>{b.status === 'VERIFIED_CONFIRMED' ? 'Confirmed' : 'Cancelled'}</span>
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                            {b.status === 'VERIFIED_CONFIRMED' && (
-                              <button
-                                type="button"
-                                onClick={() => handleStatusChange(b.reference_id, 'CANCELLED')}
-                                style={{
-                                  padding: '5px 12px',
-                                  fontSize: '11.5px',
-                                  fontWeight: 700,
-                                  color: '#DC2626',
+                      displayedList.map((item, idx) => {
+                        const isCancelled = item.status === 'CANCELLED';
+                        const isCompleted = item.status === 'COMPLETED';
+                        const isConfirmed = item.status === 'CONFIRMED' || !item.status;
+
+                        return (
+                          <tr 
+                            key={item.reference_id || idx}
+                            style={{ 
+                              borderBottom: '1px solid #F1F5F9',
+                              transition: 'background-color 0.15s ease'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FAFAF9'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            {/* Time & Ref */}
+                            <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: 800, color: '#0A2520' }}>
+                                {item.time || item.slot || '10:30 AM'}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#0F5B4C', fontFamily: 'monospace', marginTop: '2px' }}>
+                                {item.reference_id || `REF-${1000 + idx}`}
+                              </div>
+                            </td>
+
+                            {/* Patient */}
+                            <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: 800, color: '#0A2520' }}>
+                                {item.patient_name || 'Patient'}
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                <Phone size={10} color="#00C9A7" />
+                                <span>{item.phone || item.patient_phone || '+91 98XXX XXXXX'}</span>
+                              </div>
+                            </td>
+
+                            {/* Doctor & Specialty */}
+                            <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                              <div style={{ fontWeight: 700, color: '#0A2520' }}>
+                                {item.doctor_name || 'Assigned Duty Doctor'}
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: '#64748B' }}>
+                                {item.specialty || 'General Medicine'}
+                              </div>
+                            </td>
+
+                            {/* Channel / Type */}
+                            <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '2px 8px',
+                                borderRadius: '999px',
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                backgroundColor: item.booking_channel === 'VOICE_AI' ? '#FAF5FF' : '#EFF6FF',
+                                color: item.booking_channel === 'VOICE_AI' ? '#7C3AED' : '#1D4ED8'
+                              }}>
+                                {item.booking_channel === 'VOICE_AI' ? <Sparkles size={10} /> : <User size={10} />}
+                                <span>{item.booking_channel === 'VOICE_AI' ? 'Priya Voice AI' : 'In-Person'}</span>
+                              </span>
+                            </td>
+
+                            {/* Status */}
+                            <td style={{ padding: '14px 18px', verticalAlign: 'middle' }}>
+                              {isConfirmed && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '999px',
+                                  fontSize: '11px',
+                                  fontWeight: 800,
+                                  backgroundColor: '#EDFDF9',
+                                  color: '#007A65'
+                                }}>
+                                  <CheckCircle2 size={11} color="#00C9A7" />
+                                  <span>Confirmed</span>
+                                </span>
+                              )}
+                              {isCompleted && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '999px',
+                                  fontSize: '11px',
+                                  fontWeight: 800,
+                                  backgroundColor: '#EFF6FF',
+                                  color: '#2563EB'
+                                }}>
+                                  <Check size={11} color="#2563EB" />
+                                  <span>Completed</span>
+                                </span>
+                              )}
+                              {isCancelled && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '999px',
+                                  fontSize: '11px',
+                                  fontWeight: 800,
                                   backgroundColor: '#FEE2E2',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  cursor: 'pointer',
-                                  transition: 'background 0.2s'
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FECACA'}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FEE2E2'}
-                              >
-                                Cancel Slot
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
+                                  color: '#DC2626'
+                                }}>
+                                  <XCircle size={11} color="#DC2626" />
+                                  <span>Cancelled</span>
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td style={{ padding: '14px 18px', verticalAlign: 'middle', textAlign: 'right' }}>
+                              {!isCancelled && !isCompleted && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStatusChange(item.reference_id, 'COMPLETED')}
+                                    title="Mark Completed"
+                                    style={{
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      backgroundColor: '#EDFDF9',
+                                      border: '1px solid rgba(0, 201, 167, 0.4)',
+                                      color: '#007A65',
+                                      fontSize: '11.5px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Done
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStatusChange(item.reference_id, 'CANCELLED')}
+                                    title="Cancel Appointment"
+                                    style={{
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      backgroundColor: '#FEE2E2',
+                                      border: '1px solid #FECACA',
+                                      color: '#DC2626',
+                                      fontSize: '11.5px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
               </div>
-            </div>
+            )}
           </div>
-        )}
 
+          {/* ── Right Column: Clinic Identity & Quick Command Card ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            
+            {/* Verified Clinic Identity Card */}
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '20px',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: '12px',
+                borderBottom: '1px solid #F1F5F9',
+                marginBottom: '14px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={16} color="#00C9A7" />
+                  <span style={{ fontWeight: 800, fontSize: '13.5px', color: '#0A2520' }}>
+                    Clinic Identity
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  padding: '2px 7px',
+                  borderRadius: '999px',
+                  backgroundColor: '#EDFDF9',
+                  color: '#007A65'
+                }}>
+                  VERIFIED
+                </span>
+              </div>
 
-
-        {/* 3. Cancellations Tab */}
-        {activeTab === 'cancellations' && (
-          <div style={{
-            backgroundColor: '#FAF8F5',
-            borderRadius: '20px',
-            border: '1px solid rgba(15, 91, 76, 0.08)',
-            overflow: 'hidden'
-          }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'Inter, sans-serif' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#FEE2E2', borderBottom: '1px solid #FECACA', color: '#991B1B', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <th style={{ padding: '16px 20px' }}>Patient</th>
-                    <th style={{ padding: '16px 20px' }}>Physician</th>
-                    <th style={{ padding: '16px 20px' }}>Original Slot</th>
-                    <th style={{ padding: '16px 20px' }}>Cancellation Reason</th>
-                    <th style={{ padding: '16px 20px' }}>Action Taken</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(overviewData?.cancellations || []).length === 0 ? (
-                    <tr>
-                      <td colSpan={5} style={{ padding: '40px 20px', textAlign: 'center', color: '#64748B' }}>
-                        No cancellations recorded.
-                      </td>
-                    </tr>
-                  ) : (
-                    (overviewData?.cancellations || []).map(c => (
-                      <tr key={c.reference_id} style={{ borderBottom: '1px solid rgba(15, 91, 76, 0.06)' }}>
-                        <td style={{ padding: '16px 20px' }}>
-                          <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14px' }}>{c.patient_name}</div>
-                          <div style={{ fontSize: '12px', color: '#64748B' }}>{c.phone}</div>
-                        </td>
-                        <td style={{ padding: '16px 20px' }}>
-                          <div style={{ fontWeight: 700, color: '#0F5B4C', fontSize: '13.5px' }}>{c.doctor_name}</div>
-                          <div style={{ fontSize: '11px', color: '#94A3B8' }}>{c.clinic_name}</div>
-                        </td>
-                        <td style={{ padding: '16px 20px' }}>
-                          <div style={{ fontWeight: 600, color: '#0A2520', fontSize: '13px' }}>{c.preferred_date}</div>
-                          <div style={{ fontSize: '12px', color: '#64748B' }}>{c.preferred_time}</div>
-                        </td>
-                        <td style={{ padding: '16px 20px' }}>
-                          <span style={{ fontSize: '13px', color: '#B91C1C', fontStyle: 'italic' }}>
-                            {c.notes || "Slot released for waitlisted patient"}
-                          </span>
-                        </td>
-                        <td style={{ padding: '16px 20px' }}>
-                          <span style={{
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            backgroundColor: '#DCFAF3',
-                            color: '#0F5B4C'
-                          }}>
-                            Slot Reopened & Available
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* 4. Doctors on Duty Tab */}
-        {activeTab === 'doctors' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '22px' }}>
-            {doctors.map((doc) => (
-              <div 
-                key={doc.id || doc.name}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(15, 91, 76, 0.1)',
-                  boxShadow: '0 4px 18px rgba(10, 37, 32, 0.04)',
-                  padding: '22px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.2s ease',
-                }}
-              >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12.5px' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                    <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      backgroundColor: '#EAF6F3',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid rgba(0, 201, 167, 0.3)'
-                    }}>
-                      <Stethoscope size={20} color="#0F5B4C" />
-                    </div>
-                    
-                    <span style={{
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      padding: '4px 10px',
-                      borderRadius: '999px',
-                      backgroundColor: doc.duty_status === 'In Consultation' ? '#FEF3C7' : '#EDFDF9',
-                      color: doc.duty_status === 'In Consultation' ? '#B45309' : '#0F5B4C',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}>
-                      <span style={{
-                        width: '7px',
-                        height: '7px',
-                        borderRadius: '50%',
-                        backgroundColor: doc.duty_status === 'In Consultation' ? '#F59E0B' : '#00C9A7'
-                      }} />
-                      <span>{doc.duty_status || "On Duty"}</span>
-                    </span>
+                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Primary Facility
                   </div>
-
-                  <h4 style={{ margin: '0 0 4px', fontSize: '17px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
-                    {doc.name}
-                  </h4>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#00C9A7', marginBottom: '8px' }}>
-                    {doc.specialty}
+                  <div style={{ fontWeight: 800, color: '#0A2520', marginTop: '2px' }}>
+                    Apollo Clinic & Diagnostics Prime
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '12px' }}>
-                    <Building2 size={13} color="#0F5B4C" />
-                    <span>{doc.clinic_name || "CareConnect Partner Clinic"}</span>
-                  </div>
-
-                  {/* Badges */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
-                    <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', backgroundColor: '#F1F5F9', color: '#475569' }}>
-                      Exp: {doc.experience}
-                    </span>
-                    <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', backgroundColor: '#F1F5F9', color: '#475569' }}>
-                      Fee: ₹{doc.consultation_fee}
-                    </span>
-                    <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', backgroundColor: '#F1F5F9', color: '#475569' }}>
-                      {(doc.languages || []).join(', ')}
-                    </span>
+                  <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '2px' }}>
+                    Koramangala, Bengaluru · Code: CARE-IND-01
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '11.5px', color: '#64748B' }}>
-                    {doc.current_room || "Consultation Suite 1"}
-                  </span>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#0F5B4C' }}>
-                    {(doc.available_slots || []).length} slots today
-                  </span>
+                <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9' }}>
+                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Operating Hours
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#0F5B4C', marginTop: '2px' }}>
+                    Mon - Sat: 08:00 AM – 08:30 PM
+                  </div>
+                  <div style={{ fontSize: '11.5px', color: '#64748B' }}>
+                    Sunday: 09:00 AM – 02:00 PM
+                  </div>
+                </div>
+
+                <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9' }}>
+                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Telephony Gateway
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                    Sarvam AI Multi-Channel DID
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#007A65', fontWeight: 700 }}>
+                    Inbound & Outbound Telephony Active
+                  </div>
                 </div>
               </div>
-            ))}
+
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #F1F5F9' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsScheduleModalOpen(true)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#0A2520',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <CalendarDays size={13} color="#00C9A7" />
+                  <span>Inspect Full Schedule</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Navigation Cards */}
+            <div style={{
+              backgroundColor: '#0F5B4C',
+              color: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '18px 20px',
+              boxShadow: '0 2px 10px rgba(15, 91, 76, 0.15)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <ShieldCheck size={16} color="#00C9A7" />
+                <div style={{ fontWeight: 800, fontSize: '13.5px' }}>Apex Care Security Standards</div>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: '#A7F3D0', lineHeight: 1.5 }}>
+                Protected with role-based clinical access, HIPAA compliant voice audio archiving, and instant NABL diagnostic synchronization.
+              </p>
+            </div>
+
           </div>
-        )}
+
+        </div>
 
       </div>
 
-      {/* ── MODAL 1: ADD DOCTOR ── */}
+      {/* ── Modal: Add Doctor ── */}
       {isAddDoctorOpen && (
         <div style={{
           position: 'fixed',
           inset: 0,
           backgroundColor: 'rgba(10, 37, 32, 0.65)',
           backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          zIndex: 1000,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          zIndex: 1000,
           padding: '20px'
         }}>
           <div style={{
             backgroundColor: '#FFFFFF',
-            borderRadius: '24px',
+            borderRadius: '18px',
             maxWidth: '520px',
             width: '100%',
-            padding: '32px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
-            position: 'relative'
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
           }}>
-            <button
-              type="button"
-              onClick={() => setIsAddDoctorOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#64748B'
-              }}
-            >
-              <X size={20} />
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#EAF6F3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Stethoscope size={20} color="#0F5B4C" />
+            <div style={{
+              padding: '18px 24px',
+              backgroundColor: '#0F5B4C',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Stethoscope size={18} color="#00C9A7" />
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Add Physician to Duty Roster</h3>
               </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
-                  Add Doctor to Roster
-                </h3>
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>Register a physician for voice triage & verified calendar booking.</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddDoctorOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            {docSuccessMsg ? (
-              <div style={{ padding: '20px', backgroundColor: '#DCFAF3', color: '#0F5B4C', borderRadius: '14px', textAlign: 'center', fontWeight: 700 }}>
-                <CheckCircle2 size={32} color="#00C9A7" style={{ margin: '0 auto 8px' }} />
-                <div>{docSuccessMsg}</div>
+            <form onSubmit={handleAddDoctorSubmit} style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {docSuccessMsg && (
+                <div style={{ padding: '10px', borderRadius: '8px', backgroundColor: '#EDFDF9', color: '#007A65', fontSize: '13px', fontWeight: 700 }}>
+                  ✓ {docSuccessMsg}
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                  Doctor Full Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ramesh Kumar"
+                  value={newDocName}
+                  onChange={(e) => setNewDocName(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '13px',
+                    outline: 'none'
+                  }}
+                />
               </div>
-            ) : (
-              <form onSubmit={handleAddDoctorSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                    Doctor Full Name *
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                    Specialty / Department
+                  </label>
+                  <select
+                    value={newDocSpecialty}
+                    onChange={(e) => setNewDocSpecialty(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="General Medicine">General Medicine</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="Dermatology">Dermatology</option>
+                    <option value="Orthopedics">Orthopedics</option>
+                    <option value="ENT Specialist">ENT Specialist</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                    Consultation Fee (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={newDocFee}
+                    onChange={(e) => setNewDocFee(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                    Experience
                   </label>
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. Dr. Priya Menon"
-                    value={newDocName}
-                    onChange={e => setNewDocName(e.target.value)}
+                    value={newDocExp}
+                    onChange={(e) => setNewDocExp(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '10px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
                       border: '1px solid #CBD5E1',
-                      fontSize: '14px',
-                      color: '#0A2520',
-                      outline: 'none',
-                      boxSizing: 'border-box'
+                      fontSize: '13px',
+                      outline: 'none'
                     }}
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                      Specialty
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. General Medicine"
-                      value={newDocSpecialty}
-                      onChange={e => setNewDocSpecialty(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid #CBD5E1',
-                        fontSize: '14px',
-                        color: '#0A2520',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                      Experience
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 10+ years"
-                      value={newDocExp}
-                      onChange={e => setNewDocExp(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid #CBD5E1',
-                        fontSize: '14px',
-                        color: '#0A2520',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                      Clinic Location
-                    </label>
-                    <select
-                      value={newDocClinic}
-                      onChange={e => setNewDocClinic(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid #CBD5E1',
-                        fontSize: '14px',
-                        color: '#0A2520',
-                        backgroundColor: '#FFFFFF',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      {clinics.map(c => (
-                        <option key={c.code} value={c.code}>{c.name} ({c.branch})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                      Consultation Fee (₹)
-                    </label>
-                    <input
-                      type="number"
-                      value={newDocFee}
-                      onChange={e => setNewDocFee(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: '1px solid #CBD5E1',
-                        fontSize: '14px',
-                        color: '#0A2520',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                    Consulting Languages (comma separated)
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
+                    Languages
                   </label>
                   <input
                     type="text"
                     value={newDocLangs}
-                    onChange={e => setNewDocLangs(e.target.value)}
+                    onChange={(e) => setNewDocLangs(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '10px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
                       border: '1px solid #CBD5E1',
-                      fontSize: '14px',
-                      color: '#0A2520',
-                      boxSizing: 'border-box'
+                      fontSize: '13px',
+                      outline: 'none'
                     }}
                   />
                 </div>
+              </div>
 
-                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddDoctorOpen(false)}
-                    style={{
-                      flex: 1,
-                      padding: '11px',
-                      borderRadius: '10px',
-                      border: '1px solid #CBD5E1',
-                      backgroundColor: '#FFFFFF',
-                      color: '#64748B',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={docSubmitting}
-                    style={{
-                      flex: 2,
-                      padding: '11px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      backgroundColor: '#0F5B4C',
-                      color: '#FFFFFF',
-                      fontWeight: 700,
-                      cursor: docSubmitting ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
-                    }}
-                  >
-                    {docSubmitting ? 'Registering...' : 'Add Doctor to Duty'}
-                  </button>
-                </div>
-              </form>
-            )}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsAddDoctorOpen(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: '#F1F5F9',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={docSubmitting}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '8px',
+                    backgroundColor: '#0F5B4C',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: docSubmitting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {docSubmitting ? 'Adding...' : 'Add to Roster'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* ── MODAL 2: VIEW SCHEDULE ── */}
+      {/* ── Modal: View Schedule ── */}
       {isScheduleModalOpen && (
         <div style={{
           position: 'fixed',
           inset: 0,
           backgroundColor: 'rgba(10, 37, 32, 0.65)',
           backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          zIndex: 1000,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          zIndex: 1000,
           padding: '20px'
         }}>
           <div style={{
             backgroundColor: '#FFFFFF',
-            borderRadius: '24px',
-            maxWidth: '720px',
+            borderRadius: '18px',
+            maxWidth: '560px',
             width: '100%',
-            padding: '32px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
-            position: 'relative',
-            maxHeight: '90vh',
-            overflowY: 'auto'
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
           }}>
-            <button
-              type="button"
-              onClick={() => setIsScheduleModalOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#64748B'
-              }}
-            >
-              <X size={20} />
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CalendarDays size={20} color="#00C9A7" />
+            <div style={{
+              padding: '18px 24px',
+              backgroundColor: '#0F5B4C',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CalendarDays size={18} color="#00C9A7" />
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Verified Clinic Operating Schedule</h3>
               </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 900, color: '#0A2520', fontFamily: 'Manrope, sans-serif' }}>
-                  Doctor Operating Schedule
-                </h3>
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>Timetable used by Priya Voice AI to verify live appointment requests.</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsScheduleModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {doctors.map(doc => (
-                <div key={doc.id || doc.name} style={{ padding: '16px', borderRadius: '14px', backgroundColor: '#FAF8F5', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <div>
-                      <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '15px' }}>{doc.name}</div>
-                      <div style={{ fontSize: '12.5px', color: '#00C9A7', fontWeight: 600 }}>{doc.specialty} · {doc.clinic_name}</div>
-                    </div>
-                    <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '999px', backgroundColor: '#DCFAF3', color: '#0F5B4C', fontWeight: 700 }}>
-                      Active
-                    </span>
-                  </div>
+            <div style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{
+                padding: '14px',
+                borderRadius: '10px',
+                backgroundColor: '#EDFDF9',
+                border: '1px solid rgba(0, 201, 167, 0.3)'
+              }}>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#007A65' }}>FACILITY ID: CARE-IND-01</div>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#0A2520', marginTop: '2px' }}>Apollo Clinic & Diagnostics Prime</div>
+                <div style={{ fontSize: '12.5px', color: '#64748B', marginTop: '2px' }}>Koramangala 4th Block, Bengaluru, Karnataka</div>
+              </div>
 
-                  <div style={{ fontSize: '12px', color: '#475569', marginBottom: '6px' }}>
-                    <strong>Available Days:</strong> {(doc.available_days || ["Monday - Saturday"]).join(', ')}
-                  </div>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {(doc.available_slots || ["09:30 AM", "11:00 AM", "02:30 PM", "04:30 PM", "06:00 PM"]).map(slot => (
-                      <span key={slot} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', color: '#0F5B4C', fontWeight: 600 }}>
-                        {slot}
-                      </span>
-                    ))}
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', backgroundColor: '#F8FAFC', borderRadius: '6px' }}>
+                  <span style={{ fontWeight: 700, color: '#0A2520' }}>Monday to Saturday</span>
+                  <span style={{ fontWeight: 800, color: '#0F5B4C' }}>08:00 AM – 08:30 PM</span>
                 </div>
-              ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', backgroundColor: '#F8FAFC', borderRadius: '6px' }}>
+                  <span style={{ fontWeight: 700, color: '#0A2520' }}>Sunday OPD</span>
+                  <span style={{ fontWeight: 800, color: '#0F5B4C' }}>09:00 AM – 02:00 PM</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', backgroundColor: '#F8FAFC', borderRadius: '6px' }}>
+                  <span style={{ fontWeight: 700, color: '#0A2520' }}>Fasting Blood Collection</span>
+                  <span style={{ fontWeight: 800, color: '#007A65' }}>Starts 07:30 AM Daily</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', backgroundColor: '#F8FAFC', borderRadius: '6px' }}>
+                  <span style={{ fontWeight: 700, color: '#0A2520' }}>Priya Telephony Reception</span>
+                  <span style={{ fontWeight: 800, color: '#7C3AED' }}>24/7 Automated Intake</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsScheduleModalOpen(false)}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    backgroundColor: '#0F5B4C',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-    </section>
+    </div>
   );
 }
-

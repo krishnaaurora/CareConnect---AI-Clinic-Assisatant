@@ -43,6 +43,7 @@ import {
   sendAppointmentReminder,
   batchSendReminders
 } from '../api/client';
+import BackgroundPattern from './common/BackgroundPattern';
 
 const STANDARD_SLOTS = [
   '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
@@ -451,7 +452,9 @@ export default function AppointmentManagement() {
   });
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', paddingBottom: '60px' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', paddingBottom: '60px', position: 'relative' }}>
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* ── Toast Notification ── */}
       {toastMessage && (
@@ -1893,6 +1896,8 @@ export default function AppointmentManagement() {
         </div>
       )}
 
+      {/* End Z-Index Wrapper */}
+      </div>
     </div>
   );
 }

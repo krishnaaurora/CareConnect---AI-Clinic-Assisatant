@@ -40,6 +40,7 @@ import {
   updateCallbackStatus
 } from '../api/client';
 import LiveCallTranscript from './LiveCallTranscript';
+import BackgroundPattern from './common/BackgroundPattern';
 
 export default function AICallActivity() {
   const [activityData, setActivityData] = useState(null);
@@ -200,7 +201,9 @@ export default function AICallActivity() {
   });
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', paddingBottom: '60px' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', paddingBottom: '60px', position: 'relative' }}>
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       
       {/* ── Toast Notification Banner ── */}
       {toastMessage && (
@@ -1443,6 +1446,8 @@ export default function AICallActivity() {
         </div>
       )}
 
+      {/* End Z-Index Wrapper */}
+      </div>
     </div>
   );
 }

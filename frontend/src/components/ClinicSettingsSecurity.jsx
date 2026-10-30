@@ -31,6 +31,7 @@ import {
   addClinicStaff,
   fetchAuditLogs 
 } from '../api/client';
+import BackgroundPattern from './common/BackgroundPattern';
 
 const ALL_LANGUAGES = ['English', 'Hindi', 'Telugu', 'Kannada', 'Tamil', 'Malayalam', 'Bengali'];
 
@@ -188,7 +189,9 @@ export default function ClinicSettingsSecurity() {
   });
 
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ fontFamily: 'Inter, sans-serif', position: 'relative' }}>
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* Toast Notification */}
       {notification && (
@@ -1064,6 +1067,8 @@ export default function ClinicSettingsSecurity() {
         </div>
       )}
 
+      {/* End Z-Index Wrapper */}
+      </div>
     </div>
   );
 }

@@ -35,6 +35,7 @@ import {
   notifyDiagnosticReport,
   recordPatientConsent
 } from '../api/client';
+import BackgroundPattern from './common/BackgroundPattern';
 
 export default function DiagnosticReports() {
   const [reports, setReports] = useState([]);
@@ -265,7 +266,9 @@ export default function DiagnosticReports() {
   };
 
   return (
-    <div style={{ paddingBottom: '60px' }}>
+    <div style={{ paddingBottom: '60px', position: 'relative' }}>
+      <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       
       {/* ── Toast Feedback Banner ── */}
       {toastMessage && (
@@ -1810,6 +1813,8 @@ export default function DiagnosticReports() {
         </div>
       )}
 
+      {/* End Z-Index Wrapper */}
+      </div>
     </div>
   );
 }
