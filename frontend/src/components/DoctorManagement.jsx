@@ -1052,7 +1052,7 @@ export default function DoctorManagement() {
         }}>
           {[
             { id: 'directory', label: 'Doctor Directory', icon: Stethoscope },
-            { id: 'departments', label: 'Department Rosters', icon: Building2 },
+            { id: 'departments', label: 'Doctors', icon: Building2 },
             { id: 'schedule', label: 'Working Schedules', icon: Clock },
             { id: 'appointments', label: 'Doctor-wise Appointments', icon: Calendar }
           ].map(tab => {
@@ -1557,7 +1557,7 @@ export default function DoctorManagement() {
         </div>
       )}
 
-      {/* ── TAB 2: DEPARTMENT ROSTERS ── */}
+      {/* ── TAB 2: DOCTORS ── */}
       {activeTab === 'departments' && (
         <div>
           <div style={{
