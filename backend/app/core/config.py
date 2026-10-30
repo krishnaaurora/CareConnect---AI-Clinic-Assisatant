@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     SUPPORTED_LANGUAGES: list[str] = ["English", "Hindi", "Telugu"]
 
     # Sarvam AI Voice Agent Configuration
-    SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "")
+    SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "sk_j14oyjbt_vYu9GjCmkbQBXg20B1timj2U")
     SARVAM_AGENT_ID: str = os.getenv("SARVAM_AGENT_ID", "Careconnect-ee4e51b7-aa9b")
     SARVAM_AGENT_VERSION: int = int(os.getenv("SARVAM_AGENT_VERSION", "4"))
     SARVAM_CONNECTION_ID: str = os.getenv("SARVAM_CONNECTION_ID", "befb7616-3f-5bcf15a1-5fb4")

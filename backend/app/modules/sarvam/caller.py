@@ -112,7 +112,7 @@ class SarvamVoiceClient:
 
         headers = {
             "Content-Type": "application/json",
-            "X-API-Key": self.api_key
+            "X-API-Key": self.api_key or settings.SARVAM_API_KEY
         }
 
         # Safe masked phone for logging
