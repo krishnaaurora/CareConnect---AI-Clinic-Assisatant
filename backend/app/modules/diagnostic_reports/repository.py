@@ -21,21 +21,8 @@ INITIAL_DIAGNOSTIC_REPORTS = [
             "channels": ["Voice AI Call", "SMS"],
             "verified": True
         },
-        "bolna_call": {
-            "triggered": True,
-            "status": "COMPLETED",
-            "execution_id": "bolna-exec-89a14d",
-            "agent_name": "Priya (CareConnect AI Voice Receptionist)",
-            "agent_id": "007196d3-1535-41f9-9f84-4eae2664cdff",
-            "recipient_phone": "+918897371942",
-            "dispatched_at": "2026-10-30T09:31:00Z",
-            "timestamp_str": "Oct 30, 09:31 AM",
-            "outcome_summary": "Automated Priya AI call completed successfully. Patient notified of ready Blood Test report.",
-            "patient_response": "Patient confirmed they received the voice notification and will pick up results at reception.",
-            "transcript_snippet": "Priya: 'Hello Rahul Sharma, this is Priya from ApexCare Clinic. Your Blood Test is ready for review.' Patient: 'Thank you Priya, I received it.'"
-        },
         "created_at": "2026-10-30T09:30:00Z",
-        "updated_at": "2026-10-30T09:31:00Z"
+        "updated_at": "2026-10-30T09:30:00Z"
     },
     {
         "id": "RPT-2002",
@@ -54,19 +41,6 @@ INITIAL_DIAGNOSTIC_REPORTS = [
             "status": "Consented",
             "channels": ["WhatsApp", "Voice AI Call", "SMS"],
             "verified": True
-        },
-        "bolna_call": {
-            "triggered": False,
-            "status": "NOT_READY_PENDING_LAB",
-            "execution_id": None,
-            "agent_name": "Priya (CareConnect AI Voice Receptionist)",
-            "agent_id": "007196d3-1535-41f9-9f84-4eae2664cdff",
-            "recipient_phone": "+918897371942",
-            "dispatched_at": None,
-            "timestamp_str": None,
-            "outcome_summary": "Awaiting final verification. Priya voice call will trigger automatically once status becomes Ready.",
-            "patient_response": "Pending - Report still processing in imaging lab.",
-            "transcript_snippet": None
         },
         "created_at": "2026-10-30T10:15:00Z",
         "updated_at": "2026-10-30T10:15:00Z"
@@ -89,21 +63,8 @@ INITIAL_DIAGNOSTIC_REPORTS = [
             "channels": ["Voice AI Call", "SMS"],
             "verified": True
         },
-        "bolna_call": {
-            "triggered": True,
-            "status": "COMPLETED",
-            "execution_id": "bolna-exec-c7f201",
-            "agent_name": "Priya (CareConnect AI Voice Receptionist)",
-            "agent_id": "007196d3-1535-41f9-9f84-4eae2664cdff",
-            "recipient_phone": "+918897371942",
-            "dispatched_at": "2026-10-30T10:46:00Z",
-            "timestamp_str": "Oct 30, 10:46 AM",
-            "outcome_summary": "Bolna AI automated voice alert completed. Patient briefed on normal findings.",
-            "patient_response": "Patient acknowledged call and confirmed appointment follow-up with physician.",
-            "transcript_snippet": "Priya: 'Hello Arjun Kumar, your digital X-Ray report is ready.' Patient: 'Understood, thank you.'"
-        },
         "created_at": "2026-10-30T10:45:00Z",
-        "updated_at": "2026-10-30T10:46:00Z"
+        "updated_at": "2026-10-30T10:45:00Z"
     }
 ]
 
@@ -169,12 +130,9 @@ class DiagnosticReportRepository:
         total = await self.col.count_documents({})
         ready = await self.col.count_documents({"status": "Ready"})
         processing = await self.col.count_documents({"status": "Processing"})
-        calls_triggered = await self.col.count_documents({"bolna_call.triggered": True})
 
         return {
             "total_reports": total,
             "ready_count": ready,
             "processing_count": processing,
-            "calls_triggered": calls_triggered
         }
-
