@@ -1376,7 +1376,7 @@ export default function AppointmentManagement() {
                 {slotsLoading ? (
                   <div style={{ padding: '20px', textAlign: 'center', color: '#64748B', fontSize: '12.5px' }}>
                     <RefreshCw size={16} className="animate-spin" style={{ margin: '0 auto 6px', display: 'block', color: '#00C9A7' }} />
-                    Checking doctor schedule in MongoDB...
+                    Checking physician schedule...
                   </div>
                 ) : (
                   <div style={{

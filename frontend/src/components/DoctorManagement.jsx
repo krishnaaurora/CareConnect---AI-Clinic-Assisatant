@@ -403,7 +403,7 @@ export default function DoctorManagement() {
       title: willDeactivate ? `Deactivate ${doc.name}?` : `Reactivate ${doc.name}?`,
       message: willDeactivate 
         ? `Deactivating ${doc.name} will remove them from Priya Voice AI bookings and hide their schedule from patient availability. Existing appointment records will be preserved.`
-        : `Reactivating ${doc.name} will restore their availability across the web portal and Sarvam Voice AI scheduling.`,
+        : `Reactivating ${doc.name} will restore their availability across the web portal and Priya Voice scheduling.`,
       confirmText: willDeactivate ? 'Yes, Deactivate' : 'Yes, Reactivate',
       confirmColor: willDeactivate ? '#DC2626' : '#0F5B4C',
       onConfirm: async () => {
@@ -696,7 +696,7 @@ export default function DoctorManagement() {
             <button
               type="button"
               onClick={loadInitialData}
-              title="Refresh roster from MongoDB"
+              title="Refresh roster from clinic records"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1097,7 +1097,7 @@ export default function DoctorManagement() {
             <div style={{ padding: '60px 20px', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
               <RefreshCw size={36} color="#0F5B4C" className="animate-spin" style={{ margin: '0 auto 12px' }} />
               <h4 style={{ margin: '0 0 6px', color: '#0A2520', fontWeight: 800 }}>Loading Physician Roster...</h4>
-              <p style={{ margin: 0, color: '#64748B', fontSize: '13.5px' }}>Fetching verified doctors and operating schedules from MongoDB</p>
+              <p style={{ margin: 0, color: '#64748B', fontSize: '13.5px' }}>Fetching verified doctors and operating schedules</p>
             </div>
           ) : filteredDoctors.length === 0 ? (
             <div style={{ padding: '60px 20px', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0' }}>
@@ -1711,7 +1711,7 @@ export default function DoctorManagement() {
                 Doctor-Wise Clinical Appointments
               </h3>
               <p style={{ margin: 0, fontSize: '13.5px', color: '#64748B' }}>
-                Real-time appointment schedule, patient visits, and status tracking fetched from MongoDB.
+                Real-time appointment schedule, patient visits, and status tracking.
               </p>
             </div>
 
@@ -1751,7 +1751,7 @@ export default function DoctorManagement() {
               <Calendar size={40} color="#94A3B8" style={{ marginBottom: '12px' }} />
               <h4 style={{ margin: '0 0 6px', color: '#0A2520', fontWeight: 800 }}>No Appointments Found</h4>
               <p style={{ margin: 0, color: '#64748B', fontSize: '13.5px' }}>
-                There are currently no recorded appointments for {apptSelectedDoctorName} in MongoDB.
+                There are currently no recorded appointments for {apptSelectedDoctorName}.
               </p>
             </div>
           ) : (
@@ -2502,7 +2502,7 @@ export default function DoctorManagement() {
 
               {loadingProfileAppts ? (
                 <div style={{ padding: '20px', textAlign: 'center', color: '#64748B', fontSize: '13px' }}>
-                  Loading appointments from MongoDB...
+                  Loading appointments from clinic records...
                 </div>
               ) : profileAppointments.length === 0 ? (
                 <div style={{ padding: '20px', textAlign: 'center', backgroundColor: '#F8FAFC', borderRadius: '10px', color: '#64748B', fontSize: '13px' }}>
@@ -2690,7 +2690,7 @@ export default function DoctorManagement() {
                 <div style={{ fontSize: '12.5px', color: '#64748B', marginTop: '2px' }}>
                   {scheduleModalDoctor.is_on_leave 
                     ? (scheduleModalDoctor.leave_note || 'Appointments safely blocked') 
-                    : 'Open for online bookings and Sarvam Voice AI scheduling'}
+                    : 'Open for online bookings and Priya Voice scheduling'}
                 </div>
               </div>
 

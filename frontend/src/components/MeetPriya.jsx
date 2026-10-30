@@ -13,7 +13,7 @@ export default function MeetPriya({ onOpenDialer }) {
     intent: "GENERAL_GREETING",
     safety_guardrail_triggered: false,
     requires_human_handoff: false,
-    bolna_trace_id: "bolna-init-demo"
+    trace_id: "telephony-init-demo"
   });
 
   const samplePrompts = [
@@ -80,11 +80,11 @@ export default function MeetPriya({ onOpenDialer }) {
       speakText(result.spoken_text, queryLang);
     } catch (err) {
       const fallback = {
-        spoken_text: `Understood your request regarding: "${queryText}". Let me check our verified clinic schedule in MongoDB.`,
+        spoken_text: `Understood your request regarding: "${queryText}". Let me check our verified clinic schedule.`,
         intent: "PROCESSED",
         safety_guardrail_triggered: false,
         requires_human_handoff: false,
-        bolna_trace_id: "bolna-local-sim"
+        trace_id: "telephony-local-sim"
       };
       setLastResponse(fallback);
       speakText(fallback.spoken_text, queryLang);
@@ -128,7 +128,7 @@ export default function MeetPriya({ onOpenDialer }) {
           </h2>
 
           <p style={{ fontSize: '16px', color: '#4B5563', lineHeight: 1.65 }}>
-            Powered by Sarvam Voice AI infrastructure, Priya handles high-volume telephony with warm tone, clinical nuance in English, Hindi, and Telugu, and built-in medical safety guardrails.
+            Priya handles high-volume clinic telephony with warm tone, clinical nuance in English, Hindi, and Telugu, and built-in medical safety guardrails.
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export default function MeetPriya({ onOpenDialer }) {
                 <span style={{ fontSize: '12px', color: '#0D3E33', fontWeight: 800 }}>PRIYA TELEPHONY NODE</span>
               </div>
               <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'monospace' }}>
-                {lastResponse.bolna_trace_id}
+                {lastResponse.trace_id || lastResponse.bolna_trace_id || 'telephony-node-01'}
               </span>
             </div>
 

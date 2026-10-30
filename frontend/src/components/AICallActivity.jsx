@@ -153,7 +153,7 @@ export default function AICallActivity() {
     total_calls: 48,
     inbound_calls: 32,
     outbound_calls: 16,
-    booked_through_bolna: 28,
+    booked_through_ai: 28,
     failed_booking_attempts: 7,
     transferred_to_human: 9,
     pending_callbacks: 3,
@@ -339,7 +339,7 @@ export default function AICallActivity() {
         <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#EDFDF9', border: '1px solid rgba(0, 201, 167, 0.4)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase' }}>Booked Through AI</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#0F5B4C', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
-            {metrics.booked_through_bolna}
+            {metrics.booked_through_ai ?? metrics.booked_through_bolna ?? 28}
           </div>
           <div style={{ fontSize: '11px', color: '#007A65', marginTop: '2px', fontWeight: 700 }}>
             Verified Slot Confirmations

@@ -143,7 +143,7 @@ export default function AppointmentBooking() {
           </h2>
 
           <p style={{ fontSize: '16px', color: '#4B5563', lineHeight: 1.65 }}>
-            Priya and our FastAPI backend query MongoDB Atlas to verify physician availability and prevent double bookings. Every verified request receives a reference ticket immediately.
+            Priya verifies physician availability against our live clinic schedule to prevent double bookings. Every verified request receives a reference ticket immediately.
           </p>
         </div>
 
@@ -195,7 +195,7 @@ export default function AppointmentBooking() {
                 fontWeight: 700
               }}>
                 <ShieldCheck size={14} />
-                <span>MongoDB Connected</span>
+                <span>Clinic Verified</span>
               </div>
             </div>
 
@@ -470,7 +470,7 @@ export default function AppointmentBooking() {
                 }}
               >
                 {isSubmitting ? (
-                  <span>Verifying Doctor Slot in MongoDB...</span>
+                  <span>Verifying Doctor Slot Availability...</span>
                 ) : (
                   <>
                     <Calendar size={18} />
@@ -500,7 +500,7 @@ export default function AppointmentBooking() {
                     <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0D3E33', margin: 0 }}>
                       {bookingResult.status === 'VERIFIED_CONFIRMED' ? 'Appointment Verified & Confirmed' : 'Request Queued for Clinic Staff'}
                     </h4>
-                    <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>Verified against MongoDB Clinic Schema</p>
+                    <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>Verified against Clinic Operating Schedule</p>
                   </div>
                 </div>
 

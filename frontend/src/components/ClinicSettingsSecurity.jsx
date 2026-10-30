@@ -565,7 +565,7 @@ export default function ClinicSettingsSecurity() {
           {/* Supported Languages Selector */}
           <div>
             <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-              Supported Telephony Languages (Sarvam Multilingual Speech Recognition)
+              Supported Telephony Languages (Multilingual Speech Recognition)
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               {ALL_LANGUAGES.map(lang => {

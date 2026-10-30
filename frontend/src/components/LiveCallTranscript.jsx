@@ -64,7 +64,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
         patientName: 'Ananya Sharma',
         status: 'Slot Verified & Confirmed',
         humanFollowup: 'Not Required (Automated)',
-        callStatus: 'Completed via Sarvam Voice AI'
+        callStatus: 'Completed via Priya Voice Assistant'
       }
     },
     {
@@ -374,7 +374,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
               </span>
             </div>
             <p style={{ fontSize: '13px', color: '#64748B', margin: '2px 0 0' }}>
-              Turn-by-turn conversational streaming between Priya (Sarvam Multilingual Voice AI) and clinic patients.
+              Turn-by-turn conversational streaming between Priya (Clinical Voice Assistant) and clinic patients.
             </p>
           </div>
         </div>
@@ -563,7 +563,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                   <span>·</span>
                   <span>{selectedCallSource === 'live_stream' ? activeScenario.phone : selectedHistoricalCall?.caller_phone}</span>
                   <span>·</span>
-                  <span style={{ color: '#00C9A7' }}>Sarvam AI Engine</span>
+                  <span style={{ color: '#00C9A7' }}>Priya Voice Engine</span>
                 </div>
               </div>
             </div>
@@ -815,7 +815,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                       fontWeight: 800,
                       color: isPriya ? '#00C9A7' : '#A7F3D0'
                     }}>
-                      <span>{isPriya ? 'Priya (Sarvam Voice AI)' : (selectedCallSource === 'live_stream' ? activeScenario.caller : 'Patient')}</span>
+                      <span>{isPriya ? 'Priya (Clinical Assistant)' : (selectedCallSource === 'live_stream' ? activeScenario.caller : 'Patient')}</span>
                       <span style={{ fontWeight: 600, color: isPriya ? '#94A3B8' : 'rgba(255, 255, 255, 0.7)' }}>
                         {msg.time}
                       </span>
@@ -1050,7 +1050,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
             </div>
             <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: '#A7F3D0', lineHeight: 1.6 }}>
               <li>Multilingual Hindi, English, Kannada, Tamil support</li>
-              <li>Real-time MongoDB doctor availability verification</li>
+              <li>Real-time clinical doctor availability verification</li>
               <li>Instant slot locking without double-booking</li>
               <li>Automated front-desk handoff on urgent triage</li>
             </ul>

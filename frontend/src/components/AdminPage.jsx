@@ -88,14 +88,14 @@ export default function AdminPage({ onNavigateHome }) {
       num: '5',
       label: 'Diagnostic Reports',
       icon: FileText,
-      badge: 'Sarvam AI'
+      badge: 'Verified'
     },
     {
       id: 'call_history',
       num: '6',
       label: 'Call History',
       icon: PhoneCall,
-      badge: 'Live Stream'
+      badge: 'Live'
     },
     {
       id: 'clinic_settings',
@@ -119,21 +119,21 @@ export default function AdminPage({ onNavigateHome }) {
   const getTabDescription = (tabId) => {
     switch (tabId) {
       case 'dashboard':
-        return 'Real-time operational dashboard: live bookings, waitlist queues, doctor rosters, and schedule verification.';
+        return 'Welcome back to your clinic administration dashboard';
       case 'doctors':
-        return 'Verified physician directory: consult shifts, department rosters, session fees, and active duty management.';
+        return 'Verified physician directory, consultation shifts, department rosters, and active duty management.';
       case 'patients':
-        return 'Comprehensive patient registry: demographic records, electronic health details, and multi-channel communication consent.';
+        return 'Comprehensive patient registry, demographic records, electronic health details, and communication preferences.';
       case 'appointments':
-        return 'Clinical appointment management: slot verification, conflict prevention, status tracking, and reschedule handling.';
+        return 'Clinical appointment management, slot verification, conflict prevention, and schedule handling.';
       case 'diagnostic_reports':
-        return 'Diagnostic laboratory repository: PDF report uploads and automated Sarvam Voice AI patient telephony alerts.';
+        return 'Diagnostic laboratory repository, verified report uploads, and automated patient voice notifications.';
       case 'call_history':
-        return 'Telephony ledger & Live Transcripts: real-time conversational streaming, call logs, patient sentiment, and AI resolutions.';
+        return 'Telephony ledger & live transcripts, conversational streaming, call logs, and front-desk resolutions.';
       case 'clinic_settings':
-        return 'Practice administration: clinic configuration, operating hours, staff role permissions, and immutable audit logs.';
+        return 'Practice administration, clinic configuration, operating hours, staff role permissions, and audit logs.';
       default:
-        return 'Real-time operational dashboard and clinical management console.';
+        return 'Welcome back to your clinic administration dashboard';
     }
   };
 
@@ -291,34 +291,35 @@ export default function AdminPage({ onNavigateHome }) {
         style={{
           width: '280px',
           flexShrink: 0,
-          backgroundColor: '#051814',
-          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: '#FFFFFF',
+          borderRight: '1px solid #E2E8F0',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           overflowY: 'auto',
-          boxShadow: '4px 0 24px rgba(0, 0, 0, 0.18)',
+          boxShadow: '2px 0 12px rgba(0, 0, 0, 0.03)',
           position: 'relative'
         }}
       >
-        {/* Sera UI Background Pattern for Sidebar */}
-        <BackgroundPattern variant="plus" dark size={32} />
+        {/* Subtle Sera UI Pattern for Light Sidebar */}
+        <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.05)" />
+
         {/* Top Part: Branding + Back Button */}
-        <div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
           {/* Header Brand */}
           <div style={{ 
-            padding: '24px 20px 18px', 
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: '22px 20px 18px', 
+            borderBottom: '1px solid #F1F5F9',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px'
+            gap: '14px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <img
-                  src={careconnectLogoWhite}
-                  alt="CareConnect AI"
-                  style={{ height: '28px', width: 'auto', display: 'block', objectFit: 'contain' }}
+                  src={careconnectLogo}
+                  alt="CareConnect"
+                  style={{ height: '32px', width: 'auto', display: 'block', objectFit: 'contain' }}
                 />
               </div>
 
@@ -334,9 +335,9 @@ export default function AdminPage({ onNavigateHome }) {
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backgroundColor: '#F1F5F9',
                   border: 'none',
-                  color: '#FFFFFF',
+                  color: '#475569',
                   cursor: 'pointer'
                 }}
               >
@@ -352,38 +353,38 @@ export default function AdminPage({ onNavigateHome }) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '9px 14px',
+                padding: '8px 12px',
                 borderRadius: '10px',
-                backgroundColor: 'rgba(255, 255, 255, 0.07)',
-                color: '#E2E8F0',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                fontSize: '12.5px',
+                backgroundColor: '#F8FAFC',
+                color: '#475569',
+                border: '1px solid #E2E8F0',
+                fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.15s ease',
                 width: '100%',
                 justifyContent: 'flex-start'
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.14)';
-                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.backgroundColor = '#F1F5F9';
+                e.currentTarget.style.color = '#0F5B4C';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.07)';
-                e.currentTarget.style.color = '#E2E8F0';
+                e.currentTarget.style.backgroundColor = '#F8FAFC';
+                e.currentTarget.style.color = '#475569';
               }}
             >
-              <ArrowLeft size={14} color="#00C9A7" />
+              <ArrowLeft size={13} color="#00C9A7" />
               <span>Back to Website</span>
             </button>
           </div>
 
           {/* Navigation Items Section */}
-          <div style={{ padding: '20px 14px 10px' }}>
+          <div style={{ padding: '18px 14px 10px' }}>
             <div style={{
               fontSize: '10.5px',
               fontWeight: 800,
-              color: 'rgba(255, 255, 255, 0.45)',
+              color: '#94A3B8',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               padding: '0 10px',
@@ -393,7 +394,7 @@ export default function AdminPage({ onNavigateHome }) {
               Clinic Console Menu
             </div>
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = adminTab === item.id;
@@ -408,61 +409,59 @@ export default function AdminPage({ onNavigateHome }) {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       width: '100%',
-                      padding: '11px 14px',
-                      borderRadius: '14px',
-                      border: isActive ? '1px solid rgba(0, 201, 167, 0.3)' : '1px solid transparent',
-                      fontSize: '13.5px',
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      border: isActive ? '1px solid rgba(0, 201, 167, 0.4)' : '1px solid transparent',
+                      fontSize: '13px',
                       fontWeight: isActive ? 800 : 600,
                       cursor: 'pointer',
                       textAlign: 'left',
-                      backgroundColor: isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                      color: '#FFFFFF',
-                      backdropFilter: isActive ? 'blur(8px)' : 'none',
-                      boxShadow: isActive ? '0 4px 14px rgba(0, 0, 0, 0.2)' : 'none',
-                      transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                      fontFamily: 'Inter, sans-serif',
-                      position: 'relative',
-                      zIndex: 1
+                      backgroundColor: isActive ? '#EDFDF9' : 'transparent',
+                      color: isActive ? '#0F5B4C' : '#475569',
+                      transition: 'all 0.15s ease',
+                      fontFamily: 'Inter, sans-serif'
                     }}
                     onMouseEnter={e => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.backgroundColor = '#F8FAFC';
+                        e.currentTarget.style.color = '#0A2520';
                       }
                     }}
                     onMouseLeave={e => {
                       if (!isActive) {
                         e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#475569';
                       }
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '10px',
-                        backgroundColor: isActive ? 'rgba(0, 201, 167, 0.16)' : 'rgba(255, 255, 255, 0.05)',
-                        border: isActive ? '1px solid rgba(0, 201, 167, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '8px',
+                        backgroundColor: isActive ? '#DCFAF3' : '#F1F5F9',
+                        border: isActive ? '1px solid rgba(0, 201, 167, 0.3)' : '1px solid #E2E8F0',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        color: '#00C9A7'
+                        color: isActive ? '#007A65' : '#64748B'
                       }}>
-                        <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                        <Icon size={15} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ 
                           fontSize: '12px', 
                           fontWeight: 800, 
-                          color: isActive ? '#00C9A7' : 'rgba(255, 255, 255, 0.45)' 
+                          color: isActive ? '#007A65' : '#94A3B8' 
                         }}>
                           {item.num}.
                         </span>
                         <span style={{
                           fontFamily: 'Plus Jakarta Sans, sans-serif',
                           letterSpacing: '-0.01em',
-                          color: '#FFFFFF',
+                          color: isActive ? '#0A2520' : '#475569',
                           fontWeight: isActive ? 800 : 600
                         }}>
                           {item.label}
@@ -474,10 +473,10 @@ export default function AdminPage({ onNavigateHome }) {
                       <span style={{
                         fontSize: '9.5px',
                         fontWeight: 900,
-                        backgroundColor: 'rgba(0, 201, 167, 0.14)',
-                        color: '#00C9A7',
-                        border: '1px solid rgba(0, 201, 167, 0.25)',
-                        padding: '2px 8px',
+                        backgroundColor: isActive ? '#DCFAF3' : '#F1F5F9',
+                        color: isActive ? '#007A65' : '#64748B',
+                        border: isActive ? '1px solid rgba(0, 201, 167, 0.25)' : '1px solid #E2E8F0',
+                        padding: '2px 7px',
                         borderRadius: '999px',
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase'
@@ -492,46 +491,46 @@ export default function AdminPage({ onNavigateHome }) {
           </div>
         </div>
 
-        {/* Bottom Part: Priya Status Card + Quick Info */}
+        {/* Bottom Part: Priya Assistant Status Card */}
         <div style={{ 
           padding: '16px', 
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          backgroundColor: 'rgba(0, 0, 0, 0.2)' 
+          borderTop: '1px solid #F1F5F9',
+          backgroundColor: '#FFFFFF',
+          position: 'relative',
+          zIndex: 1
         }}>
           {/* Priya AI Assistant Status */}
           <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '14px',
-            padding: '12px 14px',
+            backgroundColor: '#EDFDF9',
+            border: '1px solid rgba(0, 201, 167, 0.3)',
+            borderRadius: '12px',
+            padding: '11px 12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '10px'
+            marginBottom: '8px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ position: 'relative' }}>
-                <div style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  backgroundColor: '#00C9A7',
-                  boxShadow: '0 0 10px #00C9A7',
-                  animation: 'pulseDotLive 2s ease-in-out infinite'
-                }} />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: '#00C9A7',
+                boxShadow: '0 0 8px #00C9A7',
+                animation: 'pulseDotLive 2s ease-in-out infinite'
+              }} />
               <div>
-                <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#FFFFFF', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                  Priya Voice AI
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F5B4C', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Priya Voice Assistant
                 </div>
-                <div style={{ fontSize: '10.5px', color: '#A7F3D0' }}>
-                  Live & Autonomous
+                <div style={{ fontSize: '10.5px', color: '#007A65' }}>
+                  Active & Ready
                 </div>
               </div>
             </div>
 
             <span style={{
-              fontSize: '10px',
+              fontSize: '9.5px',
               fontWeight: 800,
               backgroundColor: '#00C9A7',
               color: '#071F1B',
@@ -545,12 +544,12 @@ export default function AdminPage({ onNavigateHome }) {
           {/* Access Direct Badge */}
           <div style={{
             fontSize: '11px',
-            color: 'rgba(255, 255, 255, 0.55)',
+            color: '#64748B',
             textAlign: 'center',
             lineHeight: 1.4,
-            padding: '4px 0'
+            padding: '2px 0'
           }}>
-            Access: <strong style={{ color: '#E2E8F0' }}>Direct Admin</strong> (No Auth)
+            Role: <strong style={{ color: '#0A2520' }}>Clinic Administrator</strong>
           </div>
         </div>
       </aside>
@@ -566,102 +565,108 @@ export default function AdminPage({ onNavigateHome }) {
           backgroundColor: '#F8FAFC'
         }}
       >
-        {/* ── Top Header Banner ── */}
+        {/* ── Top Header (Clean Light 21st.dev / Sera Style) ── */}
         <header style={{
-          backgroundColor: '#051814',
-          color: '#FFFFFF',
-          padding: '22px 32px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          position: 'relative',
-          overflow: 'hidden'
+          backgroundColor: '#FFFFFF',
+          borderBottom: '1px solid #E2E8F0',
+          padding: '20px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
         }}>
-          {/* Sera UI Pattern for Executive Header */}
-          <BackgroundPattern variant="plus" dark size={32} />
+          <div>
+            <h1 style={{ 
+              fontSize: '24px', 
+              fontWeight: 900, 
+              margin: '0 0 4px', 
+              color: '#0A2520',
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+              letterSpacing: '-0.025em'
+            }}>
+              {currentNav.label === 'Dashboard' ? 'Dashboard' : currentNav.label}
+            </h1>
+            <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
+              {currentNav.label === 'Dashboard' ? 'Welcome back to your dashboard' : getTabDescription(adminTab)}
+            </p>
+          </div>
 
-          <div style={{
-            maxWidth: '1360px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
-            position: 'relative',
-            zIndex: 1
-          }}>
-            <div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '11px',
-                fontWeight: 800,
-                color: '#A7F3D0',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                marginBottom: '6px'
-              }}>
-                <span>Portal Console</span>
-                <span>/</span>
-                <span style={{ color: '#00C9A7' }}>{currentNav.label}</span>
-                <span style={{
-                  padding: '1px 6px',
-                  borderRadius: '999px',
-                  backgroundColor: 'rgba(0, 201, 167, 0.15)',
-                  border: '1px solid rgba(0, 201, 167, 0.25)',
-                  color: '#00C9A7',
-                  fontSize: '9.5px',
-                  fontWeight: 900
-                }}>
-                  ACTIVE
-                </span>
-              </div>
-
-              <h1 style={{ 
-                fontSize: 'clamp(1.5rem, 2.5vw, 1.85rem)', 
-                fontWeight: 900, 
-                margin: '0 0 6px', 
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                letterSpacing: '-0.025em'
-              }}>
-                {currentNav.label === 'Dashboard' ? 'Clinic Administration Dashboard' : currentNav.label}
-              </h1>
-              <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-                {getTabDescription(adminTab)}
-              </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {/* Notifications Bell with unread dot */}
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              backgroundColor: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569',
+              position: 'relative',
+              cursor: 'pointer'
+            }}>
+              <Bell size={17} />
+              <span style={{
+                position: 'absolute',
+                top: '7px',
+                right: '8px',
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: '#EF4444',
+                border: '1.5px solid #FFFFFF'
+              }} />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px', 
-                fontSize: '12px', 
-                color: '#E2E8F0', 
-                backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                padding: '7px 14px',
-                borderRadius: '10px'
-              }}>
-                <Calendar size={13} color="#00C9A7" />
-                <span>{currentDate}</span>
-              </div>
+            {/* Current Date Widget */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              fontSize: '12.5px', 
+              color: '#475569', 
+              backgroundColor: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              padding: '8px 14px',
+              borderRadius: '10px',
+              fontWeight: 600
+            }}>
+              <Calendar size={13} color="#00C9A7" />
+              <span>{currentDate}</span>
+            </div>
 
-              <span style={{
-                display: 'inline-flex',
+            {/* Admin Profile Badge */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 14px 6px 6px',
+              borderRadius: '10px',
+              backgroundColor: '#F8FAFC',
+              border: '1px solid #E2E8F0'
+            }}>
+              <div style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                backgroundColor: '#EDFDF9',
+                color: '#007A65',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '11.5px',
+                justifyContent: 'center',
                 fontWeight: 800,
-                backgroundColor: 'rgba(0, 201, 167, 0.12)',
-                border: '1px solid rgba(0, 201, 167, 0.25)',
-                padding: '7px 14px',
-                borderRadius: '10px',
-                color: '#00C9A7'
+                fontSize: '11px'
               }}>
-                <Shield size={12} color="#00C9A7" />
-                <span>Verified Facility: Apollo Prime</span>
+                AD
+              </div>
+              <span style={{
+                fontSize: '12.5px',
+                fontWeight: 800,
+                color: '#0A2520'
+              }}>
+                Apex Admin
               </span>
             </div>
           </div>

@@ -155,7 +155,7 @@ export default function DiagnosticReports() {
     }
   };
 
-  // Handle Report Upload & Automatic Sarvam Voice AI Call Trigger
+  // Handle Report Upload & Automatic Voice Notification Call Trigger
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     if (!uploadForm.patient_id) {
@@ -169,7 +169,7 @@ export default function DiagnosticReports() {
       const isReady = uploadForm.status === 'Ready';
       
       if (isReady) {
-        showToast(`Report uploaded successfully! Automatic Priya AI voice call initiated via Sarvam AI for ${res.data?.patient_name || 'patient'}.`);
+        showToast(`Report uploaded successfully! Automatic Priya AI voice notification initiated for ${res.data?.patient_name || 'patient'}.`);
       } else {
         showToast(`Diagnostic report saved in Processing state. Automated AI call will trigger once marked Ready.`);
       }
@@ -246,7 +246,7 @@ export default function DiagnosticReports() {
     setCallingReportId(reportId);
     try {
       const res = await notifyDiagnosticReport(reportId);
-      showToast(res.message || 'Priya AI voice call initiated via Sarvam Instant Outbound!', true);
+      showToast(res.message || 'Priya clinical voice call initiated successfully!', true);
       await loadData();
       if (selectedReport && selectedReport.id === reportId) {
         setSelectedReport(prev => ({
@@ -254,12 +254,12 @@ export default function DiagnosticReports() {
           sarvam_call: {
             triggered: true,
             status: 'INITIATED',
-            call_summary: 'Priya AI voice call initiated via Sarvam Instant Outbound.'
+            call_summary: 'Priya clinical voice notification dispatched.'
           }
         }));
       }
     } catch (err) {
-      showToast(err.message || 'Failed to dispatch Sarvam voice call', false);
+      showToast(err.message || 'Failed to dispatch voice call', false);
     } finally {
       setCallingReportId(null);
     }
@@ -333,7 +333,7 @@ export default function DiagnosticReports() {
             Diagnostic Reports
           </h1>
           <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
-            Upload patient reports and monitor automated Priya Voice AI calls via Sarvam AI. Zero manual notification required.
+            Upload patient reports and monitor automated Priya Voice patient notification alerts. Zero manual follow-up required.
           </p>
         </div>
 
@@ -408,10 +408,10 @@ export default function DiagnosticReports() {
           </div>
           <div>
             <div style={{ fontSize: '14.5px', fontWeight: 800, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Sarvam Voice AI Notification Engine
+              Automated Clinical Telephony Engine
             </div>
             <div style={{ fontSize: '12px', color: '#A7F3D0', marginTop: '2px' }}>
-              Select Patient → Upload PDF → Mark READY → Consent Verified → Sarvam Voice AI Outbound Call → Call Outcome Logged
+              Select Patient → Upload PDF → Mark READY → Consent Verified → Priya Voice Outbound Call → Call Outcome Logged
             </div>
           </div>
         </div>
@@ -501,11 +501,11 @@ export default function DiagnosticReports() {
           <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Calls withheld until Ready</p>
         </div>
 
-        {/* Card 4: Sarvam Voice Calls Dispatched & Completed */}
+        {/* Card 4: Voice Calls Dispatched & Completed */}
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              AI Priya Telephony (Sarvam)
+              Priya Clinical Telephony
             </span>
             <PhoneCall size={16} color="#00C9A7" />
           </div>
@@ -1005,7 +1005,7 @@ export default function DiagnosticReports() {
                   Upload Diagnostic Report
                 </h3>
                 <p style={{ margin: 0, fontSize: '12.5px', color: '#64748B' }}>
-                  When marked <strong>READY</strong>, Sarvam Voice AI will automatically call the patient.
+                  When marked <strong>READY</strong>, Priya Clinical Voice Assistant will automatically call the patient.
                 </p>
               </div>
             </div>
@@ -1289,7 +1289,7 @@ export default function DiagnosticReports() {
               </div>
             </div>
 
-            {/* Sarvam Voice Agent (Priya) Audit Card */}
+            {/* Priya Voice Receptionist Audit Card */}
             {(() => {
               const sarvamCall = selectedReport.sarvam_call || null;
               const consent = selectedReport.communication_consent || {};
@@ -1316,7 +1316,7 @@ export default function DiagnosticReports() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <PhoneCall size={18} color={isCompleted ? '#007A65' : '#0F5B4C'} />
                         <span style={{ fontSize: '14px', fontWeight: 800, color: '#0A2520' }}>
-                          Sarvam Voice AI Call (Priya Receptionist)
+                          Priya Clinical Telephony Call (Voice Receptionist)
                         </span>
                       </div>
                       <span style={{
@@ -1332,7 +1332,7 @@ export default function DiagnosticReports() {
                     </div>
 
                     <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
-                      {sarvamCall.call_summary || 'Outbound call dispatched via Sarvam telephony gateway.'}
+                      {sarvamCall.call_summary || 'Outbound clinical notification dispatched via telephony gateway.'}
                     </p>
 
                     {/* Extracted Call Variables Grid */}
@@ -1378,7 +1378,7 @@ export default function DiagnosticReports() {
                 );
               }
 
-              // No Sarvam Call dispatched yet: Display live patient consent status
+              // No Voice Call dispatched yet: Display live patient consent status
               return (
                 <div style={{
                   padding: '16px 20px',
