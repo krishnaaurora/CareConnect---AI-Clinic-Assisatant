@@ -20,11 +20,12 @@ import {
   Timer,
   Layers,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Mail,
   Phone,
   Award,
   FileText,
-  ChevronRight,
   Eye,
   Trash2,
   AlertTriangle,
@@ -44,7 +45,8 @@ import {
   fetchDepartments,
   addDoctorLeave,
   cancelDoctorLeave,
-  fetchDoctorAppointments
+  fetchDoctorAppointments,
+  fetchAllAppointments
 } from '../api/client';
 import BackgroundPattern from './common/BackgroundPattern';
 
@@ -138,18 +140,28 @@ export default function DoctorManagement() {
   const [loadingDoctorAppts, setLoadingDoctorAppts] = useState(false);
   const [apptViewMode, setApptViewMode] = useState('all'); // 'all' | 'today' | 'upcoming'
 
+  // Weekly Consultation Timetable Matrix (Mac Style: Day | Week | Month)
+  const [timetableMode, setTimetableMode] = useState('week'); // 'day' | 'week' | 'month'
+  const [timetableDate, setTimetableDate] = useState(() => new Date(2026, 9, 31));
+  const [timetableDoctorFilter, setTimetableDoctorFilter] = useState('ALL');
+  const [timetableDeptFilter, setTimetableDeptFilter] = useState('ALL');
+  const [allAppointments, setAllAppointments] = useState([]);
+  const [selectedEventDetails, setSelectedEventDetails] = useState(null);
+
   // Initial Load
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [docs, clinicList, depts] = await Promise.all([
+      const [docs, clinicList, depts, appts] = await Promise.all([
         fetchAllDoctors().catch(() => []),
         fetchClinics().catch(() => []),
-        fetchDepartments().catch(() => [])
+        fetchDepartments().catch(() => []),
+        fetchAllAppointments().catch(() => [])
       ]);
       setDoctors(docs || []);
       setClinics(clinicList || []);
       setDepartmentsData(depts || []);
+      setAllAppointments(appts || []);
       if (clinicList && clinicList.length > 0) {
         setFormClinicCode(clinicList[0].code);
       }
@@ -623,6 +635,164 @@ export default function DoctorManagement() {
     const parts = clean.split(' ').filter(Boolean);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  // ── Timetable Matrix Date & Parsing Helpers ──
+  const formatYYYYMMDD = (d) => {
+    if (!d) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getWeekDays = (currDate) => {
+    const d = new Date(currDate);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.getFullYear(), d.getMonth(), diff);
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      const nextDay = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+      week.push(nextDay);
+    }
+    return week;
+  };
+
+  const getMonthGrid = (currDate) => {
+    const year = currDate.getFullYear();
+    const month = currDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const totalDays = lastDay.getDate();
+
+    const cells = [];
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startOffset - 1; i >= 0; i--) {
+      const d = new Date(year, month - 1, prevMonthLastDay - i);
+      cells.push({
+        date: d,
+        dateStr: formatYYYYMMDD(d),
+        dayNum: d.getDate(),
+        isCurrentMonth: false,
+        isToday: formatYYYYMMDD(d) === '2026-10-31'
+      });
+    }
+
+    for (let i = 1; i <= totalDays; i++) {
+      const d = new Date(year, month, i);
+      cells.push({
+        date: d,
+        dateStr: formatYYYYMMDD(d),
+        dayNum: i,
+        isCurrentMonth: true,
+        isToday: formatYYYYMMDD(d) === '2026-10-31'
+      });
+    }
+
+    const remaining = (cells.length <= 35 ? 35 : 42) - cells.length;
+    for (let i = 1; i <= remaining; i++) {
+      const d = new Date(year, month + 1, i);
+      cells.push({
+        date: d,
+        dateStr: formatYYYYMMDD(d),
+        dayNum: i,
+        isCurrentMonth: false,
+        isToday: formatYYYYMMDD(d) === '2026-10-31'
+      });
+    }
+
+    return cells;
+  };
+
+  const handlePrevTimetable = () => {
+    const d = new Date(timetableDate);
+    if (timetableMode === 'day') {
+      d.setDate(d.getDate() - 1);
+    } else if (timetableMode === 'week') {
+      d.setDate(d.getDate() - 7);
+    } else {
+      d.setMonth(d.getMonth() - 1);
+    }
+    setTimetableDate(d);
+  };
+
+  const handleNextTimetable = () => {
+    const d = new Date(timetableDate);
+    if (timetableMode === 'day') {
+      d.setDate(d.getDate() + 1);
+    } else if (timetableMode === 'week') {
+      d.setDate(d.getDate() + 7);
+    } else {
+      d.setMonth(d.getMonth() + 1);
+    }
+    setTimetableDate(d);
+  };
+
+  const handleTodayTimetable = () => {
+    setTimetableDate(new Date(2026, 9, 31));
+  };
+
+  const getTimetableTitle = () => {
+    if (timetableMode === 'day') {
+      return timetableDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    if (timetableMode === 'week') {
+      const week = getWeekDays(timetableDate);
+      const start = week[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const end = week[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `${start} – ${end}`;
+    }
+    return timetableDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
+  const getDoctorAppointmentsOnDate = (docName, dateStr) => {
+    if (!docName || !dateStr) return [];
+    const cleanDoc = docName.toLowerCase().replace(/^dr\.\s*/i, '').trim();
+    return allAppointments.filter(a => {
+      const aDoc = (a.doctor_name || '').toLowerCase().replace(/^dr\.\s*/i, '').trim();
+      const matchDoc = aDoc.includes(cleanDoc) || cleanDoc.includes(aDoc);
+      return matchDoc && a.preferred_date === dateStr;
+    });
+  };
+
+  const getDoctorLeaveOnDate = (doc, dateStr) => {
+    if (!doc || !dateStr) return null;
+    if (doc.is_on_leave && doc.leave_start_date && doc.leave_end_date) {
+      if (dateStr >= doc.leave_start_date && dateStr <= doc.leave_end_date) {
+        return {
+          reason: doc.leave_reason || 'Approved Medical Leave',
+          start_date: doc.leave_start_date,
+          end_date: doc.leave_end_date
+        };
+      }
+    }
+    if (doc.leaves && Array.isArray(doc.leaves)) {
+      for (const l of doc.leaves) {
+        if (dateStr >= l.start_date && dateStr <= l.end_date) {
+          return {
+            reason: l.reason || 'Approved Planned Leave',
+            start_date: l.start_date,
+            end_date: l.end_date
+          };
+        }
+      }
+    }
+    return null;
+  };
+
+  const parseTimeToFloat = (timeStr) => {
+    if (!timeStr) return 10.0;
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    if (!match) return 10.0;
+    let hour = parseInt(match[1], 10);
+    const minute = parseInt(match[2], 10);
+    const period = match[3] ? match[3].toUpperCase() : null;
+    if (period === 'PM' && hour < 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+    return hour + (minute / 60);
   };
 
   return (
@@ -1564,131 +1734,1013 @@ export default function DoctorManagement() {
         </div>
       )}
 
-      {/* ── TAB 3: WORKING SCHEDULES & TIMETABLE ── */}
-      {activeTab === 'schedule' && (
-        <div>
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '20px',
-            border: '1px solid #E2E8F0',
-            marginBottom: '20px',
-            boxShadow: '0 2px 10px rgba(10, 37, 32, 0.03)'
-          }}>
-            <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 800, color: '#0A2520' }}>
-              Weekly Consultation Timetable Matrix
-            </h3>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#64748B' }}>
-              Weekly operating schedule per physician across days, shifts, slot intervals, and planned break periods.
-            </p>
-          </div>
+      {/* ── TAB 3: WORKING SCHEDULES & TIMETABLE MATRIX ── */}
+      {activeTab === 'schedule' && (() => {
+        const weekDays = getWeekDays(timetableDate);
+        const monthGrid = getMonthGrid(timetableDate);
+        const dayStr = formatYYYYMMDD(timetableDate);
+        const hoursList = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            border: '1px solid #E2E8F0',
-            overflowX: 'auto',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                  <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
-                    Physician & Department
-                  </th>
-                  {ALL_DAYS.map(day => (
-                    <th key={day} style={{ padding: '14px 12px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', textAlign: 'center' }}>
-                      {day.slice(0, 3)}
-                    </th>
-                  ))}
-                  <th style={{ padding: '14px 18px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', textAlign: 'right' }}>
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {doctors.map((doc, idx) => {
-                  const days = doc.working_days || doc.available_days || [];
-                  const onLeave = Boolean(doc.is_on_leave);
-                  const isInactive = doc.is_active === false;
+        const filteredTimetableDocs = doctors.filter(doc => {
+          const matchDoc = timetableDoctorFilter === 'ALL' || doc.name === timetableDoctorFilter;
+          const matchDept = timetableDeptFilter === 'ALL' || doc.department === timetableDeptFilter;
+          return matchDoc && matchDept;
+        });
 
+        const selectedDocObj = timetableDoctorFilter !== 'ALL'
+          ? doctors.find(d => d.name === timetableDoctorFilter) || null
+          : null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* ── Top Bar: Title, Mac Segmented Control, Date Navigator ── */}
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '18px',
+              padding: '18px 22px',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 2px 10px rgba(10, 37, 32, 0.03)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px'
+            }}>
+              <div>
+                <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 800, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Weekly Consultation Timetable Matrix
+                </h3>
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>
+                  Unified clinical timetable across physicians, booked appointments, consultation shifts, and planned leaves.
+                </p>
+              </div>
+
+              {/* Mac-Style Segmented View Switcher [ Day | Week | Month ] */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                backgroundColor: '#F1F5F9',
+                padding: '3px',
+                borderRadius: '10px',
+                border: '1px solid #E2E8F0'
+              }}>
+                {[
+                  { id: 'day', label: 'Day' },
+                  { id: 'week', label: 'Week' },
+                  { id: 'month', label: 'Month' }
+                ].map(mode => {
+                  const isCurrent = timetableMode === mode.id;
                   return (
-                    <tr 
-                      key={doc.id}
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => setTimetableMode(mode.id)}
                       style={{
-                        borderBottom: idx !== doctors.length - 1 ? '1px solid #F1F5F9' : 'none',
-                        backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#FAFCFB',
-                        opacity: isInactive ? 0.6 : 1
+                        padding: '6px 16px',
+                        borderRadius: '7px',
+                        border: 'none',
+                        backgroundColor: isCurrent ? '#FFFFFF' : 'transparent',
+                        color: isCurrent ? '#0F5B4C' : '#64748B',
+                        fontSize: '12.5px',
+                        fontWeight: isCurrent ? 800 : 600,
+                        cursor: 'pointer',
+                        boxShadow: isCurrent ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
                     >
-                      <td style={{ padding: '14px 18px' }}>
-                        <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14px' }}>
-                          {doc.name}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#00C9A7', fontWeight: 600 }}>
-                          {doc.specialty} • {doc.department}
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
-                          Slot: {doc.consultation_duration || '20 mins'} | ₹{doc.consultation_fee || 700}
-                        </div>
-                      </td>
+                      {mode.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-                      {ALL_DAYS.map(day => {
-                        const worksToday = days.includes(day);
-                        return (
-                          <td key={day} style={{ padding: '12px', textAlign: 'center' }}>
-                            {worksToday ? (
+              {/* Date Navigator */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={handleTodayTimetable}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#0A2520',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Today
+                </button>
+
+                <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', backgroundColor: '#FFFFFF', overflow: 'hidden' }}>
+                  <button
+                    type="button"
+                    onClick={handlePrevTimetable}
+                    style={{
+                      padding: '6px 8px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: '#475569',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Previous"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span style={{
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: '#0A2520',
+                    minWidth: '140px',
+                    textAlign: 'center',
+                    borderLeft: '1px solid #E2E8F0',
+                    borderRight: '1px solid #E2E8F0'
+                  }}>
+                    {getTimetableTitle()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleNextTimetable}
+                    style={{
+                      padding: '6px 8px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: '#475569',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Next"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Filter Controls & Legend Bar ── */}
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '14px 20px',
+              border: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '14px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                {/* Doctor Filter Dropdown */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#64748B' }}>Physician:</span>
+                  <select
+                    value={timetableDoctorFilter}
+                    onChange={e => setTimetableDoctorFilter(e.target.value)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      color: '#0A2520',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="ALL">All Physicians (Whole Clinic)</option>
+                    {doctors.map(d => (
+                      <option key={d.id} value={d.name}>{d.name} — {d.specialty || d.department}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Department Filter */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#64748B' }}>Department:</span>
+                  <select
+                    value={timetableDeptFilter}
+                    onChange={e => setTimetableDeptFilter(e.target.value)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      color: '#0A2520',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="ALL">All Departments</option>
+                    {STANDARD_DEPARTMENTS.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {timetableDoctorFilter !== 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={() => setTimetableDoctorFilter('ALL')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: '#F1F5F9',
+                      border: '1px solid #E2E8F0',
+                      color: '#475569',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+
+              {/* Legend matching Image 2 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '12px', fontWeight: 600, color: '#475569' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#2563EB', display: 'inline-block' }} />
+                  <span>Consultation Booking</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#059669', display: 'inline-block' }} />
+                  <span>On Duty / Available</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#8B5CF6', display: 'inline-block' }} />
+                  <span>Break / Handover</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: '#F59E0B', display: 'inline-block' }} />
+                  <span>Approved Leave</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Single Doctor Hero Strip (When Filtered by Each Doctor) ── */}
+            {selectedDocObj && (
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '18px 22px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 2px 10px rgba(10, 37, 32, 0.03)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    backgroundColor: '#EDFDF9',
+                    border: '1px solid rgba(0, 201, 167, 0.3)',
+                    color: '#0F5B4C',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    fontSize: '16px'
+                  }}>
+                    {getInitials(selectedDocObj.name)}
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0A2520' }}>
+                        {selectedDocObj.name}
+                      </h4>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: selectedDocObj.is_on_leave ? '#FEF3C7' : '#EDFDF9',
+                        color: selectedDocObj.is_on_leave ? '#B45309' : '#0F5B4C'
+                      }}>
+                        {selectedDocObj.is_on_leave ? 'On Approved Leave' : 'Active On Duty'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: '#64748B', marginTop: '2px' }}>
+                      {selectedDocObj.specialty || selectedDocObj.department} • Reg: {selectedDocObj.medical_registration_number || 'MCI-DEL-4491'} • Slot: {selectedDocObj.consultation_duration || '20 mins'} • Fee: ₹{selectedDocObj.consultation_fee || 700}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenScheduleModal(selectedDocObj)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#0F5B4C',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Calendar size={13} />
+                    <span>Manage Schedule & Leaves</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════ */}
+            {/* ── VIEW 1: DAY VIEW (Horizontal Timeline Matrix, Image 2 Style) ── */}
+            {/* ══════════════════════════════════════════════════════════ */}
+            {timetableMode === 'day' && (
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                overflowX: 'auto',
+                padding: '20px'
+              }}>
+                <div style={{ minWidth: '950px' }}>
+                  {/* Timeline Header Row */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '220px repeat(9, 1fr)',
+                    borderBottom: '2px solid #E2E8F0',
+                    paddingBottom: '10px',
+                    marginBottom: '12px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    color: '#64748B'
+                  }}>
+                    <div>Physician & Chamber</div>
+                    {hoursList.slice(0, 9).map(hr => (
+                      <div key={hr} style={{ textAlign: 'center' }}>{hr}</div>
+                    ))}
+                  </div>
+
+                  {/* Doctor Timeline Rows */}
+                  {filteredTimetableDocs.map((doc, idx) => {
+                    const docAppts = getDoctorAppointmentsOnDate(doc.name, dayStr);
+                    const leave = getDoctorLeaveOnDate(doc, dayStr);
+                    const dayName = timetableDate.toLocaleDateString('en-US', { weekday: 'long' });
+                    const worksToday = (doc.working_days || doc.available_days || []).includes(dayName);
+
+                    return (
+                      <div
+                        key={doc.id || idx}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '220px 1fr',
+                          borderBottom: '1px solid #F1F5F9',
+                          padding: '14px 0',
+                          alignItems: 'center',
+                          position: 'relative'
+                        }}
+                      >
+                        {/* Doctor Column */}
+                        <div style={{ paddingRight: '16px' }}>
+                          <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '13.5px' }}>
+                            {doc.name}
+                          </div>
+                          <div style={{ fontSize: '11.5px', color: '#00C9A7', fontWeight: 600 }}>
+                            {doc.department}
+                          </div>
+                          <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '2px' }}>
+                            Chamber 10{idx + 1} • {worksToday ? 'Shift: 09:00 - 13:00' : 'Off Duty'}
+                          </div>
+                        </div>
+
+                        {/* Timeline Track Area */}
+                        <div style={{
+                          position: 'relative',
+                          height: '52px',
+                          backgroundColor: '#F8FAFC',
+                          borderRadius: '10px',
+                          border: '1px dashed #CBD5E1',
+                          overflow: 'hidden'
+                        }}>
+                          {/* Grid hour guidelines */}
+                          <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', pointerEvents: 'none' }}>
+                            {Array.from({ length: 9 }).map((_, i) => (
+                              <div key={i} style={{ borderRight: '1px solid #E2E8F0', height: '100%' }} />
+                            ))}
+                          </div>
+
+                          {/* Leave Banner if on leave */}
+                          {leave ? (
+                            <div style={{
+                              position: 'absolute',
+                              inset: '6px',
+                              backgroundColor: '#FEF3C7',
+                              border: '1px solid #FCD34D',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              fontSize: '12px',
+                              fontWeight: 800,
+                              color: '#B45309',
+                              zIndex: 2
+                            }}>
+                              <CalendarOff size={14} />
+                              <span>Approved Leave: {leave.reason}</span>
+                            </div>
+                          ) : !worksToday ? (
+                            <div style={{
+                              position: 'absolute',
+                              inset: '6px',
+                              backgroundColor: '#F1F5F9',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                              color: '#94A3B8'
+                            }}>
+                              Off Duty on {dayName}s
+                            </div>
+                          ) : (
+                            <>
+                              {/* Lunch Break block (13:00 to 14:00 is column 4 in 0..8) */}
                               <div style={{
-                                display: 'inline-flex',
-                                flexDirection: 'column',
+                                position: 'absolute',
+                                left: `${(4 / 9) * 100}%`,
+                                width: `${(1 / 9) * 100}%`,
+                                top: '6px',
+                                bottom: '6px',
+                                backgroundColor: '#F3E8FF',
+                                border: '1px solid #DDD6FE',
+                                borderRadius: '6px',
+                                display: 'flex',
                                 alignItems: 'center',
-                                gap: '2px',
-                                padding: '6px 8px',
-                                borderRadius: '8px',
-                                backgroundColor: onLeave ? '#FEF3C7' : '#EDFDF9',
-                                border: onLeave ? '1px solid #FCD34D' : '1px solid rgba(0, 201, 167, 0.3)',
+                                justifyContent: 'center',
                                 fontSize: '10.5px',
                                 fontWeight: 700,
-                                color: onLeave ? '#B45309' : '#0F5B4C'
+                                color: '#7C3AED',
+                                zIndex: 1
                               }}>
-                                <span>{onLeave ? 'Leave' : 'On Duty'}</span>
-                                <span style={{ fontSize: '9.5px', color: '#64748B' }}>
-                                  {(doc.shifts && doc.shifts[0]) ? doc.shifts[0].split(' - ')[0] : '09:00 AM'}
-                                </span>
+                                Break
                               </div>
-                            ) : (
-                              <span style={{ color: '#CBD5E1', fontSize: '12px' }}>—</span>
-                            )}
-                          </td>
+
+                              {/* Booked Appointments */}
+                              {docAppts.map((appt, aIdx) => {
+                                const floatTime = parseTimeToFloat(appt.preferred_time);
+                                const clampedTime = Math.max(9, Math.min(17.5, floatTime));
+                                const leftPercent = Math.max(1, Math.min(85, ((clampedTime - 9) / 9) * 100));
+
+                                return (
+                                  <div
+                                    key={appt.reference_id || aIdx}
+                                    onClick={() => setSelectedEventDetails({ type: 'appointment', data: appt, doctor: doc })}
+                                    style={{
+                                      position: 'absolute',
+                                      left: `${leftPercent}%`,
+                                      width: '135px',
+                                      top: '5px',
+                                      bottom: '5px',
+                                      backgroundColor: '#EFF6FF',
+                                      borderLeft: '4px solid #2563EB',
+                                      border: '1px solid #BFDBFE',
+                                      borderLeftWidth: '4px',
+                                      borderRadius: '6px',
+                                      padding: '3px 8px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      justifyContent: 'center',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 1px 4px rgba(37, 99, 235, 0.12)',
+                                      zIndex: 3
+                                    }}
+                                  >
+                                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#1E40AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {appt.patient_name}
+                                    </div>
+                                    <div style={{ fontSize: '9.5px', color: '#3B82F6', fontWeight: 600 }}>
+                                      {appt.preferred_time} • {appt.visit_type || 'Consult'}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════ */}
+            {/* ── VIEW 2: WEEK VIEW (7-Day Schedule Matrix) ── */}
+            {/* ══════════════════════════════════════════════════════════ */}
+            {timetableMode === 'week' && (
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                overflowX: 'auto'
+              }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                      <th style={{ padding: '16px 18px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', width: '220px' }}>
+                        Physician & Department
+                      </th>
+                      {weekDays.map(d => {
+                        const isToday = formatYYYYMMDD(d) === '2026-10-31';
+                        return (
+                          <th key={d.toISOString()} style={{
+                            padding: '14px 10px',
+                            textAlign: 'center',
+                            backgroundColor: isToday ? '#EDFDF9' : '#F8FAFC',
+                            borderLeft: '1px solid #E2E8F0'
+                          }}>
+                            <div style={{ fontSize: '11px', fontWeight: 800, color: isToday ? '#0F5B4C' : '#64748B', textTransform: 'uppercase' }}>
+                              {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                            </div>
+                            <div style={{
+                              fontSize: '15px',
+                              fontWeight: 900,
+                              color: isToday ? '#0F5B4C' : '#0A2520',
+                              marginTop: '2px'
+                            }}>
+                              {d.getDate()}
+                            </div>
+                          </th>
                         );
                       })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTimetableDocs.map((doc, idx) => {
+                      return (
+                        <tr
+                          key={doc.id || idx}
+                          style={{
+                            borderBottom: '1px solid #F1F5F9',
+                            backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#FAFCFB'
+                          }}
+                        >
+                          {/* Physician Info */}
+                          <td style={{ padding: '16px 18px', verticalAlign: 'top' }}>
+                            <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '13.5px' }}>
+                              {doc.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#00C9A7', fontWeight: 600 }}>
+                              {doc.specialty || doc.department}
+                            </div>
+                            <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '2px' }}>
+                              Fee: ₹{doc.consultation_fee || 700} • {doc.consultation_duration || '20 mins'}
+                            </div>
+                          </td>
 
-                      <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                          {/* 7 Days of the Week */}
+                          {weekDays.map(d => {
+                            const dateStr = formatYYYYMMDD(d);
+                            const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                            const worksToday = (doc.working_days || doc.available_days || []).includes(dayName);
+                            const leave = getDoctorLeaveOnDate(doc, dateStr);
+                            const dayAppts = getDoctorAppointmentsOnDate(doc.name, dateStr);
+
+                            return (
+                              <td
+                                key={dateStr}
+                                style={{
+                                  padding: '12px 8px',
+                                  verticalAlign: 'top',
+                                  borderLeft: '1px solid #F1F5F9',
+                                  minWidth: '120px'
+                                }}
+                              >
+                                {leave ? (
+                                  <div
+                                    onClick={() => setSelectedEventDetails({ type: 'leave', data: leave, doctor: doc })}
+                                    style={{
+                                      padding: '8px 10px',
+                                      borderRadius: '8px',
+                                      backgroundColor: '#FEF3C7',
+                                      border: '1px solid #FCD34D',
+                                      fontSize: '11px',
+                                      color: '#B45309',
+                                      fontWeight: 700,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <CalendarOff size={11} />
+                                      <span>On Leave</span>
+                                    </div>
+                                    <div style={{ fontSize: '9.5px', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {leave.reason}
+                                    </div>
+                                  </div>
+                                ) : !worksToday ? (
+                                  <div style={{ textAlign: 'center', color: '#CBD5E1', fontSize: '12px', padding: '12px 0' }}>
+                                    — Off —
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {/* Shift tag */}
+                                    <div style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      color: '#0F5B4C',
+                                      backgroundColor: '#EDFDF9',
+                                      border: '1px solid rgba(0, 201, 167, 0.3)',
+                                      padding: '3px 6px',
+                                      borderRadius: '6px',
+                                      textAlign: 'center'
+                                    }}>
+                                      Shift: 09:00 - 13:00
+                                    </div>
+
+                                    {/* Appointments Booked on this date */}
+                                    {dayAppts.length > 0 ? (
+                                      dayAppts.map(a => (
+                                        <div
+                                          key={a.reference_id}
+                                          onClick={() => setSelectedEventDetails({ type: 'appointment', data: a, doctor: doc })}
+                                          style={{
+                                            padding: '4px 6px',
+                                            borderRadius: '6px',
+                                            backgroundColor: '#EFF6FF',
+                                            borderLeft: '3px solid #2563EB',
+                                            fontSize: '10.5px',
+                                            fontWeight: 700,
+                                            color: '#1E40AF',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                                          }}
+                                        >
+                                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {a.patient_name}
+                                          </div>
+                                          <div style={{ fontSize: '9px', color: '#3B82F6' }}>
+                                            {a.preferred_time}
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div style={{ fontSize: '10px', color: '#94A3B8', textAlign: 'center', padding: '4px 0' }}>
+                                        Open Slots
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════ */}
+            {/* ── VIEW 3: MONTH VIEW (Full Calendar Grid, Image 3 & 4 Style) ── */}
+            {/* ══════════════════════════════════════════════════════════ */}
+            {timetableMode === 'month' && (
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                overflow: 'hidden'
+              }}>
+                {/* Calendar Day Header */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  backgroundColor: '#F8FAFC',
+                  borderBottom: '1px solid #E2E8F0',
+                  textAlign: 'center',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  color: '#475569',
+                  padding: '12px 0'
+                }}>
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(dayName => (
+                    <div key={dayName}>{dayName}</div>
+                  ))}
+                </div>
+
+                {/* Calendar 35/42 Days Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  backgroundColor: '#E2E8F0',
+                  gap: '1px'
+                }}>
+                  {monthGrid.map((cell, cIdx) => {
+                    const cellDateStr = cell.dateStr;
+                    // Gather appointments and leaves in this cell
+                    const cellAppts = allAppointments.filter(a => {
+                      const matchDate = a.preferred_date === cellDateStr;
+                      const matchDoc = timetableDoctorFilter === 'ALL' || (a.doctor_name || '').includes(timetableDoctorFilter.replace(/^dr\.\s*/i, ''));
+                      return matchDate && matchDoc;
+                    });
+
+                    const leavesInCell = filteredTimetableDocs
+                      .map(doc => {
+                        const l = getDoctorLeaveOnDate(doc, cellDateStr);
+                        return l ? { doc, leave: l } : null;
+                      })
+                      .filter(Boolean);
+
+                    return (
+                      <div
+                        key={cellDateStr + cIdx}
+                        onClick={() => {
+                          setTimetableDate(cell.date);
+                          setTimetableMode('day');
+                        }}
+                        style={{
+                          backgroundColor: cell.isCurrentMonth ? '#FFFFFF' : '#FAFCFB',
+                          minHeight: '115px',
+                          padding: '8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.1s ease',
+                          opacity: cell.isCurrentMonth ? 1 : 0.45
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = cell.isCurrentMonth ? '#F8FAFC' : '#F1F5F9'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = cell.isCurrentMonth ? '#FFFFFF' : '#FAFCFB'}
+                      >
+                        {/* Day Number Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{
+                            fontSize: '12.5px',
+                            fontWeight: cell.isToday ? 900 : 700,
+                            color: cell.isToday ? '#FFFFFF' : (cell.isCurrentMonth ? '#0A2520' : '#94A3B8'),
+                            backgroundColor: cell.isToday ? '#0F5B4C' : 'transparent',
+                            width: cell.isToday ? '24px' : 'auto',
+                            height: cell.isToday ? '24px' : 'auto',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {cell.dayNum}
+                          </span>
+
+                          {cellAppts.length > 0 && (
+                            <span style={{ fontSize: '10px', fontWeight: 800, color: '#2563EB' }}>
+                              {cellAppts.length} {cellAppts.length === 1 ? 'visit' : 'visits'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Event Pills inside Day Cell (Multi-day Leave / Appointments) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, overflow: 'hidden' }}>
+                          {/* Leaves in this date cell */}
+                          {leavesInCell.slice(0, 1).map(({ doc, leave }, lIdx) => (
+                            <div
+                              key={lIdx}
+                              style={{
+                                padding: '2px 5px',
+                                borderRadius: '4px',
+                                backgroundColor: '#FEF3C7',
+                                borderLeft: '3px solid #F59E0B',
+                                fontSize: '9.5px',
+                                fontWeight: 700,
+                                color: '#B45309',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              Leave: {doc.name.replace(/^dr\.\s*/i, '')}
+                            </div>
+                          ))}
+
+                          {/* Appointments in this date cell */}
+                          {cellAppts.slice(0, 2).map((a, aIdx) => (
+                            <div
+                              key={a.reference_id || aIdx}
+                              style={{
+                                padding: '2px 5px',
+                                borderRadius: '4px',
+                                backgroundColor: '#EFF6FF',
+                                borderLeft: '3px solid #2563EB',
+                                fontSize: '9.5px',
+                                fontWeight: 700,
+                                color: '#1E40AF',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {a.preferred_time} {a.patient_name}
+                            </div>
+                          ))}
+
+                          {cellAppts.length > 2 && (
+                            <div style={{ fontSize: '9px', color: '#64748B', fontWeight: 700, paddingLeft: '4px' }}>
+                              +{cellAppts.length - 2} more bookings
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Event Details Modal (When clicking any appointment or leave) ── */}
+            {selectedEventDetails && (
+              <div style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(10, 37, 32, 0.6)',
+                backdropFilter: 'blur(3px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1100,
+                padding: '16px'
+              }}>
+                <div style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '20px',
+                  width: '100%',
+                  maxWidth: '520px',
+                  padding: '28px',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+                  border: '1px solid #E2E8F0'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        backgroundColor: selectedEventDetails.type === 'leave' ? '#F59E0B' : '#2563EB'
+                      }} />
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#0A2520' }}>
+                        {selectedEventDetails.type === 'leave' ? 'Approved Leave Details' : 'Appointment Information'}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEventDetails(null)}
+                      style={{
+                        padding: '6px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        backgroundColor: '#F1F5F9',
+                        color: '#64748B',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {selectedEventDetails.type === 'appointment' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ padding: '14px', borderRadius: '12px', backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 800, color: '#1E40AF', textTransform: 'uppercase' }}>
+                          Patient Ticket: {selectedEventDetails.data.reference_id}
+                        </div>
+                        <div style={{ fontSize: '17px', fontWeight: 900, color: '#0A2520', marginTop: '2px' }}>
+                          {selectedEventDetails.data.patient_name}
+                        </div>
+                        <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '2px' }}>
+                          Phone: {selectedEventDetails.data.phone || 'Not available'}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div style={{ padding: '10px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>Physician</div>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#0A2520', marginTop: '2px' }}>
+                            {selectedEventDetails.data.doctor_name}
+                          </div>
+                        </div>
+
+                        <div style={{ padding: '10px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>Date & Time</div>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#0A2520', marginTop: '2px' }}>
+                            {selectedEventDetails.data.preferred_date} • {selectedEventDetails.data.preferred_time}
+                          </div>
+                        </div>
+
+                        <div style={{ padding: '10px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>Visit Type</div>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#0A2520', marginTop: '2px' }}>
+                            {selectedEventDetails.data.visit_type || 'Consultation'}
+                          </div>
+                        </div>
+
+                        <div style={{ padding: '10px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>Status</div>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F5B4C', marginTop: '2px' }}>
+                            {selectedEventDetails.data.status}
+                          </div>
+                        </div>
+                      </div>
+
+                      {selectedEventDetails.data.notes && (
+                        <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>Clinical Notes</div>
+                          <div style={{ fontSize: '12.5px', color: '#334155', marginTop: '2px' }}>
+                            {selectedEventDetails.data.notes}
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                         <button
                           type="button"
-                          onClick={() => handleOpenScheduleModal(doc)}
+                          onClick={() => setSelectedEventDetails(null)}
                           style={{
-                            padding: '6px 12px',
-                            borderRadius: '8px',
+                            padding: '9px 18px',
+                            borderRadius: '10px',
                             backgroundColor: '#0F5B4C',
                             color: '#FFFFFF',
                             border: 'none',
-                            fontSize: '12px',
-                            fontWeight: 700,
+                            fontSize: '13px',
+                            fontWeight: 800,
                             cursor: 'pointer'
                           }}
                         >
-                          Manage
+                          Close
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ padding: '14px', borderRadius: '12px', backgroundColor: '#FEF3C7', border: '1px solid #FCD34D' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 800, color: '#B45309', textTransform: 'uppercase' }}>
+                          Approved Planned Leave
+                        </div>
+                        <div style={{ fontSize: '16px', fontWeight: 900, color: '#0A2520', marginTop: '2px' }}>
+                          {selectedEventDetails.doctor.name}
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#78350F', marginTop: '4px' }}>
+                          Reason: {selectedEventDetails.data.reason}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>Leave Period</div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#0A2520', marginTop: '2px' }}>
+                          {selectedEventDetails.data.start_date} to {selectedEventDetails.data.end_date}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEventDetails(null)}
+                          style={{
+                            padding: '9px 18px',
+                            borderRadius: '10px',
+                            backgroundColor: '#0F5B4C',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            fontSize: '13px',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── TAB 4: DOCTOR-WISE APPOINTMENT SCHEDULE ── */}
       {activeTab === 'appointments' && (

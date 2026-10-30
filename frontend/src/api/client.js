@@ -228,7 +228,10 @@ export async function cancelDoctorLeave(clinicCode, doctorId, leaveId) {
 }
 
 export async function fetchDoctorAppointments(doctorName) {
-  const res = await fetch(`${API_BASE_URL}/appointments?doctor_name=${encodeURIComponent(doctorName)}`);
+  const url = doctorName 
+    ? `${API_BASE_URL}/appointments?doctor_name=${encodeURIComponent(doctorName)}`
+    : `${API_BASE_URL}/appointments`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error('Failed to fetch doctor appointments');
   return await res.json();
 }

@@ -60,14 +60,14 @@ export default function AdminPage({ onNavigateHome }) {
       num: '1',
       label: 'Dashboard',
       icon: LayoutDashboard,
-      badge: 'Live'
+      badge: null
     },
     {
       id: 'doctors',
       num: '2',
       label: 'Doctors',
       icon: Stethoscope,
-      badge: 'Roster'
+      badge: null
     },
     {
       id: 'patients',
@@ -88,14 +88,14 @@ export default function AdminPage({ onNavigateHome }) {
       num: '5',
       label: 'Diagnostic Reports',
       icon: FileText,
-      badge: 'Verified'
+      badge: null
     },
     {
       id: 'call_history',
       num: '6',
       label: 'Call History',
       icon: PhoneCall,
-      badge: 'Live'
+      badge: null
     },
     {
       id: 'clinic_settings',
@@ -509,39 +509,26 @@ export default function AdminPage({ onNavigateHome }) {
             padding: '8px 10px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            gap: '8px',
             marginBottom: '6px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-              <div style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                backgroundColor: '#00C9A7',
-                boxShadow: '0 0 6px #00C9A7',
-                animation: 'pulseDotLive 2s ease-in-out infinite'
-              }} />
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C' }}>
-                  Priya Receptionist
-                </div>
-                <div style={{ fontSize: '9.5px', color: '#64748B' }}>
-                  Online & Active
-                </div>
+            <div style={{
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              backgroundColor: '#00C9A7',
+              boxShadow: '0 0 6px #00C9A7',
+              animation: 'pulseDotLive 2s ease-in-out infinite',
+              flexShrink: 0
+            }} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C', lineHeight: 1.2 }}>
+                Priya Receptionist
+              </div>
+              <div style={{ fontSize: '9.5px', color: '#64748B' }}>
+                Voice Assistant Active
               </div>
             </div>
-
-            <span style={{
-              fontSize: '8.5px',
-              fontWeight: 800,
-              backgroundColor: '#EDFDF9',
-              color: '#007A65',
-              border: '1px solid rgba(0, 201, 167, 0.3)',
-              padding: '1px 5px',
-              borderRadius: '3px'
-            }}>
-              LIVE
-            </span>
           </div>
 
           {/* Access Direct Badge */}
