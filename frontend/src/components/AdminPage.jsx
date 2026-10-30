@@ -153,6 +153,16 @@ export default function AdminPage({ onNavigateHome }) {
           0%, 100% { transform: scale(1); opacity: 0.85; }
           50% { transform: scale(1.3); opacity: 1; }
         }
+        /* Completely hide scrollbars on sidebar across all browsers */
+        .admin-sidebar {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+        .admin-sidebar::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
         @media (max-width: 1024px) {
           .admin-sidebar {
             position: fixed !important;
@@ -287,9 +297,9 @@ export default function AdminPage({ onNavigateHome }) {
 
       {/* ── Left Sidebar Navigation (Side Nav) ── */}
       <aside 
-        className={`admin-sidebar ${mobileNavOpen ? 'open' : ''}`}
+        className={`admin-sidebar no-scrollbar ${mobileNavOpen ? 'open' : ''}`}
         style={{
-          width: '280px',
+          width: '232px',
           flexShrink: 0,
           backgroundColor: '#FFFFFF',
           borderRight: '1px solid #E2E8F0',
@@ -297,31 +307,31 @@ export default function AdminPage({ onNavigateHome }) {
           flexDirection: 'column',
           justifyContent: 'space-between',
           overflowY: 'auto',
-          boxShadow: '2px 0 12px rgba(0, 0, 0, 0.03)',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          boxShadow: '1px 0 6px rgba(0, 0, 0, 0.02)',
           position: 'relative'
         }}
       >
         {/* Subtle Sera UI Pattern for Light Sidebar */}
-        <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.05)" />
+        <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.03)" />
 
         {/* Top Part: Branding + Back Button */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* Header Brand */}
           <div style={{ 
-            padding: '22px 20px 18px', 
+            padding: '14px 14px 10px', 
             borderBottom: '1px solid #F1F5F9',
             display: 'flex',
             flexDirection: 'column',
-            gap: '14px'
+            gap: '10px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img
-                  src={careconnectLogo}
-                  alt="CareConnect"
-                  style={{ height: '32px', width: 'auto', display: 'block', objectFit: 'contain' }}
-                />
-              </div>
+              <img
+                src={careconnectLogo}
+                alt="CareConnect"
+                style={{ height: '26px', width: 'auto', display: 'block', objectFit: 'contain' }}
+              />
 
               {/* Close button on mobile */}
               <button
@@ -332,16 +342,16 @@ export default function AdminPage({ onNavigateHome }) {
                   display: mobileNavOpen ? 'flex' : 'none',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
                   backgroundColor: '#F1F5F9',
                   border: 'none',
                   color: '#475569',
                   cursor: 'pointer'
                 }}
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
 
@@ -352,14 +362,14 @@ export default function AdminPage({ onNavigateHome }) {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                borderRadius: '10px',
+                gap: '6px',
+                padding: '6px 10px',
+                borderRadius: '8px',
                 backgroundColor: '#F8FAFC',
-                color: '#475569',
+                color: '#64748B',
                 border: '1px solid #E2E8F0',
-                fontSize: '12px',
-                fontWeight: 700,
+                fontSize: '11.5px',
+                fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 width: '100%',
@@ -371,30 +381,30 @@ export default function AdminPage({ onNavigateHome }) {
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.backgroundColor = '#F8FAFC';
-                e.currentTarget.style.color = '#475569';
+                e.currentTarget.style.color = '#64748B';
               }}
             >
-              <ArrowLeft size={13} color="#00C9A7" />
+              <ArrowLeft size={12} color="#00C9A7" />
               <span>Back to Website</span>
             </button>
           </div>
 
           {/* Navigation Items Section */}
-          <div style={{ padding: '18px 14px 10px' }}>
+          <div style={{ padding: '10px 8px 6px' }}>
             <div style={{
-              fontSize: '10.5px',
+              fontSize: '10px',
               fontWeight: 800,
               color: '#94A3B8',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              padding: '0 10px',
-              marginBottom: '10px',
+              padding: '0 8px',
+              marginBottom: '6px',
               fontFamily: 'Inter, sans-serif'
             }}>
               Clinic Console Menu
             </div>
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = adminTab === item.id;
@@ -409,11 +419,11 @@ export default function AdminPage({ onNavigateHome }) {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      border: isActive ? '1px solid rgba(0, 201, 167, 0.4)' : '1px solid transparent',
-                      fontSize: '13px',
-                      fontWeight: isActive ? 800 : 600,
+                      padding: '7px 9px',
+                      borderRadius: '8px',
+                      border: isActive ? '1px solid rgba(0, 201, 167, 0.35)' : '1px solid transparent',
+                      fontSize: '12.5px',
+                      fontWeight: isActive ? 700 : 500,
                       cursor: 'pointer',
                       textAlign: 'left',
                       backgroundColor: isActive ? '#EDFDF9' : 'transparent',
@@ -434,35 +444,27 @@ export default function AdminPage({ onNavigateHome }) {
                       }
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{
-                        width: '30px',
-                        height: '30px',
-                        borderRadius: '8px',
-                        backgroundColor: isActive ? '#DCFAF3' : '#F1F5F9',
-                        border: isActive ? '1px solid rgba(0, 201, 167, 0.3)' : '1px solid #E2E8F0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        color: isActive ? '#007A65' : '#64748B'
-                      }}>
-                        <Icon size={15} strokeWidth={isActive ? 2.5 : 2} />
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      <Icon 
+                        size={16} 
+                        strokeWidth={isActive ? 2.4 : 1.8} 
+                        color={isActive ? '#007A65' : '#64748B'}
+                        style={{ flexShrink: 0 }}
+                      />
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <span style={{ 
-                          fontSize: '12px', 
-                          fontWeight: 800, 
+                          fontSize: '11px', 
+                          fontWeight: 700, 
                           color: isActive ? '#007A65' : '#94A3B8' 
                         }}>
                           {item.num}.
                         </span>
                         <span style={{
-                          fontFamily: 'Plus Jakarta Sans, sans-serif',
                           letterSpacing: '-0.01em',
                           color: isActive ? '#0A2520' : '#475569',
-                          fontWeight: isActive ? 800 : 600
+                          fontWeight: isActive ? 700 : 500,
+                          fontSize: '12.5px'
                         }}>
                           {item.label}
                         </span>
@@ -471,15 +473,15 @@ export default function AdminPage({ onNavigateHome }) {
 
                     {item.badge && (
                       <span style={{
-                        fontSize: '9.5px',
-                        fontWeight: 900,
+                        fontSize: '9px',
+                        fontWeight: 800,
                         backgroundColor: isActive ? '#DCFAF3' : '#F1F5F9',
                         color: isActive ? '#007A65' : '#64748B',
-                        border: isActive ? '1px solid rgba(0, 201, 167, 0.25)' : '1px solid #E2E8F0',
-                        padding: '2px 7px',
-                        borderRadius: '999px',
-                        letterSpacing: '0.04em',
-                        textTransform: 'uppercase'
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                        letterSpacing: '0.03em',
+                        textTransform: 'uppercase',
+                        flexShrink: 0
                       }}>
                         {item.badge}
                       </span>
@@ -493,7 +495,7 @@ export default function AdminPage({ onNavigateHome }) {
 
         {/* Bottom Part: Priya Assistant Status Card */}
         <div style={{ 
-          padding: '16px', 
+          padding: '10px 12px', 
           borderTop: '1px solid #F1F5F9',
           backgroundColor: '#FFFFFF',
           position: 'relative',
@@ -501,55 +503,55 @@ export default function AdminPage({ onNavigateHome }) {
         }}>
           {/* Priya AI Assistant Status */}
           <div style={{
-            backgroundColor: '#EDFDF9',
-            border: '1px solid rgba(0, 201, 167, 0.3)',
-            borderRadius: '12px',
-            padding: '11px 12px',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: '9px',
+            padding: '8px 10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '8px'
+            marginBottom: '6px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
               <div style={{
-                width: '8px',
-                height: '8px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
                 backgroundColor: '#00C9A7',
-                boxShadow: '0 0 8px #00C9A7',
+                boxShadow: '0 0 6px #00C9A7',
                 animation: 'pulseDotLive 2s ease-in-out infinite'
               }} />
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F5B4C', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                  Priya Voice Assistant
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C' }}>
+                  Priya Receptionist
                 </div>
-                <div style={{ fontSize: '10.5px', color: '#007A65' }}>
-                  Active & Ready
+                <div style={{ fontSize: '9.5px', color: '#64748B' }}>
+                  Online & Active
                 </div>
               </div>
             </div>
 
             <span style={{
-              fontSize: '9.5px',
+              fontSize: '8.5px',
               fontWeight: 800,
-              backgroundColor: '#00C9A7',
-              color: '#071F1B',
-              padding: '2px 6px',
-              borderRadius: '4px'
+              backgroundColor: '#EDFDF9',
+              color: '#007A65',
+              border: '1px solid rgba(0, 201, 167, 0.3)',
+              padding: '1px 5px',
+              borderRadius: '3px'
             }}>
-              ONLINE
+              LIVE
             </span>
           </div>
 
           {/* Access Direct Badge */}
           <div style={{
-            fontSize: '11px',
-            color: '#64748B',
+            fontSize: '10px',
+            color: '#94A3B8',
             textAlign: 'center',
-            lineHeight: 1.4,
-            padding: '2px 0'
+            lineHeight: 1.3
           }}>
-            Role: <strong style={{ color: '#0A2520' }}>Clinic Administrator</strong>
+            Role: <strong style={{ color: '#475569' }}>Clinic Administrator</strong>
           </div>
         </div>
       </aside>
