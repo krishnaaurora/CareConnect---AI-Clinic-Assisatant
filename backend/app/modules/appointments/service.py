@@ -16,27 +16,20 @@ class AppointmentService:
 
         clinic = await self.clinic_repo.get_clinic_by_code(req.clinic_code)
         if not clinic:
-            clinics = await self.clinic_repo.get_all_clinics()
-            clinic = clinics[0] if clinics else {
-                "name": "CareConnect Central Clinic",
-                "code": req.clinic_code,
-                "doctors": []
-            }
+            raise ValueError(f"Clinic with code '{req.clinic_code}' not found. Please select a verified clinic.")
 
         clinic_name = clinic.get("name", "CareConnect Partner Clinic")
         doctors = clinic.get("doctors", [])
         
-        # Match doctor
+        # Match doctor by name
         matched_doctor = None
         for d in doctors:
             if d.get("name", "").lower() == req.doctor_name.lower() or req.doctor_name.lower() in d.get("name", "").lower():
                 matched_doctor = d
                 break
 
-        if not matched_doctor and doctors:
-            matched_doctor = doctors[0]
-
-        specialty = matched_doctor.get("specialty", "General Medicine") if matched_doctor else "General Consultation"
+        # Zero silent fallback to doctors[0]: keep matched_doctor as None if requested physician is not on roster
+        specialty = matched_doctor.get("specialty", "General Consultation") if matched_doctor else "General Consultation"
         
         # Backend verification step
         is_verified, status, verification_msg = await self._run_verification(

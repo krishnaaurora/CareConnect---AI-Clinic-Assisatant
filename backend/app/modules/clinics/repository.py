@@ -77,74 +77,61 @@ class ClinicRepository:
         )
         return res.modified_count > 0
 
-    async def get_schedule_config(self, clinic_code: Optional[str] = None) -> dict:
-        clinic = None
-        if clinic_code and str(clinic_code).strip() and str(clinic_code).strip() not in ["{clinic_code}", ":clinic_code"]:
-            clean_code = str(clinic_code).strip()
-            # Try case-insensitive code match
-            clinic = await self.clinics_col.find_one(
-                {"code": {"$regex": f"^{clean_code}$", "$options": "i"}},
-                {"_id": 0}
-            )
-            # Try name match if code not found
-            if not clinic:
-                clinic = await self.clinics_col.find_one(
-                    {"name": {"$regex": clean_code, "$options": "i"}},
-                    {"_id": 0}
-                )
+    async def get_schedule_config(self, clinic_code: Optional[str] = None) -> Optional[dict]:
+        """
+        Retrieves verified clinic schedule configuration from MongoDB.
+        Strict validation: Requires a non-empty, non-template clinic_code.
+        Returns None if clinic does not exist (no fallback to default/other clinic).
+        """
+        if not clinic_code or not str(clinic_code).strip():
+            raise ValueError("Missing clinic_code parameter. An explicit, valid clinic_code is required.")
+        
+        clean_code = str(clinic_code).strip()
+        if clean_code in ["{clinic_code}", ":clinic_code", "<clinic_code>", "null", "undefined"]:
+            raise ValueError(f"Invalid placeholder clinic_code '{clean_code}'. Please provide an explicit clinic identifier.")
 
-        # Fallback to primary clinic if not found or no code provided
-        if not clinic:
-            clinic = await self.clinics_col.find_one({}, {"_id": 0})
+        # Search MongoDB for the exact clinic
+        clinic = await self.clinics_col.find_one(
+            {"code": {"$regex": f"^{clean_code}$", "$options": "i"}},
+            {"_id": 0}
+        )
 
+        # No silent fallback: return None if clinic is not registered in MongoDB
         if not clinic:
-            return {
-                "clinic_code": "CARE-IND-01",
-                "clinic_name": "Apollo Clinic & Diagnostics Prime",
-                "branch": "Indiranagar, Bengaluru",
-                "operating_days": "Monday - Saturday",
-                "opening_time": "08:30 AM",
-                "closing_time": "08:30 PM",
-                "timings": "08:00 AM - 09:00 PM (Mon-Sat)",
-                "slot_duration": "20 mins",
-                "buffer_time": "5 mins",
-                "emergency_available": False,
-                "schedule_summary": "Open Monday to Saturday from 08:30 AM to 08:30 PM. Closed on Sundays. Consultations are available in 20-minute slots.",
-                "blocked_slots": []
-            }
+            return None
 
         cfg = clinic.get("schedule_config", {})
         open_time = cfg.get("opening_time", "08:30 AM")
         close_time = cfg.get("closing_time", "08:30 PM")
         slot_dur = cfg.get("slot_duration", "20 mins")
         buffer_t = cfg.get("buffer_time", "5 mins")
-        timings = clinic.get("timings", f"{open_time} - {close_time} (Mon-Sat)")
-        clinic_name = clinic.get("name", "Apollo Clinic & Diagnostics Prime")
-        branch = clinic.get("branch", "Bengaluru")
-        code = clinic.get("code", "CARE-IND-01")
-
-        # Determine operating days from timings or schedule
+        
+        # Resolve conflicting timings: align operating days and authoritative schedule hours
+        raw_timings = clinic.get("timings", "")
         operating_days = "Monday - Saturday"
-        if "mon-sat" in timings.lower() or "monday - saturday" in timings.lower():
-            operating_days = "Monday - Saturday"
-        elif "mon-fri" in timings.lower() or "monday - friday" in timings.lower():
+        if "mon-fri" in raw_timings.lower() or "monday - friday" in raw_timings.lower():
             operating_days = "Monday - Friday"
-        elif "all days" in timings.lower() or "daily" in timings.lower() or "mon-sun" in timings.lower():
+        elif "all days" in raw_timings.lower() or "daily" in raw_timings.lower() or "mon-sun" in raw_timings.lower():
             operating_days = "Monday - Sunday (All Days)"
+
+        aligned_timings = f"{open_time} - {close_time} ({operating_days})"
+        clinic_name = clinic.get("name", "")
+        branch = clinic.get("branch", "")
+        code = clinic.get("code", "")
 
         return {
             "clinic_code": code,
             "clinic_name": clinic_name,
             "branch": branch,
-            "phone": clinic.get("phone", "+91 80 4125 7800"),
+            "phone": clinic.get("phone", ""),
             "operating_days": operating_days,
             "opening_time": open_time,
             "closing_time": close_time,
-            "timings": timings,
+            "timings": aligned_timings,
             "slot_duration": slot_dur,
             "buffer_time": buffer_t,
             "emergency_available": clinic.get("emergency_available", False),
-            "schedule_summary": f"{clinic_name} ({branch}) is open {operating_days} from {open_time} to {close_time}. Consultations are scheduled in {slot_dur} slots.",
+            "schedule_summary": f"{clinic_name} ({branch}) is open {operating_days} from {open_time} to {close_time}. Consultation slots are {slot_dur}.",
             "blocked_slots": clinic.get("blocked_slots", [])
         }
 
