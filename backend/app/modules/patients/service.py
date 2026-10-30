@@ -44,14 +44,21 @@ class PatientService:
         report_code = f"RPT-{str(uuid.uuid4())[:4].upper()}"
 
         masked = mask_phone_number(req.phone)
-        consent_channels = req.consent_channels if req.consent_channels is not None else (["Voice AI Call", "SMS", "WhatsApp"] if (req.consent_status or "Consented") == "Consented" else [])
+        status = req.consent_status or "Pending"
+        if status == "Consented":
+            channels = req.consent_channels if req.consent_channels is not None else ["Voice AI Call", "SMS", "WhatsApp"]
+            consented_at = now_iso
+        else:
+            channels = req.consent_channels or []
+            consented_at = None
+
         consent_record = {
-            "status": req.consent_status or "Consented",
-            "channels": consent_channels,
-            "consented_at": now_iso if (req.consent_status or "Consented") == "Consented" else None,
+            "status": status,
+            "channels": channels,
+            "consented_at": consented_at,
             "recorded_by": "Front Desk Reception",
-            "source": "Clinical Intake Form",
-            "consent_notes": req.consent_notes or "Explicit communication consent recorded during intake."
+            "source": req.consent_source or "Clinical Intake Form",
+            "consent_notes": req.consent_notes or ("Explicit communication consent recorded during intake." if status == "Consented" else "Awaiting patient consent.")
         }
 
         patient_doc = {
@@ -100,6 +107,35 @@ class PatientService:
         if req.clinical_notes is not None:
             updates["clinical_notes"] = req.clinical_notes
 
+        if req.consent_status is not None:
+            now_iso = datetime.utcnow().isoformat() + "Z"
+            existing_consent = existing.get("communication_consent", {})
+            st = req.consent_status
+            if st == "Consented":
+                ch = req.consent_channels if req.consent_channels is not None else (existing_consent.get("channels") or ["Voice AI Call", "SMS", "WhatsApp"])
+                cat = existing_consent.get("consented_at") or now_iso
+            else:
+                ch = req.consent_channels if req.consent_channels is not None else []
+                cat = None
+
+            consent_record = {
+                "status": st,
+                "channels": ch,
+                "consented_at": cat,
+                "recorded_by": "Front Desk Reception",
+                "source": req.consent_source or existing_consent.get("source") or "Patient Profile Update",
+                "consent_notes": req.consent_notes or existing_consent.get("consent_notes") or f"Consent updated to {st} by clinic staff."
+            }
+            updates["communication_consent"] = consent_record
+            try:
+                from app.core.database import get_database
+                await get_database()["diagnostic_reports"].update_many(
+                    {"patient_id": patient_id},
+                    {"$set": {"communication_consent": consent_record, "updated_at": now_iso}}
+                )
+            except Exception:
+                pass
+
         if updates:
             await self.repo.update(patient_id, updates)
         return await self.repo.get_by_id(patient_id)
@@ -110,17 +146,31 @@ class PatientService:
             return None
 
         now_iso = datetime.utcnow().isoformat() + "Z"
-        channels = req.channels if req.channels is not None else (["Voice AI Call", "SMS", "WhatsApp"] if req.status == "Consented" else [])
+        if req.status == "Consented":
+            channels = req.channels if req.channels is not None else ["Voice AI Call", "SMS", "WhatsApp"]
+            consented_at = now_iso
+        else:
+            channels = req.channels if req.channels is not None else []
+            consented_at = None
+
         consent_record = {
             "status": req.status,
             "channels": channels,
-            "consented_at": now_iso if req.status == "Consented" else None,
+            "consented_at": consented_at,
             "recorded_by": req.recorded_by or "Front Desk Reception",
             "source": req.source or "Front Desk Verbal Verification",
             "consent_notes": req.consent_notes or f"Consent updated to {req.status} by clinic staff."
         }
 
         await self.repo.record_consent(patient_id, consent_record)
+        try:
+            from app.core.database import get_database
+            await get_database()["diagnostic_reports"].update_many(
+                {"patient_id": patient_id},
+                {"$set": {"communication_consent": consent_record, "updated_at": now_iso}}
+            )
+        except Exception:
+            pass
         return await self.repo.get_by_id(patient_id)
 
     async def notify_patient(self, patient_id: str, req: PatientNotifyRequest) -> Optional[dict]:

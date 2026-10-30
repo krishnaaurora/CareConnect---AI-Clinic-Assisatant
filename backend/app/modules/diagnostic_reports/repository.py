@@ -125,14 +125,49 @@ class DiagnosticReportRepository:
         )
         return res.modified_count > 0
 
-    async def get_metrics(self) -> Dict[str, int]:
+    async def get_metrics(self) -> Dict[str, Any]:
         await self.seed_if_needed()
+        db = get_database()
         total = await self.col.count_documents({})
         ready = await self.col.count_documents({"status": "Ready"})
         processing = await self.col.count_documents({"status": "Processing"})
+
+        # Actual persisted Sarvam voice calls from voice_calls collection
+        voice_calls_col = db["voice_calls"]
+        calls_dispatched = await voice_calls_col.count_documents({
+            "status": {"$in": ["INITIATED", "IN_PROGRESS", "QUEUED", "COMPLETED"]}
+        })
+        calls_completed = await voice_calls_col.count_documents({"status": "COMPLETED"})
+        calls_failed = await voice_calls_col.count_documents({
+            "status": {"$in": ["FAILED", "ERROR", "BUSY", "NO_ANSWER"]}
+        })
+
+        # Evaluate Ready reports against live patient consent
+        reports = await self.col.find({"status": "Ready"}, {"_id": 0, "patient_id": 1, "communication_consent": 1, "sarvam_call": 1}).to_list(200)
+        patient_ids = list({r.get("patient_id") for r in reports if r.get("patient_id")})
+        patients = await db["patients"].find({"id": {"$in": patient_ids}}, {"_id": 0, "id": 1, "communication_consent": 1}).to_list(len(patient_ids)) if patient_ids else []
+        patient_consent_map = {p["id"]: p.get("communication_consent", {}) for p in patients}
+
+        calls_blocked_consent = 0
+        ready_to_dispatch = 0
+        for r in reports:
+            consent = patient_consent_map.get(r.get("patient_id")) or r.get("communication_consent", {})
+            st = (consent.get("status") or "Pending").strip().title()
+            ch = consent.get("channels") or []
+            has_voice = any("voice" in str(c).lower() for c in ch)
+            if st != "Consented" or not has_voice:
+                calls_blocked_consent += 1
+            else:
+                if not (r.get("sarvam_call") or {}).get("triggered"):
+                    ready_to_dispatch += 1
 
         return {
             "total_reports": total,
             "ready_count": ready,
             "processing_count": processing,
+            "calls_dispatched": calls_dispatched,
+            "calls_completed": calls_completed,
+            "calls_failed": calls_failed,
+            "calls_blocked_consent": calls_blocked_consent,
+            "ready_to_dispatch_count": ready_to_dispatch
         }

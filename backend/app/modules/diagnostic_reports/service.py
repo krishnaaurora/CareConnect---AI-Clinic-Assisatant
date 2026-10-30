@@ -20,12 +20,35 @@ class DiagnosticReportService:
         report_type: Optional[str] = None,
         limit: int = 100
     ) -> List[dict]:
-        return await self.repo.get_all(search, status, report_type, limit)
+        reports = await self.repo.get_all(search, status, report_type, limit)
+        try:
+            patient_ids = list({r.get("patient_id") for r in reports if r.get("patient_id")})
+            if patient_ids:
+                patients = await self.patient_repo.col.find({"id": {"$in": patient_ids}}, {"_id": 0}).to_list(len(patient_ids))
+                patient_map = {p["id"]: p for p in patients}
+                for r in reports:
+                    pid = r.get("patient_id")
+                    if pid in patient_map:
+                        p = patient_map[pid]
+                        if "communication_consent" in p:
+                            r["communication_consent"] = p["communication_consent"]
+                        if p.get("phone"):
+                            r["patient_phone"] = p["phone"]
+                        if p.get("masked_phone"):
+                            r["masked_phone"] = p["masked_phone"]
+        except Exception as e:
+            logger.warning(f"Failed to enrich reports with live patient details: {e}")
+        return reports
 
     async def get_report(self, report_id: str) -> Optional[dict]:
-        return await self.repo.get_by_id(report_id)
+        report = await self.repo.get_by_id(report_id)
+        if report and report.get("patient_id"):
+            p = await self.patient_repo.get_by_id(report["patient_id"])
+            if p and "communication_consent" in p:
+                report["communication_consent"] = p["communication_consent"]
+        return report
 
-    async def get_metrics(self) -> Dict[str, int]:
+    async def get_metrics(self) -> Dict[str, Any]:
         return await self.repo.get_metrics()
 
     async def upload_report(self, req: DiagnosticReportCreateRequest) -> dict:
@@ -47,8 +70,8 @@ class DiagnosticReportService:
                 "phone": "+91 98765 43210",
                 "masked_phone": "98XXXXXX10",
                 "communication_consent": {
-                    "status": "Consented",
-                    "channels": ["Voice AI Call", "SMS"]
+                    "status": "Pending",
+                    "channels": []
                 }
             }
 
@@ -56,7 +79,7 @@ class DiagnosticReportService:
         patient_phone = patient.get("phone", "+91 98765 43210")
         masked_phone = patient.get("masked_phone", "98XXXXXX10")
         consent = patient.get("communication_consent", {})
-        consent_status = consent.get("status", "Consented")
+        consent_status = consent.get("status", "Pending")
 
         is_ready = req.status.strip().title() == "Ready"
 

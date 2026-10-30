@@ -74,9 +74,10 @@ export default function PatientRegistry() {
     gender: 'Male',
     report_status: 'Processing',
     report_type: 'Comprehensive Metabolic Panel',
-    consent_status: 'Consented',
-    consent_channels: ['Voice AI Call', 'SMS', 'WhatsApp'],
-    consent_notes: 'Explicit verbal and digital consent captured during front-desk intake.',
+    consent_status: 'Pending', // Defaults to Pending until explicit agreement is obtained
+    consent_channels: [],
+    consent_source: 'Clinical Intake Form',
+    consent_notes: 'Awaiting patient communication agreement.',
     clinical_notes: ''
   });
 
@@ -89,7 +90,11 @@ export default function PatientRegistry() {
     gender: 'Male',
     report_status: 'Processing',
     report_type: '',
-    clinical_notes: ''
+    clinical_notes: '',
+    consent_status: 'Pending',
+    consent_channels: [],
+    consent_source: 'Front Desk Verbal Verification',
+    consent_notes: ''
   });
 
   // Form states: Record Consent
@@ -136,6 +141,7 @@ export default function PatientRegistry() {
   // Open Edit Modal with selected patient
   const handleOpenEdit = (patient) => {
     setSelectedPatient(patient);
+    const consent = patient.communication_consent || {};
     setEditForm({
       name: patient.name || '',
       phone: patient.phone || '',
@@ -144,7 +150,11 @@ export default function PatientRegistry() {
       gender: patient.gender || 'Male',
       report_status: patient.report_status || 'Processing',
       report_type: patient.report_type || '',
-      clinical_notes: patient.clinical_notes || ''
+      clinical_notes: patient.clinical_notes || '',
+      consent_status: consent.status || 'Pending',
+      consent_channels: consent.channels || [],
+      consent_source: consent.source || 'Front Desk Verbal Verification',
+      consent_notes: consent.consent_notes || ''
     });
     setIsEditModalOpen(true);
   };
@@ -200,9 +210,10 @@ export default function PatientRegistry() {
         gender: 'Male',
         report_status: 'Processing',
         report_type: 'Comprehensive Metabolic Panel',
-        consent_status: 'Consented',
-        consent_channels: ['Voice AI Call', 'SMS', 'WhatsApp'],
-        consent_notes: 'Explicit verbal and digital consent captured during front-desk intake.',
+        consent_status: 'Pending',
+        consent_channels: [],
+        consent_source: 'Clinical Intake Form',
+        consent_notes: 'Awaiting patient communication agreement.',
         clinical_notes: ''
       });
       loadData();
@@ -263,6 +274,20 @@ export default function PatientRegistry() {
   // Submit Notify Patient
   const handleNotifySubmit = async () => {
     if (!selectedPatient) return;
+    const consent = selectedPatient.communication_consent || {};
+    const isConsented = (consent.status || '').toLowerCase() === 'consented';
+    const channels = consent.channels || [];
+    const hasVoice = channels.some(c => c.toLowerCase().includes('voice'));
+
+    if (!isConsented) {
+      showToast(`Automated voice call blocked: Patient communication consent is '${consent.status || 'Pending'}'. Explicit consent is required.`, true);
+      return;
+    }
+    if (!hasVoice) {
+      showToast(`Automated voice call blocked: Patient has not consented to 'Voice AI Call'. Consented channels: ${channels.join(', ') || 'None'}.`, true);
+      return;
+    }
+
     setActionLoading(true);
     try {
       await notifyPatient(selectedPatient.id, {
@@ -1471,7 +1496,7 @@ export default function PatientRegistry() {
                   Clinical Notes
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={editForm.clinical_notes}
                   onChange={e => setEditForm({ ...editForm, clinical_notes: e.target.value })}
                   placeholder="Internal notes for physicians & reception..."
@@ -1485,6 +1510,121 @@ export default function PatientRegistry() {
                     boxSizing: 'border-box'
                   }}
                 />
+              </div>
+
+              {/* Communication Consent Section in Edit Modal */}
+              <div style={{ padding: '16px', backgroundColor: '#EDFDF9', borderRadius: '12px', border: '1px solid rgba(0, 201, 167, 0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#0F5B4C' }}>
+                    <ShieldCheck size={16} color="#00C9A7" />
+                    <span>Communication Consent & Channels</span>
+                  </div>
+                  <select
+                    value={editForm.consent_status}
+                    onChange={e => {
+                      const newStatus = e.target.value;
+                      const newChannels = newStatus === 'Revoked' ? [] : (newStatus === 'Consented' && (!editForm.consent_channels || editForm.consent_channels.length === 0) ? ['Voice AI Call', 'SMS', 'WhatsApp'] : editForm.consent_channels);
+                      setEditForm({ ...editForm, consent_status: newStatus, consent_channels: newChannels });
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      backgroundColor: '#FFFFFF',
+                      color: editForm.consent_status === 'Consented' ? '#007A65' : (editForm.consent_status === 'Revoked' ? '#B91C1C' : '#B45309')
+                    }}
+                  >
+                    <option value="Consented">Consented</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Revoked">Revoked</option>
+                  </select>
+                </div>
+
+                <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#0A2520', lineHeight: 1.4 }}>
+                  Authorized notification channels (requires explicit patient agreement):
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '10px' }}>
+                  {[
+                    { id: 'Voice AI Call', label: 'Voice AI Call', icon: PhoneCall, desc: 'Priya AI Receptionist (+918064269783)' },
+                    { id: 'SMS', label: 'SMS', icon: MessageSquare, desc: 'Direct text SMS notifications' },
+                    { id: 'WhatsApp', label: 'WhatsApp', icon: MessageCircle, desc: 'WhatsApp report delivery & alerts' }
+                  ].map(ch => {
+                    const isChecked = (editForm.consent_channels || []).includes(ch.id);
+                    const IconComp = ch.icon;
+                    return (
+                      <label
+                        key={ch.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '8px',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          backgroundColor: isChecked ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                          border: isChecked ? '1.5px solid #00C9A7' : '1px solid #CBD5E1',
+                          cursor: editForm.consent_status === 'Revoked' ? 'not-allowed' : 'pointer',
+                          opacity: editForm.consent_status === 'Revoked' ? 0.6 : 1
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={editForm.consent_status === 'Revoked'}
+                          onChange={e => {
+                            const cur = editForm.consent_channels || [];
+                            const updated = e.target.checked
+                              ? [...cur, ch.id]
+                              : cur.filter(c => c !== ch.id);
+                            setEditForm({ ...editForm, consent_channels: updated });
+                          }}
+                          style={{ marginTop: '2px', accentColor: '#00C9A7' }}
+                        />
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#0A2520', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <IconComp size={12} color={isChecked ? '#007A65' : '#64748B'} />
+                            <span>{ch.label}</span>
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#64748B', marginTop: '1px' }}>
+                            {ch.desc}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: '#64748B', marginBottom: '2px', fontWeight: 700 }}>
+                      Consent Source
+                    </label>
+                    <select
+                      value={editForm.consent_source}
+                      onChange={e => setEditForm({ ...editForm, consent_source: e.target.value })}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '12px', backgroundColor: '#FFFFFF' }}
+                    >
+                      <option value="Front Desk Verbal Verification">Front Desk Verbal Verification</option>
+                      <option value="Digital Intake Form">Digital Intake Form</option>
+                      <option value="Physical Signed Form">Physical Signed Form</option>
+                      <option value="Priya AI Inbound Verification">Priya AI Inbound Verification</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: '#64748B', marginBottom: '2px', fontWeight: 700 }}>
+                      Consent Notes
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Notes on patient agreement..."
+                      value={editForm.consent_notes}
+                      onChange={e => setEditForm({ ...editForm, consent_notes: e.target.value })}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -2055,63 +2195,111 @@ export default function PatientRegistry() {
               Trigger automated notification to <strong>{selectedPatient.name}</strong> regarding ready report (<strong style={{ color: '#0A2520' }}>{selectedPatient.report_type || 'Diagnostic Report'}</strong>).
             </p>
 
-            <div style={{ padding: '14px', borderRadius: '12px', backgroundColor: '#FAF8F5', border: '1px solid rgba(15, 91, 76, 0.08)', marginBottom: '20px', fontSize: '12.5px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ color: '#64748B' }}>Primary Channel:</span>
-                <strong style={{ color: '#0F5B4C' }}>Priya AI Voice Call & SMS</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ color: '#64748B' }}>Recipient Number:</span>
-                <strong style={{ fontFamily: 'monospace' }}>{selectedPatient.phone}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748B' }}>Consent Status:</span>
-                <strong style={{ color: '#007A65' }}>{selectedPatient.communication_consent?.status || 'Consented'}</strong>
-              </div>
-            </div>
+            {(() => {
+              const consent = selectedPatient.communication_consent || {};
+              const isConsented = (consent.status || '').toLowerCase() === 'consented';
+              const channels = consent.channels || [];
+              const hasVoice = channels.some(c => c.toLowerCase().includes('voice'));
+              const isBlocked = !isConsented || !hasVoice;
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setIsNotifyModalOpen(false)}
-                style={{
-                  flex: 1,
-                  padding: '11px',
-                  borderRadius: '10px',
-                  border: '1px solid #CBD5E1',
-                  backgroundColor: '#FFFFFF',
-                  color: '#64748B',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleNotifySubmit}
-                disabled={actionLoading}
-                style={{
-                  flex: 2,
-                  padding: '11px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: '#0F5B4C',
-                  color: '#FFFFFF',
-                  fontWeight: 800,
-                  fontSize: '13.5px',
-                  cursor: actionLoading ? 'not-allowed' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
-                }}
-              >
-                <Send size={14} />
-                <span>{actionLoading ? 'Dispatching...' : 'Dispatch Notification'}</span>
-              </button>
-            </div>
+              return (
+                <>
+                  <div style={{
+                    padding: '14px',
+                    borderRadius: '12px',
+                    backgroundColor: isBlocked ? '#FFFBEB' : '#FAF8F5',
+                    border: isBlocked ? '1px solid #FDE68A' : '1px solid rgba(15, 91, 76, 0.08)',
+                    marginBottom: '20px',
+                    fontSize: '12.5px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: '#64748B' }}>Primary Channel:</span>
+                      <strong style={{ color: '#0F5B4C' }}>Priya AI Voice Call & SMS</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: '#64748B' }}>Recipient Number:</span>
+                      <strong style={{ fontFamily: 'monospace' }}>{selectedPatient.phone}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: '#64748B' }}>Consent Status:</span>
+                      <strong style={{ color: isConsented ? '#007A65' : '#B45309' }}>{consent.status || 'Pending'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#64748B' }}>Allowed Channels:</span>
+                      <strong style={{ color: '#0A2520' }}>{channels.length > 0 ? channels.join(', ') : 'None'}</strong>
+                    </div>
+                    {isBlocked && (
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #FCD34D', color: '#B45309', fontSize: '11.5px', lineHeight: 1.4 }}>
+                        ⚠️ <strong>Action Required:</strong> {!isConsented ? `Patient communication consent is currently '${consent.status || 'Pending'}'. Explicit agreement is required before voice dispatch.` : `Patient has opted out of 'Voice AI Call'. Update channels to enable calling.`}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsNotifyModalOpen(false)}
+                      style={{
+                        flex: 1,
+                        padding: '11px',
+                        borderRadius: '10px',
+                        border: '1px solid #CBD5E1',
+                        backgroundColor: '#FFFFFF',
+                        color: '#64748B',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    {isBlocked ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsNotifyModalOpen(false);
+                          handleOpenConsent(selectedPatient);
+                        }}
+                        style={{
+                          flex: 2,
+                          padding: '11px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          backgroundColor: '#B45309',
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <ShieldAlert size={14} />
+                        <span>Record Consent First</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleNotifySubmit}
+                        disabled={actionLoading}
+                        style={{
+                          flex: 2,
+                          padding: '11px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          backgroundColor: '#0F5B4C',
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          cursor: actionLoading ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {actionLoading ? 'Dispatching...' : 'Dispatch Notification'}
+                      </button>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

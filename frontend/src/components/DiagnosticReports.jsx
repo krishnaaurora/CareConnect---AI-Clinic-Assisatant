@@ -21,7 +21,10 @@ import {
   Download,
   Printer,
   Sparkles,
-  Check
+  Check,
+  ShieldAlert,
+  MessageSquare,
+  MessageCircle
 } from 'lucide-react';
 import {
   fetchDiagnosticReports,
@@ -29,7 +32,8 @@ import {
   uploadDiagnosticReport,
   updateDiagnosticReportStatus,
   fetchPatients,
-  notifyDiagnosticReport
+  notifyDiagnosticReport,
+  recordPatientConsent
 } from '../api/client';
 
 export default function DiagnosticReports() {
@@ -39,7 +43,11 @@ export default function DiagnosticReports() {
     total_reports: 0,
     ready_count: 0,
     processing_count: 0,
-    calls_triggered: 0
+    calls_dispatched: 0,
+    calls_completed: 0,
+    calls_failed: 0,
+    calls_blocked_consent: 0,
+    ready_to_dispatch_count: 0
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,6 +57,15 @@ export default function DiagnosticReports() {
   // Modals state
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+  const [consentTargetReport, setConsentTargetReport] = useState(null);
+  const [consentForm, setConsentForm] = useState({
+    status: 'Consented',
+    channels: ['Voice AI Call', 'SMS', 'WhatsApp'],
+    source: 'Front Desk Verbal Verification',
+    recorded_by: 'Staff Receptionist',
+    consent_notes: ''
+  });
   const [selectedReport, setSelectedReport] = useState(null);
   const [callingReportId, setCallingReportId] = useState(null);
 
@@ -181,7 +198,49 @@ export default function DiagnosticReports() {
     }
   };
 
-  // Trigger Sarvam Instant Outbound Voice Call (Priya)
+  // Open Consent Modal for a Report's Patient
+  const handleOpenConsentModal = (report) => {
+    setConsentTargetReport(report);
+    const existingConsent = report.communication_consent || {};
+    const existingChannels = existingConsent.channels || [];
+    setConsentForm({
+      status: 'Consented',
+      channels: existingChannels.length > 0 && existingChannels.includes('Voice AI Call')
+        ? [...existingChannels]
+        : ['Voice AI Call', 'SMS', 'WhatsApp'],
+      source: 'Front Desk Verbal Verification',
+      recorded_by: 'Staff Receptionist',
+      consent_notes: `Patient explicitly consented to automated Priya Voice AI report alerts.`
+    });
+    setIsConsentModalOpen(true);
+  };
+
+  // Submit Patient Communication Consent
+  const handleConsentSubmit = async (e) => {
+    e.preventDefault();
+    if (!consentTargetReport || !consentTargetReport.patient_id) return;
+    setSubmitting(true);
+    try {
+      await recordPatientConsent(consentTargetReport.patient_id, consentForm);
+      showToast(`Communication consent recorded as "${consentForm.status}" for ${consentTargetReport.patient_name}!`, true);
+      setIsConsentModalOpen(false);
+      setConsentTargetReport(null);
+      await loadData();
+      if (selectedReport && selectedReport.id === consentTargetReport.id) {
+        setSelectedReport(prev => ({
+          ...prev,
+          communication_consent: {
+            ...consentForm,
+            consented_at: consentForm.status === 'Consented' ? new Date().toISOString() : null
+          }
+        }));
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to record consent', false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
   const handleNotifyPatient = async (reportId) => {
     setCallingReportId(reportId);
     try {
@@ -378,7 +437,7 @@ export default function DiagnosticReports() {
           <div style={{ fontSize: '28px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             {metrics.total_reports}
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Logged diagnostic files</p>
+          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Diagnostic files in registry</p>
         </div>
 
         {/* Card 2: Reports Ready */}
@@ -403,10 +462,12 @@ export default function DiagnosticReports() {
               {metrics.ready_count}
             </span>
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C', backgroundColor: 'rgba(0, 201, 167, 0.2)', padding: '2px 6px', borderRadius: '999px' }}>
-              Auto-Notified
+              {metrics.ready_to_dispatch_count || 0} Eligible
             </span>
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Sarvam outbound call triggered</p>
+          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#64748B' }}>
+            {metrics.calls_blocked_consent > 0 ? `${metrics.calls_blocked_consent} require consent update` : 'All consented'}
+          </p>
         </div>
 
         {/* Card 3: Processing */}
@@ -437,23 +498,33 @@ export default function DiagnosticReports() {
           <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Calls withheld until Ready</p>
         </div>
 
-        {/* Card 4: Sarvam Calls Dispatched */}
+        {/* Card 4: Sarvam Voice Calls Dispatched & Completed */}
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              AI Priya Calls Dispatched
+              AI Priya Telephony (Sarvam)
             </span>
             <PhoneCall size={16} color="#00C9A7" />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
             <span style={{ fontSize: '28px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              {metrics.calls_triggered}
+              {metrics.calls_dispatched || 0}
             </span>
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C', backgroundColor: '#DCFAF3', padding: '2px 6px', borderRadius: '999px' }}>
-              100% Automated
+              {(metrics.calls_completed || 0) > 0 ? `${metrics.calls_completed} Completed` : 'Live Gateway Active'}
             </span>
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Zero manual staff effort</p>
+          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#64748B', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <span>Completed: <strong>{metrics.calls_completed || 0}</strong></span>
+            <span>·</span>
+            <span>Consent Blocked: <strong>{metrics.calls_blocked_consent || 0}</strong></span>
+            {metrics.calls_failed > 0 && (
+              <>
+                <span>·</span>
+                <span style={{ color: '#DC2626' }}>Failed: <strong>{metrics.calls_failed}</strong></span>
+              </>
+            )}
+          </p>
         </div>
       </div>
 
@@ -691,7 +762,7 @@ export default function DiagnosticReports() {
 
                       {/* Column: Voice AI Call Outcome */}
                       <td style={{ padding: '16px 20px' }}>
-                        {(r.sarvam_call?.triggered || r.bolna_call?.triggered) ? (
+                        {r.sarvam_call?.triggered ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{
@@ -700,63 +771,154 @@ export default function DiagnosticReports() {
                                 gap: '4px',
                                 padding: '3px 8px',
                                 borderRadius: '6px',
-                                backgroundColor: (r.sarvam_call?.status === 'COMPLETED' || r.bolna_call?.status === 'COMPLETED') ? '#DCFAF3' : (r.sarvam_call?.status === 'INITIATED') ? '#FEF3C7' : '#F1F5F9',
-                                color: (r.sarvam_call?.status === 'COMPLETED' || r.bolna_call?.status === 'COMPLETED') ? '#007A65' : (r.sarvam_call?.status === 'INITIATED') ? '#B45309' : '#475569',
+                                backgroundColor: r.sarvam_call.status === 'COMPLETED' ? '#DCFAF3' : (r.sarvam_call.status === 'INITIATED' ? '#FEF3C7' : '#FEE2E2'),
+                                color: r.sarvam_call.status === 'COMPLETED' ? '#007A65' : (r.sarvam_call.status === 'INITIATED' ? '#B45309' : '#DC2626'),
                                 fontSize: '11px',
                                 fontWeight: 800
                               }}>
                                 <PhoneCall size={11} />
-                                <span>{r.sarvam_call?.status === 'INITIATED' ? 'Calling...' : (r.sarvam_call?.status === 'COMPLETED' || r.bolna_call?.status === 'COMPLETED') ? 'Priya Notified' : r.sarvam_call?.status || 'Dispatched'}</span>
+                                <span>{r.sarvam_call.status === 'INITIATED' ? 'Calling...' : r.sarvam_call.status === 'COMPLETED' ? 'Priya Notified' : r.sarvam_call.status || 'Dispatched'}</span>
                               </span>
-                              {(r.sarvam_call?.duration || r.bolna_call?.duration) && (
-                                <span style={{ fontSize: '10.5px', color: '#64748B' }}>{r.sarvam_call?.duration || r.bolna_call?.duration}</span>
+                              {r.sarvam_call.duration && (
+                                <span style={{ fontSize: '10.5px', color: '#64748B' }}>{r.sarvam_call.duration}</span>
                               )}
                             </div>
                             <span style={{ fontSize: '11px', color: '#64748B', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {r.sarvam_call?.patient_response || r.sarvam_call?.call_summary || r.bolna_call?.patient_response || 'Notification dispatched'}
+                              {r.sarvam_call.patient_response || r.sarvam_call.call_summary || 'Outbound notification dispatched'}
                             </span>
                           </div>
                         ) : (
-                          <span style={{ fontSize: '11.5px', color: '#94A3B8', fontStyle: 'italic' }}>
-                            {isReady ? 'Ready to notify' : 'Waiting for Ready status'}
-                          </span>
+                          (() => {
+                            const consent = r.communication_consent || {};
+                            const isConsented = (consent.status || '').toLowerCase() === 'consented';
+                            const channels = consent.channels || [];
+                            const hasVoice = channels.some(c => c.toLowerCase().includes('voice'));
+
+                            if (!isConsented) {
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#FEF3C7',
+                                    color: '#B45309',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    width: 'fit-content'
+                                  }}>
+                                    <ShieldAlert size={12} color="#D97706" />
+                                    <span>Consent: {consent.status || 'Pending'}</span>
+                                  </span>
+                                  <span style={{ fontSize: '10.5px', color: '#94A3B8' }}>Voice AI call blocked until consent</span>
+                                </div>
+                              );
+                            }
+
+                            if (!hasVoice) {
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#F1F5F9',
+                                    color: '#475569',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    width: 'fit-content'
+                                  }}>
+                                    <span>Voice Opt-Out</span>
+                                  </span>
+                                  <span style={{ fontSize: '10.5px', color: '#94A3B8' }}>{channels.join(', ') || 'SMS/WhatsApp only'}</span>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <span style={{ fontSize: '11.5px', color: isReady ? '#007A65' : '#94A3B8', fontWeight: isReady ? 600 : 400 }}>
+                                {isReady ? 'Ready for Dispatch' : 'Waiting for Lab sign-off'}
+                              </span>
+                            );
+                          })()
                         )}
                       </td>
 
                       {/* Column 5: Action (Notify Patient & View) */}
                       <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                          {isReady && (
-                            <button
-                              type="button"
-                              onClick={() => handleNotifyPatient(r.id)}
-                              disabled={callingReportId === r.id}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '7px 14px',
-                                borderRadius: '8px',
-                                backgroundColor: '#0F5B4C',
-                                color: '#FFFFFF',
-                                border: 'none',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                cursor: callingReportId === r.id ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.15s ease',
-                                boxShadow: '0 2px 8px rgba(15, 91, 76, 0.18)'
-                              }}
-                              onMouseEnter={e => {
-                                if (callingReportId !== r.id) e.currentTarget.style.backgroundColor = '#007A65';
-                              }}
-                              onMouseLeave={e => {
-                                if (callingReportId !== r.id) e.currentTarget.style.backgroundColor = '#0F5B4C';
-                              }}
-                            >
-                              <PhoneCall size={12} />
-                              <span>{callingReportId === r.id ? 'Calling...' : 'Notify Patient'}</span>
-                            </button>
-                          )}
+                          {isReady && (() => {
+                            const consent = r.communication_consent || {};
+                            const isConsented = (consent.status || '').toLowerCase() === 'consented';
+                            const channels = consent.channels || [];
+                            const hasVoice = channels.some(c => c.toLowerCase().includes('voice'));
+                            const canCall = isConsented && hasVoice;
+
+                            if (!canCall) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenConsentModal(r)}
+                                  title="Patient has not consented to Voice AI calls. Click to record consent."
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '7px 14px',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#FFFBEB',
+                                    color: '#B45309',
+                                    border: '1px solid #FDE68A',
+                                    fontSize: '12px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FEF3C7'}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FFFBEB'}
+                                >
+                                  <ShieldAlert size={12} color="#D97706" />
+                                  <span>Record Consent</span>
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleNotifyPatient(r.id)}
+                                disabled={callingReportId === r.id}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '7px 14px',
+                                  borderRadius: '8px',
+                                  backgroundColor: '#0F5B4C',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  fontSize: '12px',
+                                  fontWeight: 800,
+                                  cursor: callingReportId === r.id ? 'not-allowed' : 'pointer',
+                                  transition: 'all 0.15s ease',
+                                  boxShadow: '0 2px 8px rgba(15, 91, 76, 0.18)'
+                                }}
+                                onMouseEnter={e => {
+                                  if (callingReportId !== r.id) e.currentTarget.style.backgroundColor = '#007A65';
+                                }}
+                                onMouseLeave={e => {
+                                  if (callingReportId !== r.id) e.currentTarget.style.backgroundColor = '#0F5B4C';
+                                }}
+                              >
+                                <PhoneCall size={12} />
+                                <span>{callingReportId === r.id ? 'Calling...' : 'Notify Patient'}</span>
+                              </button>
+                            );
+                          })()}
 
                           <button
                             type="button"
@@ -1126,96 +1288,154 @@ export default function DiagnosticReports() {
 
             {/* Sarvam Voice Agent (Priya) Audit Card */}
             {(() => {
-              const sarvamCall = selectedReport.sarvam_call || selectedReport.bolna_call || {};
-              const callStatus = (sarvamCall.status || '').toUpperCase();
-              const isInitiated = callStatus === 'INITIATED';
-              const isCompleted = callStatus === 'COMPLETED';
-              const isFailed = callStatus === 'FAILED';
-              const isNoAnswer = callStatus === 'NO_ANSWER';
+              const sarvamCall = selectedReport.sarvam_call || null;
+              const consent = selectedReport.communication_consent || {};
+              const isConsented = (consent.status || '').toLowerCase() === 'consented';
+              const channels = consent.channels || [];
+              const hasVoice = channels.some(c => c.toLowerCase().includes('voice'));
 
+              if (sarvamCall && sarvamCall.triggered) {
+                const callStatus = (sarvamCall.status || '').toUpperCase();
+                const isInitiated = callStatus === 'INITIATED';
+                const isCompleted = callStatus === 'COMPLETED';
+                const isFailed = callStatus === 'FAILED';
+                const isNoAnswer = callStatus === 'NO_ANSWER';
+
+                return (
+                  <div style={{
+                    padding: '20px',
+                    borderRadius: '16px',
+                    backgroundColor: isCompleted ? '#EDFDF9' : isInitiated ? '#FEF3C7' : '#FAF8F5',
+                    border: isCompleted ? '1px solid rgba(0, 201, 167, 0.4)' : isInitiated ? '1px solid #FCD34D' : '1px solid #E2E8F0',
+                    marginBottom: '18px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <PhoneCall size={18} color={isCompleted ? '#007A65' : '#0F5B4C'} />
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#0A2520' }}>
+                          Sarvam Voice AI Call (Priya Receptionist)
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        padding: '3px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: isCompleted ? '#DCFAF3' : isInitiated ? '#FEF3C7' : isFailed ? '#FEE2E2' : '#F1F5F9',
+                        color: isCompleted ? '#0F5B4C' : isInitiated ? '#B45309' : isFailed ? '#DC2626' : '#64748B'
+                      }}>
+                        {isInitiated ? 'Calling Patient...' : isCompleted ? 'Call Completed' : isNoAnswer ? 'No Answer' : isFailed ? 'Call Failed' : 'Call Dispatched'}
+                      </span>
+                    </div>
+
+                    <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+                      {sarvamCall.call_summary || 'Outbound call dispatched via Sarvam telephony gateway.'}
+                    </p>
+
+                    {/* Extracted Call Variables Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                      <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Patient Response</div>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                          {sarvamCall.patient_response || 'Pending response'}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Preferred Collection Date</div>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                          {sarvamCall.preferred_collection_date || 'Not specified yet'}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Callback Requested</div>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: sarvamCall.callback_requested ? '#B45309' : '#0A2520', marginTop: '2px' }}>
+                          {sarvamCall.callback_requested ? 'Yes (Reception callback needed)' : 'No'}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Call Duration</div>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
+                          {sarvamCall.duration || '0s'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '11.5px', color: '#64748B' }}>
+                      <div><strong>Agent:</strong> Careconnect Receptionist (v4)</div>
+                      <div><strong>Caller ID:</strong> +918064269783</div>
+                      <div><strong>Recipient:</strong> {selectedReport.masked_phone || selectedReport.patient_phone}</div>
+                      {sarvamCall.attempt_id && (
+                        <div><strong>Attempt ID:</strong> <span style={{ fontFamily: 'monospace' }}>{sarvamCall.attempt_id}</span></div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // No Sarvam Call dispatched yet: Display live patient consent status
               return (
                 <div style={{
-                  padding: '20px',
+                  padding: '16px 20px',
                   borderRadius: '16px',
-                  backgroundColor: isCompleted ? '#EDFDF9' : isInitiated ? '#FEF3C7' : '#FAF8F5',
-                  border: isCompleted ? '1px solid rgba(0, 201, 167, 0.4)' : isInitiated ? '1px solid #FCD34D' : '1px solid #E2E8F0',
+                  backgroundColor: !isConsented ? '#FFFBEB' : !hasVoice ? '#F8FAFC' : '#EDFDF9',
+                  border: !isConsented ? '1px solid #FDE68A' : !hasVoice ? '1px solid #E2E8F0' : '1px solid rgba(0, 201, 167, 0.4)',
                   marginBottom: '18px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <PhoneCall size={18} color={isCompleted ? '#007A65' : '#0F5B4C'} />
-                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#0A2520' }}>
-                        Sarvam Voice AI Call (Priya Receptionist)
+                      <ShieldCheck size={18} color={isConsented && hasVoice ? '#007A65' : '#D97706'} />
+                      <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#0A2520' }}>
+                        Patient Communication Consent Status
                       </span>
                     </div>
                     <span style={{
                       fontSize: '11px',
                       fontWeight: 800,
-                      padding: '3px 10px',
+                      padding: '3px 8px',
                       borderRadius: '6px',
-                      backgroundColor: isCompleted ? '#DCFAF3' : isInitiated ? '#FEF3C7' : isFailed ? '#FEE2E2' : '#F1F5F9',
-                      color: isCompleted ? '#0F5B4C' : isInitiated ? '#B45309' : isFailed ? '#DC2626' : '#64748B'
+                      backgroundColor: isConsented ? '#DCFAF3' : '#FEF3C7',
+                      color: isConsented ? '#0F5B4C' : '#B45309'
                     }}>
-                      {isInitiated ? 'Calling Patient...' : isCompleted ? 'Call Completed' : isNoAnswer ? 'No Answer' : isFailed ? 'Call Failed' : sarvamCall.triggered ? 'Call Dispatched' : 'Ready to Notify'}
+                      {consent.status || 'Pending'}
                     </span>
                   </div>
 
-                  <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
-                    {sarvamCall.call_summary || (selectedReport.status === 'Ready' ? 'Report is ready. Click "Notify Patient" below to initiate Priya AI voice call.' : 'Report is currently processing in lab.')}
+                  <p style={{ margin: '0 0 10px', fontSize: '12.5px', color: '#475569', lineHeight: 1.5 }}>
+                    {!isConsented
+                      ? `Automated voice calls are blocked. Patient '${selectedReport.patient_name}' has communication consent status 'Pending'. Explicit consent is required before dispatch.`
+                      : !hasVoice
+                      ? `Patient is consented to [${channels.join(', ')}], but has not enabled 'Voice AI Call'. Calls will be blocked.`
+                      : `Patient has granted explicit consent for Voice AI calls and SMS notifications. Ready for Priya AI dispatch.`}
                   </p>
 
-                  {/* Extracted Call Variables Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Patient Response</div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
-                        {sarvamCall.patient_response || 'Pending response'}
-                      </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ fontSize: '11.5px', color: '#64748B' }}>
+                      <strong>Allowed Channels:</strong> {channels.length > 0 ? channels.join(', ') : 'None'}
                     </div>
-
-                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Preferred Collection Date</div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
-                        {sarvamCall.preferred_collection_date || 'Not specified yet'}
-                      </div>
-                    </div>
-
-                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Callback Requested</div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: sarvamCall.callback_requested ? '#B45309' : '#0A2520', marginTop: '2px' }}>
-                        {sarvamCall.callback_requested ? 'Yes (Reception callback needed)' : 'No'}
-                      </div>
-                    </div>
-
-                    <div style={{ padding: '8px 12px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
-                      <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Call Duration</div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0A2520', marginTop: '2px' }}>
-                        {sarvamCall.duration || '0s'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {sarvamCall.interaction_transcript && (
-                    <div style={{
-                      padding: '10px 14px',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(0, 201, 167, 0.25)',
-                      fontSize: '12px',
-                      color: '#0A2520',
-                      fontStyle: 'italic',
-                      marginBottom: '10px'
-                    }}>
-                      "{sarvamCall.interaction_transcript}"
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '11.5px', color: '#64748B' }}>
-                    <div><strong>Agent:</strong> Careconnect Receptionist (v4)</div>
-                    <div><strong>Caller ID:</strong> +918064269783</div>
-                    <div><strong>Recipient:</strong> {selectedReport.masked_phone || selectedReport.patient_phone}</div>
-                    {sarvamCall.attempt_id && (
-                      <div><strong>Attempt ID:</strong> <span style={{ fontFamily: 'monospace' }}>{sarvamCall.attempt_id}</span></div>
+                    {(!isConsented || !hasVoice) && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenConsentModal(selectedReport)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #F59E0B',
+                          backgroundColor: '#FFFBEB',
+                          color: '#B45309',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <ShieldAlert size={13} color="#D97706" />
+                        <span>Record / Update Consent</span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1290,30 +1510,63 @@ export default function DiagnosticReports() {
                     <CheckCircle2 size={14} />
                     <span>{submitting ? 'Updating status...' : 'Mark Report as READY'}</span>
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleNotifyPatient(selectedReport.id)}
-                    disabled={callingReportId === selectedReport.id}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      backgroundColor: '#0F5B4C',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '13px',
-                      cursor: callingReportId === selectedReport.id ? 'not-allowed' : 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '7px',
-                      boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
-                    }}
-                  >
-                    <PhoneCall size={14} />
-                    <span>{callingReportId === selectedReport.id ? 'Calling Patient...' : 'Notify Patient via Priya AI'}</span>
-                  </button>
-                )}
+                ) : (() => {
+                  const consent = selectedReport.communication_consent || {};
+                  const isConsented = (consent.status || '').toLowerCase() === 'consented';
+                  const channels = consent.channels || [];
+                  const hasVoice = channels.some(c => c.toLowerCase().includes('voice'));
+                  const canCall = isConsented && hasVoice;
+
+                  if (!canCall) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenConsentModal(selectedReport)}
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: '10px',
+                          border: '1px solid #F59E0B',
+                          backgroundColor: '#FFFBEB',
+                          color: '#B45309',
+                          fontWeight: 800,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '7px'
+                        }}
+                      >
+                        <ShieldAlert size={14} color="#D97706" />
+                        <span>Record Consent to Enable Call</span>
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => handleNotifyPatient(selectedReport.id)}
+                      disabled={callingReportId === selectedReport.id}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        backgroundColor: '#0F5B4C',
+                        color: '#FFFFFF',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        cursor: callingReportId === selectedReport.id ? 'not-allowed' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '7px',
+                        boxShadow: '0 4px 14px rgba(15, 91, 76, 0.25)'
+                      }}
+                    >
+                      <PhoneCall size={14} />
+                      <span>{callingReportId === selectedReport.id ? 'Calling Patient...' : 'Notify Patient via Priya AI'}</span>
+                    </button>
+                  );
+                })()}
               </div>
 
               <button
@@ -1333,6 +1586,226 @@ export default function DiagnosticReports() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: RECORD PATIENT COMMUNICATION CONSENT ── */}
+      {isConsentModalOpen && consentTargetReport && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(10, 37, 32, 0.65)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+          zIndex: 3000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '20px',
+            maxWidth: '520px',
+            width: '100%',
+            padding: '28px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25)',
+            position: 'relative'
+          }}>
+            <button
+              type="button"
+              onClick={() => { setIsConsentModalOpen(false); setConsentTargetReport(null); }}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={22} color="#00C9A7" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  Record Communication Consent
+                </h3>
+                <p style={{ margin: 0, fontSize: '12.5px', color: '#64748B' }}>
+                  {consentTargetReport.patient_name} ({consentTargetReport.patient_id})
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleConsentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#0A2520', marginBottom: '6px' }}>
+                  Consent Status
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {['Consented', 'Pending', 'Revoked'].map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => {
+                        const newChannels = st === 'Revoked' ? [] : (consentForm.channels.length > 0 ? consentForm.channels : ['Voice AI Call', 'SMS', 'WhatsApp']);
+                        setConsentForm({ ...consentForm, status: st, channels: newChannels });
+                      }}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '10px',
+                        border: consentForm.status === st ? '2px solid #00C9A7' : '1px solid #CBD5E1',
+                        backgroundColor: consentForm.status === st ? '#EDFDF9' : '#FFFFFF',
+                        color: consentForm.status === st ? '#0F5B4C' : '#475569',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Authorized Communication Channels */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#0A2520', marginBottom: '6px' }}>
+                  Authorized Communication Channels
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                  {[
+                    { id: 'Voice AI Call', label: 'Voice AI Call', icon: PhoneCall, desc: 'Priya AI Receptionist (+918064269783)' },
+                    { id: 'SMS', label: 'SMS', icon: MessageSquare, desc: 'Direct text SMS notifications' },
+                    { id: 'WhatsApp', label: 'WhatsApp', icon: MessageCircle, desc: 'WhatsApp report delivery & alerts' }
+                  ].map(ch => {
+                    const isChecked = (consentForm.channels || []).includes(ch.id);
+                    const IconComp = ch.icon;
+                    return (
+                      <label
+                        key={ch.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '8px',
+                          padding: '10px',
+                          borderRadius: '10px',
+                          backgroundColor: isChecked ? '#EDFDF9' : '#F8FAFC',
+                          border: isChecked ? '1.5px solid #00C9A7' : '1px solid #CBD5E1',
+                          cursor: consentForm.status === 'Revoked' ? 'not-allowed' : 'pointer',
+                          opacity: consentForm.status === 'Revoked' ? 0.6 : 1
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={consentForm.status === 'Revoked'}
+                          onChange={e => {
+                            const cur = consentForm.channels || [];
+                            const updated = e.target.checked
+                              ? [...cur, ch.id]
+                              : cur.filter(c => c !== ch.id);
+                            setConsentForm({ ...consentForm, channels: updated });
+                          }}
+                          style={{ marginTop: '2px', accentColor: '#00C9A7' }}
+                        />
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#0A2520', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <IconComp size={13} color={isChecked ? '#007A65' : '#64748B'} />
+                            <span>{ch.label}</span>
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
+                            {ch.desc}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+                {consentForm.status === 'Consented' && !(consentForm.channels || []).some(ch => ch.toLowerCase().includes('voice')) && (
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: '#B45309', backgroundColor: '#FEF3C7', padding: '6px 10px', borderRadius: '6px', border: '1px solid #FDE68A' }}>
+                    ⚠️ Note: 'Voice AI Call' is unselected. Automated Priya voice calls will remain blocked until voice consent is granted.
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#0A2520', marginBottom: '6px' }}>
+                  Verification Method / Source
+                </label>
+                <select
+                  value={consentForm.source}
+                  onChange={e => setConsentForm({ ...consentForm, source: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '13px',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                >
+                  <option value="Front Desk Verbal Verification">Front Desk Verbal Verification</option>
+                  <option value="Digital Intake Form">Digital Intake Form</option>
+                  <option value="Physical Signed Form">Physical Signed Form</option>
+                  <option value="Priya AI Inbound Verification">Priya AI Inbound Verification</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#0A2520', marginBottom: '6px' }}>
+                  Audit / Receptionist Notes
+                </label>
+                <textarea
+                  rows={2}
+                  value={consentForm.consent_notes}
+                  onChange={e => setConsentForm({ ...consentForm, consent_notes: e.target.value })}
+                  placeholder="Record verification notes or patient agreement details..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '13px',
+                    fontFamily: 'Inter, sans-serif',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setIsConsentModalOpen(false); setConsentTargetReport(null); }}
+                  style={{
+                    flex: 1,
+                    padding: '11px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    backgroundColor: '#F8FAFC',
+                    color: '#64748B',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    flex: 2,
+                    padding: '11px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    backgroundColor: '#0F5B4C',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    cursor: submitting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {submitting ? 'Recording...' : 'Save Consent'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -16,9 +16,10 @@ class PatientCreateRequest(BaseModel):
     gender: Optional[str] = "Unspecified"
     report_status: str = "Processing"  # Ready, Processing
     report_type: Optional[str] = "General Lab Report"
-    consent_status: Optional[str] = "Consented"
-    consent_channels: Optional[List[str]] = Field(default_factory=lambda: ["Voice AI Call", "SMS", "WhatsApp"])
-    consent_notes: Optional[str] = "Explicit communication consent recorded during intake."
+    consent_status: Optional[str] = "Pending"  # Defaults to Pending until explicit consent granted
+    consent_channels: Optional[List[str]] = None
+    consent_source: Optional[str] = "Clinical Intake Form"
+    consent_notes: Optional[str] = None
     clinical_notes: Optional[str] = None
 
 class PatientUpdateRequest(BaseModel):
@@ -30,6 +31,10 @@ class PatientUpdateRequest(BaseModel):
     report_status: Optional[str] = None
     report_type: Optional[str] = None
     clinical_notes: Optional[str] = None
+    consent_status: Optional[str] = None  # Consented, Pending, Revoked
+    consent_channels: Optional[List[str]] = None
+    consent_source: Optional[str] = None
+    consent_notes: Optional[str] = None
 
 class ConsentRecordRequest(BaseModel):
     status: str  # Consented, Pending, Revoked

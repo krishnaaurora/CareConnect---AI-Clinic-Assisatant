@@ -547,13 +547,7 @@ export async function fetchDiagnosticReports(params = {}) {
         file_name: "Rahul_Sharma_CBC_Report.pdf",
         file_size: "1.4 MB",
         communication_consent: { status: "Consented", channels: ["Voice AI Call", "SMS"], verified: true },
-        sarvam_call: {
-          triggered: true,
-          status: "COMPLETED",
-          call_id: "sarvam-call-89a14d",
-          call_summary: "Automated Priya AI call completed successfully.",
-          patient_response: "Patient confirmed notification received."
-        }
+        sarvam_call: null
       },
       {
         id: "RPT-2002",
@@ -567,11 +561,7 @@ export async function fetchDiagnosticReports(params = {}) {
         file_name: "Priya_Reddy_Lumbar_MRI.pdf",
         file_size: "4.8 MB",
         communication_consent: { status: "Consented", channels: ["Voice AI Call", "SMS", "WhatsApp"], verified: true },
-        sarvam_call: {
-          triggered: false,
-          status: "NOT_READY_PENDING_LAB",
-          call_summary: "Pending lab completion."
-        }
+        sarvam_call: null
       },
       {
         id: "RPT-2003",
@@ -585,13 +575,7 @@ export async function fetchDiagnosticReports(params = {}) {
         file_name: "Arjun_Kumar_Chest_XRay.pdf",
         file_size: "2.1 MB",
         communication_consent: { status: "Consented", channels: ["Voice AI Call", "SMS"], verified: true },
-        sarvam_call: {
-          triggered: true,
-          status: "COMPLETED",
-          call_id: "sarvam-call-c7f201",
-          call_summary: "Automated Priya AI call completed successfully.",
-          patient_response: "Patient acknowledged report pickup."
-        }
+        sarvam_call: null
       }
     ];
   }
@@ -609,7 +593,11 @@ export async function fetchDiagnosticReportMetrics() {
       total_reports: 3,
       ready_count: 2,
       processing_count: 1,
-      calls_triggered: 2
+      calls_dispatched: 0,
+      calls_completed: 0,
+      calls_failed: 0,
+      calls_blocked_consent: 0,
+      ready_to_dispatch_count: 2
     };
   }
 }
