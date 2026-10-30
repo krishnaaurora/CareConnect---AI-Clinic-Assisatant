@@ -567,9 +567,9 @@ export default function DiagnosticReports() {
       {/* Columns: Patient | Report type | Uploaded date | Status | Action */}
       <div style={{
         backgroundColor: '#FFFFFF',
-        borderRadius: '18px',
-        border: '1px solid rgba(15, 91, 76, 0.08)',
-        boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+        borderRadius: '16px',
+        border: '1px solid #E2E8F0',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
         overflow: 'hidden'
       }}>
         <div style={{ overflowX: 'auto' }}>
@@ -581,10 +581,10 @@ export default function DiagnosticReports() {
           }}>
             <thead>
               <tr style={{
-                backgroundColor: '#FAF8F5',
-                borderBottom: '1px solid rgba(15, 91, 76, 0.1)',
-                color: '#0F5B4C',
-                fontSize: '12.5px',
+                backgroundColor: '#F8FAFC',
+                borderBottom: '1px solid #E2E8F0',
+                color: '#475569',
+                fontSize: '11.5px',
                 fontWeight: 800,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'

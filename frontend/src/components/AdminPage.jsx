@@ -24,7 +24,10 @@ import {
   FileText,
   Bot,
   PhoneCall,
-  Sparkles
+  Sparkles,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelLeft
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
 import DoctorManagement from './DoctorManagement';
@@ -46,6 +49,7 @@ export default function AdminPage({ onNavigateHome }) {
     return 'dashboard';
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -194,14 +198,27 @@ export default function AdminPage({ onNavigateHome }) {
             top: 0 !important;
             left: 0 !important;
             bottom: 0 !important;
-            width: 232px !important;
             height: 100vh !important;
             z-index: 90 !important;
+            transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          .admin-sidebar.collapsed {
+            width: 68px !important;
+          }
+          .admin-sidebar:not(.collapsed) {
+            width: 232px !important;
           }
           .admin-main-panel {
+            min-width: 0 !important;
+            transition: margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          .admin-main-panel.sidebar-collapsed {
+            margin-left: 68px !important;
+            width: calc(100% - 68px) !important;
+          }
+          .admin-main-panel:not(.sidebar-collapsed) {
             margin-left: 232px !important;
             width: calc(100% - 232px) !important;
-            min-width: 0 !important;
           }
         }
       `}</style>
@@ -304,9 +321,9 @@ export default function AdminPage({ onNavigateHome }) {
 
       {/* ── Left Sidebar Navigation (Side Nav) ── */}
       <aside 
-        className={`admin-sidebar no-scrollbar ${mobileNavOpen ? 'open' : ''}`}
+        className={`admin-sidebar no-scrollbar ${mobileNavOpen ? 'open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}
         style={{
-          width: '232px',
+          width: isSidebarCollapsed ? '68px' : '232px',
           height: '100vh',
           flexShrink: 0,
           backgroundColor: '#FFFFFF',
@@ -317,7 +334,8 @@ export default function AdminPage({ onNavigateHome }) {
           overflowY: 'auto',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
-          boxShadow: '1px 0 6px rgba(0, 0, 0, 0.02)'
+          boxShadow: '1px 0 6px rgba(0, 0, 0, 0.02)',
+          transition: 'width 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Subtle Sera UI Pattern for Light Sidebar */}
@@ -327,50 +345,112 @@ export default function AdminPage({ onNavigateHome }) {
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* Header Brand */}
           <div style={{ 
-            padding: '14px 14px 10px', 
+            padding: isSidebarCollapsed ? '14px 8px 10px' : '14px 14px 10px', 
             borderBottom: '1px solid #F1F5F9',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '10px',
+            alignItems: isSidebarCollapsed ? 'center' : 'stretch'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <img
-                src={careconnectLogo}
-                alt="CareConnect"
-                style={{ height: '26px', width: 'auto', display: 'block', objectFit: 'contain' }}
-              />
+            {!isSidebarCollapsed ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <img
+                  src={careconnectLogo}
+                  alt="CareConnect"
+                  style={{ height: '26px', width: 'auto', display: 'block', objectFit: 'contain' }}
+                />
 
-              {/* Close button on mobile */}
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(false)}
-                className="admin-mobile-close"
-                style={{
-                  display: mobileNavOpen ? 'flex' : 'none',
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsSidebarCollapsed(true)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '6px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#64748B',
+                      cursor: 'pointer'
+                    }}
+                    title="Collapse sidebar"
+                  >
+                    <PanelLeftClose size={15} />
+                  </button>
+
+                  {/* Close button on mobile */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="admin-mobile-close"
+                    style={{
+                      display: mobileNavOpen ? 'flex' : 'none',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
+                      backgroundColor: '#F1F5F9',
+                      border: 'none',
+                      color: '#475569',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: '#0F5B4C',
+                  color: '#FFFFFF',
+                  display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
-                  backgroundColor: '#F1F5F9',
-                  border: 'none',
-                  color: '#475569',
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={15} />
-              </button>
-            </div>
+                  fontWeight: 900,
+                  fontSize: '12px'
+                }}>
+                  CC
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarCollapsed(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '6px',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    color: '#0F5B4C',
+                    cursor: 'pointer'
+                  }}
+                  title="Expand sidebar"
+                >
+                  <PanelLeftOpen size={15} />
+                </button>
+              </div>
+            )}
 
             {/* Back to Website button */}
             <button
               type="button"
               onClick={onNavigateHome}
+              title="Back to Website"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 10px',
+                gap: isSidebarCollapsed ? '0' : '6px',
+                padding: isSidebarCollapsed ? '8px 0' : '6px 10px',
                 borderRadius: '8px',
                 backgroundColor: '#F8FAFC',
                 color: '#64748B',
@@ -380,7 +460,7 @@ export default function AdminPage({ onNavigateHome }) {
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 width: '100%',
-                justifyContent: 'flex-start'
+                justifyContent: isSidebarCollapsed ? 'center' : 'flex-start'
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.backgroundColor = '#F1F5F9';
@@ -391,27 +471,29 @@ export default function AdminPage({ onNavigateHome }) {
                 e.currentTarget.style.color = '#64748B';
               }}
             >
-              <ArrowLeft size={12} color="#00C9A7" />
-              <span>Back to Website</span>
+              <ArrowLeft size={13} color="#00C9A7" />
+              {!isSidebarCollapsed && <span>Back to Website</span>}
             </button>
           </div>
 
           {/* Navigation Items Section */}
-          <div style={{ padding: '10px 8px 6px' }}>
-            <div style={{
-              fontSize: '10px',
-              fontWeight: 800,
-              color: '#94A3B8',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              padding: '0 8px',
-              marginBottom: '6px',
-              fontFamily: 'Inter, sans-serif'
-            }}>
-              Clinic Console Menu
-            </div>
+          <div style={{ padding: isSidebarCollapsed ? '10px 4px 6px' : '10px 8px 6px' }}>
+            {!isSidebarCollapsed && (
+              <div style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                color: '#94A3B8',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '0 8px',
+                marginBottom: '6px',
+                fontFamily: 'Inter, sans-serif'
+              }}>
+                Clinic Console Menu
+              </div>
+            )}
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = adminTab === item.id;
@@ -421,12 +503,13 @@ export default function AdminPage({ onNavigateHome }) {
                     key={item.id}
                     type="button"
                     onClick={() => handleSelectTab(item.id)}
+                    title={item.label}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
                       width: '100%',
-                      padding: '7px 9px',
+                      padding: isSidebarCollapsed ? '9px 0' : '7px 9px',
                       borderRadius: '8px',
                       border: isActive ? '1px solid rgba(234, 88, 12, 0.35)' : '1px solid transparent',
                       fontSize: '12.5px',
@@ -453,29 +536,31 @@ export default function AdminPage({ onNavigateHome }) {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                       <Icon 
-                        size={16} 
+                        size={17} 
                         strokeWidth={isActive ? 2.4 : 1.8} 
                         color={isActive ? '#EA580C' : '#64748B'}
                         style={{ flexShrink: 0 }}
                       />
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span style={{ 
-                          fontSize: '11px', 
-                          fontWeight: 700, 
-                          color: isActive ? '#EA580C' : '#94A3B8' 
-                        }}>
-                          {item.num}.
-                        </span>
-                        <span style={{
-                          letterSpacing: '-0.01em',
-                          color: isActive ? '#9A3412' : '#475569',
-                          fontWeight: isActive ? 700 : 500,
-                          fontSize: '12.5px'
-                        }}>
-                          {item.label}
-                        </span>
-                      </div>
+                      {!isSidebarCollapsed && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ 
+                            fontSize: '11px', 
+                            fontWeight: 700, 
+                            color: isActive ? '#EA580C' : '#94A3B8' 
+                          }}>
+                            {item.num}.
+                          </span>
+                          <span style={{
+                            letterSpacing: '-0.01em',
+                            color: isActive ? '#9A3412' : '#475569',
+                            fontWeight: isActive ? 700 : 500,
+                            fontSize: '12.5px'
+                          }}>
+                            {item.label}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
@@ -486,57 +571,83 @@ export default function AdminPage({ onNavigateHome }) {
 
         {/* Bottom Part: Priya Assistant Status Card */}
         <div style={{ 
-          padding: '10px 12px', 
+          padding: isSidebarCollapsed ? '10px 6px' : '10px 12px', 
           borderTop: '1px solid #F1F5F9',
           backgroundColor: '#FFFFFF',
           position: 'relative',
           zIndex: 1
         }}>
-          {/* Priya AI Assistant Status */}
-          <div style={{
-            backgroundColor: '#F8FAFC',
-            border: '1px solid #E2E8F0',
-            borderRadius: '9px',
-            padding: '8px 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '6px'
-          }}>
-            <div style={{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              backgroundColor: '#00C9A7',
-              boxShadow: '0 0 6px #00C9A7',
-              animation: 'pulseDotLive 2s ease-in-out infinite',
-              flexShrink: 0
-            }} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C', lineHeight: 1.2 }}>
-                Priya Receptionist
+          {!isSidebarCollapsed ? (
+            <>
+              {/* Priya AI Assistant Status */}
+              <div style={{
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '9px',
+                padding: '8px 10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '6px'
+              }}>
+                <div style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  backgroundColor: '#00C9A7',
+                  boxShadow: '0 0 6px #00C9A7',
+                  animation: 'pulseDotLive 2s ease-in-out infinite',
+                  flexShrink: 0
+                }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F5B4C', lineHeight: 1.2 }}>
+                    Priya Receptionist
+                  </div>
+                  <div style={{ fontSize: '9.5px', color: '#64748B' }}>
+                    Voice Assistant Active
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: '9.5px', color: '#64748B' }}>
-                Voice Assistant Active
-              </div>
-            </div>
-          </div>
 
-          {/* Access Direct Badge */}
-          <div style={{
-            fontSize: '10px',
-            color: '#94A3B8',
-            textAlign: 'center',
-            lineHeight: 1.3
-          }}>
-            Role: <strong style={{ color: '#475569' }}>Clinic Administrator</strong>
-          </div>
+              {/* Access Direct Badge */}
+              <div style={{
+                fontSize: '10px',
+                color: '#94A3B8',
+                textAlign: 'center',
+                lineHeight: 1.3
+              }}>
+                Role: <strong style={{ color: '#475569' }}>Clinic Administrator</strong>
+              </div>
+            </>
+          ) : (
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px 0',
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '8px'
+              }}
+              title="Priya Voice Assistant Active"
+            >
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: '#00C9A7',
+                boxShadow: '0 0 6px #00C9A7',
+                animation: 'pulseDotLive 2s ease-in-out infinite'
+              }} />
+            </div>
+          )}
         </div>
       </aside>
 
       {/* ── Main Content Panel ── */}
       <div 
-        className="admin-main-panel"
+        className={`admin-main-panel ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}
         style={{
           flex: 1,
           display: 'flex',
@@ -560,28 +671,55 @@ export default function AdminPage({ onNavigateHome }) {
           gap: '16px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
         }}>
-          <div style={{ minWidth: 0, flexShrink: 1 }}>
-            <h1 style={{ 
-              fontSize: '20px', 
-              fontWeight: 900, 
-              margin: 0, 
-              color: '#0A2520',
-              fontFamily: 'Plus Jakarta Sans, sans-serif',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2
-            }}>
-              {currentNav.label === 'Dashboard' ? 'Dashboard' : currentNav.label}
-            </h1>
-            <p style={{ 
-              fontSize: '12px', 
-              color: '#64748B', 
-              margin: '2px 0 0',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {currentNav.label === 'Dashboard' ? 'Welcome back to your dashboard' : getTabDescription(adminTab)}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flexShrink: 1 }}>
+            <button
+              type="button"
+              onClick={() => setIsSidebarCollapsed(prev => !prev)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                border: '1px solid #CBD5E1',
+                backgroundColor: '#F8FAFC',
+                color: '#0F5B4C',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDFDF9'; e.currentTarget.style.borderColor = '#00C9A7'; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F8FAFC'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
+              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label="Toggle navigation sidebar"
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            </button>
+
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ 
+                fontSize: '20px', 
+                fontWeight: 900, 
+                margin: 0, 
+                color: '#0A2520',
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2
+              }}>
+                {currentNav.label === 'Dashboard' ? 'Dashboard' : currentNav.label}
+              </h1>
+              <p style={{ 
+                fontSize: '12px', 
+                color: '#64748B', 
+                margin: '2px 0 0',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {currentNav.label === 'Dashboard' ? 'Welcome back to your dashboard' : getTabDescription(adminTab)}
+              </p>
+            </div>
           </div>
 
           {/* Right Group: Pinned in Top Navbar across every section */}

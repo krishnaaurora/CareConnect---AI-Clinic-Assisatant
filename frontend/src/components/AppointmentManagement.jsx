@@ -650,52 +650,52 @@ export default function AppointmentManagement() {
           />
         </div>
 
-        {/* Status Filter Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          {[
-            { id: 'ALL', label: 'All Status' },
-            { id: 'CONFIRMED', label: 'Confirmed' },
-            { id: 'IN_CONSULTATION', label: 'In OPD' },
-            { id: 'PENDING', label: 'Pending' },
-            { id: 'COMPLETED', label: 'Completed' },
-            { id: 'CANCELLED', label: 'Cancelled' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setStatusFilter(tab.id)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: 'none',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                backgroundColor: statusFilter === tab.id ? '#0F5B4C' : '#F1F5F9',
-                color: statusFilter === tab.id ? '#FFFFFF' : '#475569',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Date & Source Dropdowns */}
+        {/* Filter Controls: Status, Date & Source Dropdowns */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Status Selector Dropdown */}
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid #CBD5E1',
+              backgroundColor: '#FFFFFF',
+              fontSize: '12.5px',
+              color: '#0A2520',
+              fontWeight: 600,
+              cursor: 'pointer',
+              outline: 'none',
+              fontFamily: 'Inter, sans-serif',
+              height: '38px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <option value="ALL">All Status</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="IN_CONSULTATION">In OPD</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+
           {/* Date Selector */}
           <select
             value={dateFilter}
             onChange={e => setDateFilter(e.target.value)}
             style={{
-              padding: '7px 10px',
+              padding: '8px 12px',
               borderRadius: '8px',
               border: '1px solid #CBD5E1',
               backgroundColor: '#FFFFFF',
-              fontSize: '12px',
+              fontSize: '12.5px',
               color: '#0A2520',
-              fontWeight: 700,
-              cursor: 'pointer'
+              fontWeight: 600,
+              cursor: 'pointer',
+              outline: 'none',
+              fontFamily: 'Inter, sans-serif',
+              height: '38px',
+              boxSizing: 'border-box'
             }}
           >
             <option value="ALL">All Dates</option>
@@ -708,14 +708,18 @@ export default function AppointmentManagement() {
             value={sourceFilter}
             onChange={e => setSourceFilter(e.target.value)}
             style={{
-              padding: '7px 10px',
+              padding: '8px 12px',
               borderRadius: '8px',
               border: '1px solid #CBD5E1',
               backgroundColor: '#FFFFFF',
-              fontSize: '12px',
+              fontSize: '12.5px',
               color: '#0A2520',
-              fontWeight: 700,
-              cursor: 'pointer'
+              fontWeight: 600,
+              cursor: 'pointer',
+              outline: 'none',
+              fontFamily: 'Inter, sans-serif',
+              height: '38px',
+              boxSizing: 'border-box'
             }}
           >
             <option value="ALL">All Booking Channels</option>

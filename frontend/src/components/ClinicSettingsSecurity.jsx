@@ -261,9 +261,9 @@ export default function ClinicSettingsSecurity() {
       {activeSection === 'general' && (
         <form onSubmit={handleSaveSettings} style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '20px',
-          border: '1px solid rgba(15, 91, 76, 0.1)',
-          boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+          borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
           padding: '28px',
           display: 'flex',
           flexDirection: 'column',
@@ -447,9 +447,9 @@ export default function ClinicSettingsSecurity() {
       {activeSection === 'ai' && (
         <form onSubmit={handleSaveSettings} style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '20px',
-          border: '1px solid rgba(15, 91, 76, 0.1)',
-          boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+          borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
           padding: '28px',
           display: 'flex',
           flexDirection: 'column',
@@ -705,9 +705,9 @@ export default function ClinicSettingsSecurity() {
           {/* Role-Based Permissions Matrix */}
           <div style={{
             backgroundColor: '#FFFFFF',
-            borderRadius: '20px',
-            border: '1px solid rgba(15, 91, 76, 0.1)',
-            boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+            borderRadius: '16px',
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
             padding: '24px'
           }}>
             <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0A2520', margin: '0 0 4px' }}>
@@ -758,9 +758,9 @@ export default function ClinicSettingsSecurity() {
       {activeSection === 'audit' && (
         <div style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '20px',
-          border: '1px solid rgba(15, 91, 76, 0.1)',
-          boxShadow: '0 4px 20px rgba(10, 37, 32, 0.03)',
+          borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
           padding: '24px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
