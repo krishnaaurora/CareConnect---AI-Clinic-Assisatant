@@ -346,3 +346,172 @@ export async function resolveFollowup(followupId, notes = '') {
     return { success: true, message: `Follow-up ${followupId} marked resolved.` };
   }
 }
+
+// ==========================================
+// 8. PATIENT REGISTRY & CONSENT APIs
+// ==========================================
+
+export async function fetchPatients(params = {}) {
+  try {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.report_status && params.report_status !== 'All') query.append('report_status', params.report_status);
+    if (params.consent_status && params.consent_status !== 'All') query.append('consent_status', params.consent_status);
+
+    const url = `${API_BASE_URL}/patients${query.toString() ? `?${query.toString()}` : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch patients');
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.warn('Patients API fallback:', err);
+    return [
+      {
+        id: "PAT-1001",
+        name: "Rahul Sharma",
+        phone: "9876543210",
+        masked_phone: "98XXXXXX10",
+        email: "rahul.sharma@example.com",
+        age: 38,
+        gender: "Male",
+        report_status: "Ready",
+        report_id: "RPT-1001",
+        report_type: "Comprehensive Metabolic Panel",
+        report_updated_at: "2026-10-29T14:30:00Z",
+        communication_consent: {
+          status: "Consented",
+          channels: ["Voice AI Call", "SMS"],
+          consented_at: "2026-10-28T09:30:00Z",
+          recorded_by: "Front Desk Reception",
+          source: "Digital Intake Form",
+          consent_notes: "Patient authorized automated Priya voice calls and SMS alerts for diagnostic updates."
+        },
+        notification_history: [],
+        clinical_notes: "Annual executive health checkup; report analyzed and verified by Dr. Rajesh Sharma."
+      },
+      {
+        id: "PAT-1002",
+        name: "Priya Reddy",
+        phone: "9988776620",
+        masked_phone: "99XXXXXX20",
+        email: "priya.reddy@example.com",
+        age: 29,
+        gender: "Female",
+        report_status: "Processing",
+        report_id: "RPT-1002",
+        report_type: "Thyroid Profile (T3, T4, TSH)",
+        report_updated_at: "2026-10-30T08:15:00Z",
+        communication_consent: {
+          status: "Consented",
+          channels: ["WhatsApp", "Voice AI Call", "SMS"],
+          consented_at: "2026-10-29T11:15:00Z",
+          recorded_by: "Web Intake",
+          source: "Online Verification",
+          consent_notes: "Explicit consent captured during online appointment reservation."
+        },
+        notification_history: [],
+        clinical_notes: "Sample collected at Apollo Clinic lab; automated biochemical assay currently in progress."
+      },
+      {
+        id: "PAT-1003",
+        name: "Arjun Kumar",
+        phone: "9765432130",
+        masked_phone: "97XXXXXX30",
+        email: "arjun.kumar@example.com",
+        age: 45,
+        gender: "Male",
+        report_status: "Ready",
+        report_id: "RPT-1003",
+        report_type: "HbA1c & Fasting Lipid Profile",
+        report_updated_at: "2026-10-29T16:45:00Z",
+        communication_consent: {
+          status: "Consented",
+          channels: ["Voice AI Call", "SMS"],
+          consented_at: "2026-10-27T14:20:00Z",
+          recorded_by: "Front Desk Reception",
+          source: "Verbal Consent at Intake",
+          consent_notes: "Patient confirmed primary phone number for outbound voice notifications."
+        },
+        notification_history: [],
+        clinical_notes: "Diabetic profile review. Dr. Sneha Kulkarni cleared the report for patient delivery."
+      }
+    ];
+  }
+}
+
+export async function fetchPatientMetrics() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/patients/metrics`);
+    if (!res.ok) throw new Error('Failed to fetch patient metrics');
+    const json = await res.json();
+    return json.data;
+  } catch (err) {
+    console.warn('Patient metrics API fallback:', err);
+    return {
+      total_patients: 5,
+      reports_ready: 3,
+      reports_processing: 2,
+      consented_count: 4,
+      pending_consent_count: 1
+    };
+  }
+}
+
+export async function fetchPatientById(patientId) {
+  const res = await fetch(`${API_BASE_URL}/patients/${patientId}`);
+  if (!res.ok) throw new Error(`Failed to fetch patient ${patientId}`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function createPatient(data) {
+  const res = await fetch(`${API_BASE_URL}/patients`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create patient');
+  }
+  return await res.json();
+}
+
+export async function updatePatient(patientId, data) {
+  const res = await fetch(`${API_BASE_URL}/patients/${patientId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update patient');
+  }
+  return await res.json();
+}
+
+export async function recordPatientConsent(patientId, consentData) {
+  const res = await fetch(`${API_BASE_URL}/patients/${patientId}/consent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(consentData)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to record consent');
+  }
+  return await res.json();
+}
+
+export async function notifyPatient(patientId, payload = {}) {
+  const res = await fetch(`${API_BASE_URL}/patients/${patientId}/notify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to notify patient');
+  }
+  return await res.json();
+}

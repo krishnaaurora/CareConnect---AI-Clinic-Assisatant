@@ -19,9 +19,11 @@ import {
   X,
   Radio,
   ChevronRight,
-  Shield
+  Shield,
+  Users
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
+import PatientRegistry from './PatientRegistry';
 
 export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState('dashboard');
@@ -41,10 +43,17 @@ export default function AdminPage({ onNavigateHome }) {
       label: 'Dashboard',
       icon: LayoutDashboard,
       badge: 'Live'
+    },
+    {
+      id: 'patients',
+      num: '2',
+      label: 'Patient Registry',
+      icon: Users,
+      badge: 'New'
     }
   ];
 
-  const currentNav = NAV_ITEMS[0];
+  const currentNav = NAV_ITEMS.find(item => item.id === adminTab) || NAV_ITEMS[0];
 
   return (
     <div style={{ 
@@ -552,7 +561,7 @@ export default function AdminPage({ onNavigateHome }) {
           </div>
         </header>
 
-        {/* ── Active Tab Component View: Dashboard ── */}
+        {/* ── Active Tab Component View ── */}
         <main style={{ 
           maxWidth: '1360px', 
           width: '100%', 
@@ -560,7 +569,8 @@ export default function AdminPage({ onNavigateHome }) {
           padding: '28px 32px 64px',
           boxSizing: 'border-box'
         }}>
-          <ClinicOverview />
+          {adminTab === 'dashboard' && <ClinicOverview onNavigateToPatients={() => setAdminTab('patients')} />}
+          {adminTab === 'patients' && <PatientRegistry />}
         </main>
       </div>
 
