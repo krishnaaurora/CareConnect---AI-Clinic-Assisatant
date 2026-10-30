@@ -13,15 +13,15 @@ class SarvamVoiceClient:
     """
 
     def __init__(self):
-        self.api_key = settings.SARVAM_API_KEY
-        self.org_id = settings.SARVAM_ORG_ID
-        self.workspace_id = settings.SARVAM_WORKSPACE_ID
-        self.base_url = settings.SARVAM_API_BASE_URL.rstrip("/")
-        self.agent_id = settings.SARVAM_AGENT_ID
-        self.agent_version = settings.SARVAM_AGENT_VERSION
-        self.connection_id = settings.SARVAM_CONNECTION_ID
-        self.agent_phone = settings.SARVAM_AGENT_PHONE_NUMBER
-        self.webhook_url = settings.SARVAM_WEBHOOK_URL
+        self.api_key = str(settings.SARVAM_API_KEY or "").strip().strip("'\"")
+        self.org_id = str(settings.SARVAM_ORG_ID or "").strip()
+        self.workspace_id = str(settings.SARVAM_WORKSPACE_ID or "").strip()
+        self.base_url = str(settings.SARVAM_API_BASE_URL or "").strip().rstrip("/")
+        self.agent_id = str(settings.SARVAM_AGENT_ID or "").strip()
+        self.agent_version = int(settings.SARVAM_AGENT_VERSION)
+        self.connection_id = str(settings.SARVAM_CONNECTION_ID or "").strip()
+        self.agent_phone = str(settings.SARVAM_AGENT_PHONE_NUMBER or "").strip()
+        self.webhook_url = str(settings.SARVAM_WEBHOOK_URL or "").strip()
 
     @property
     def outbound_url(self) -> str:
