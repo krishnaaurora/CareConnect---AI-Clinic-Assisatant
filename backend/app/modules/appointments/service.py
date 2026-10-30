@@ -90,6 +90,35 @@ class AppointmentService:
                 "Requested physician schedule requires manual clinic verification. Clinic desk has been alerted for priority callback."
             )
 
+        # Check active status
+        if doctor.get("is_active") is False:
+            return (
+                False,
+                AppointmentStatus.ROUTED_TO_HUMAN_DESK,
+                f"Physician {doctor.get('name')} is currently inactive and not accepting new appointments. Routed to clinic desk."
+            )
+
+        # Check currently on leave
+        if doctor.get("is_on_leave"):
+            note = doctor.get("leave_note") or "On approved leave"
+            return (
+                False,
+                AppointmentStatus.ROUTED_TO_HUMAN_DESK,
+                f"Physician {doctor.get('name')} is currently on leave ({note}). Unable to confirm appointment for {preferred_date}."
+            )
+
+        # Check planned leave records for preferred_date
+        leave_records = doctor.get("leave_records") or []
+        for lr in leave_records:
+            s_date = lr.get("start_date")
+            e_date = lr.get("end_date")
+            if s_date and e_date and s_date <= preferred_date <= e_date:
+                return (
+                    False,
+                    AppointmentStatus.ROUTED_TO_HUMAN_DESK,
+                    f"Physician {doctor.get('name')} is on approved leave from {s_date} to {e_date} ({lr.get('reason')}). Booking cannot be scheduled."
+                )
+
         # Strict conflict check: Prevent double-booking the exact same slot
         conflict_count = await self.repo.count_existing_bookings(
             clinic_code=clinic.get("code", ""),
@@ -163,6 +192,20 @@ class AppointmentService:
                 "availability_summary": f"{matched_doctor['name']} is not available on {day_name} ({date_str}). Consultation days are: {', '.join(available_days)}."
             }
 
+        # Check active status
+        if matched_doctor.get("is_active") is False:
+            return {
+                "doctor_name": matched_doctor["name"],
+                "specialty": matched_doctor.get("specialty", "General"),
+                "clinic_code": clinic_code,
+                "clinic_name": clinic.get("name"),
+                "date": date_str,
+                "is_available": False,
+                "reason": f"{matched_doctor['name']} is currently inactive.",
+                "available_slots": [],
+                "availability_summary": f"{matched_doctor['name']} is currently inactive and not accepting appointments."
+            }
+
         # Check leaves
         if matched_doctor.get("is_on_leave"):
             return {
@@ -172,10 +215,26 @@ class AppointmentService:
                 "clinic_name": clinic.get("name"),
                 "date": date_str,
                 "is_available": False,
-                "reason": f"{matched_doctor['name']} is currently on leave.",
+                "reason": f"{matched_doctor['name']} is currently on leave ({matched_doctor.get('leave_note') or 'Approved Leave'}).",
                 "available_slots": [],
                 "availability_summary": f"{matched_doctor['name']} is on leave and unavailable for booking on {date_str}."
             }
+
+        for lr in matched_doctor.get("leave_records") or []:
+            s_date = lr.get("start_date")
+            e_date = lr.get("end_date")
+            if s_date and e_date and s_date <= date_str <= e_date:
+                return {
+                    "doctor_name": matched_doctor["name"],
+                    "specialty": matched_doctor.get("specialty", "General"),
+                    "clinic_code": clinic_code,
+                    "clinic_name": clinic.get("name"),
+                    "date": date_str,
+                    "is_available": False,
+                    "reason": f"{matched_doctor['name']} is on approved leave from {s_date} to {e_date} ({lr.get('reason')}).",
+                    "available_slots": [],
+                    "availability_summary": f"{matched_doctor['name']} is on approved leave from {s_date} to {e_date} ({lr.get('reason')}) and unavailable for booking on {date_str}."
+                }
 
         # Candidate slots
         candidate_slots = matched_doctor.get("available_slots", ["09:30 AM", "11:00 AM", "02:30 PM", "04:30 PM", "06:00 PM"])
@@ -224,6 +283,9 @@ class AppointmentService:
 
     async def list_all(self):
         return await self.repo.get_recent_appointments(limit=100)
+
+    async def get_by_doctor(self, doctor_name: str, limit: int = 100):
+        return await self.repo.get_appointments_by_doctor(doctor_name, limit=limit)
 
     async def update_status(self, reference_id: str, status: str, notes: str = None):
         appt = await self.repo.get_by_reference(reference_id)

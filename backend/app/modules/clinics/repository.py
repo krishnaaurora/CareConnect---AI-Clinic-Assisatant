@@ -30,15 +30,69 @@ class ClinicRepository:
     async def find_doctor_by_name(self, doctor_name: str) -> Optional[dict]:
         clinic = await self.clinics_col.find_one(
             {"doctors.name": {"$regex": doctor_name, "$options": "i"}},
-            {"_id": 0, "name": 1, "branch": 1, "doctors.$": 1}
+            {"_id": 0, "name": 1, "branch": 1, "code": 1, "doctors.$": 1}
         )
-        return clinic
+        if clinic and clinic.get("doctors"):
+            doc = dict(clinic["doctors"][0])
+            doc["clinic_name"] = clinic.get("name")
+            doc["clinic_code"] = clinic.get("code")
+            doc["branch"] = clinic.get("branch")
+            return doc
+        return None
+
+    async def get_doctor_by_id(self, doctor_id: str) -> Optional[dict]:
+        clinic = await self.clinics_col.find_one(
+            {"doctors.id": doctor_id},
+            {"_id": 0, "name": 1, "branch": 1, "code": 1, "doctors.$": 1}
+        )
+        if clinic and clinic.get("doctors"):
+            doc = dict(clinic["doctors"][0])
+            doc["clinic_name"] = clinic.get("name")
+            doc["clinic_code"] = clinic.get("code")
+            doc["branch"] = clinic.get("branch")
+            return doc
+        return None
 
     async def add_doctor_to_clinic(self, clinic_code: str, doctor_data: dict) -> bool:
         res = await self.clinics_col.update_one(
             {"code": clinic_code},
             {"$push": {"doctors": doctor_data}}
         )
+        return res.modified_count > 0
+
+    async def add_leave_to_doctor(self, clinic_code: str, doctor_id: str, leave_data: dict, is_currently_on_leave: bool = False, leave_note: str = "") -> bool:
+        update_doc = {
+            "$push": {
+                "doctors.$.leave_records": leave_data,
+                "doctors.$.leaves": f"{leave_data.get('start_date')} to {leave_data.get('end_date')} ({leave_data.get('reason')})"
+            }
+        }
+        if is_currently_on_leave:
+            update_doc["$set"] = {
+                "doctors.$.is_on_leave": True,
+                "doctors.$.leave_note": leave_note or leave_data.get("reason", "On approved leave")
+            }
+        res = await self.clinics_col.update_one(
+            {"code": clinic_code, "doctors.id": doctor_id},
+            update_doc
+        )
+        return res.modified_count > 0
+
+    async def cancel_leave_from_doctor(self, clinic_code: str, doctor_id: str, leave_id: str, should_clear_active_leave: bool = True) -> bool:
+        pull_doc = {
+            "$pull": {
+                "doctors.$.leave_records": {"id": leave_id}
+            }
+        }
+        res = await self.clinics_col.update_one(
+            {"code": clinic_code, "doctors.id": doctor_id},
+            pull_doc
+        )
+        if should_clear_active_leave:
+            await self.clinics_col.update_one(
+                {"code": clinic_code, "doctors.id": doctor_id},
+                {"$set": {"doctors.$.is_on_leave": False, "doctors.$.leave_note": ""}}
+            )
         return res.modified_count > 0
 
     async def update_doctor_in_clinic(self, clinic_code: str, doctor_id: str, update_fields: dict) -> bool:

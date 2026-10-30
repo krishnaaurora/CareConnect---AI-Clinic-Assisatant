@@ -27,14 +27,17 @@ async def create_appointment(request: AppointmentCreateRequest):
 @router.get("/patient", response_model=List[dict])
 async def list_appointments(
     phone: Optional[str] = Query(None, description="Filter appointments by patient phone number"),
-    limit: int = Query(25, ge=1, le=100)
+    doctor_name: Optional[str] = Query(None, description="Filter appointments by doctor name"),
+    limit: int = Query(50, ge=1, le=100)
 ):
     """
-    List recent appointments or retrieve a specific patient's appointments by phone.
+    List recent appointments or retrieve a specific patient's appointments by phone or doctor.
     Used by Sarvam Inbound tool 'get_patient_appointments'.
     """
     if phone and phone.strip() and phone.strip() not in ["{phone}", ":phone"]:
         return await service.get_by_phone(phone.strip())
+    if doctor_name and doctor_name.strip() and doctor_name.strip() not in ["{doctor_name}", ":doctor_name"]:
+        return await service.get_by_doctor(doctor_name.strip(), limit=limit)
     return await service.list_all()
 
 @router.get("/check-availability", response_model=dict)

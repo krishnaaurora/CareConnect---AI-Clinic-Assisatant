@@ -37,6 +37,13 @@ class AppointmentRepository:
         cursor = self.collection.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
         return await cursor.to_list(length=limit)
 
+    async def get_appointments_by_doctor(self, doctor_name: str, limit: int = 100) -> List[dict]:
+        cursor = self.collection.find(
+            {"doctor_name": {"$regex": doctor_name, "$options": "i"}},
+            {"_id": 0}
+        ).sort("preferred_date", -1).limit(limit)
+        return await cursor.to_list(length=limit)
+
     async def update_status(self, reference_id: str, status: str, notes: Optional[str] = None) -> bool:
         update_data = {"status": status}
         if notes:

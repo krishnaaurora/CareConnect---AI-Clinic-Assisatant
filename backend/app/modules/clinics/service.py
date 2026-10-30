@@ -31,35 +31,132 @@ class ClinicService:
                 doctors.append(doc_copy)
         return doctors
 
+    async def get_doctor_by_id(self, doctor_id: str) -> Optional[dict]:
+        return await self.repository.get_doctor_by_id(doctor_id)
+
     async def add_doctor(self, clinic_code: str, doctor_req: DoctorCreateRequest) -> dict:
+        clinic = await self.repository.get_clinic_by_code(clinic_code)
+        if not clinic:
+            raise ValueError(f"Clinic with code '{clinic_code}' not found")
+
+        existing_doctors = clinic.get("doctors", [])
+        req_name = doctor_req.name.strip().lower()
+        req_reg = (doctor_req.registration_number or "").strip().lower()
+        req_email = (doctor_req.email or "").strip().lower()
+
+        # Prevent duplicate doctor registrations
+        for d in existing_doctors:
+            if d.get("name", "").strip().lower() == req_name:
+                raise ValueError(f"Physician '{doctor_req.name}' is already registered at {clinic.get('name')}.")
+            if req_reg and (d.get("registration_number") or "").strip().lower() == req_reg:
+                raise ValueError(f"Medical registration number '{doctor_req.registration_number}' is already assigned to {d.get('name')}.")
+            if req_email and (d.get("email") or "").strip().lower() == req_email:
+                raise ValueError(f"Email '{doctor_req.email}' is already in use by {d.get('name')}.")
+
         doc_dict = doctor_req.model_dump()
         doc_dict["id"] = f"doc-{uuid.uuid4().hex[:6]}"
-        if "is_active" not in doc_dict:
+        if "is_active" not in doc_dict or doc_dict["is_active"] is None:
             doc_dict["is_active"] = True
-        if "department" not in doc_dict:
+        if "department" not in doc_dict or not doc_dict["department"]:
             doc_dict["department"] = doc_dict.get("specialty", "General Medicine")
         if "duty_status" not in doc_dict:
             doc_dict["duty_status"] = "Available"
         if "current_room" not in doc_dict:
             doc_dict["current_room"] = "Consultation Room"
-        if "shifts" not in doc_dict:
+        if "shifts" not in doc_dict or not doc_dict["shifts"]:
             doc_dict["shifts"] = ["09:00 AM - 01:00 PM (Morning)", "04:30 PM - 08:00 PM (Evening)"]
-        if "breaks" not in doc_dict:
+        if "breaks" not in doc_dict or not doc_dict["breaks"]:
             doc_dict["breaks"] = ["01:00 PM - 02:00 PM (Lunch)"]
 
         success = await self.repository.add_doctor_to_clinic(clinic_code, doc_dict)
         if not success:
-            raise ValueError(f"Clinic with code {clinic_code} not found")
+            raise ValueError(f"Failed to add doctor to clinic {clinic_code}")
 
         # Audit Log
         await self.repository.add_audit_log(
             action="DOCTOR_ADDED",
             target=f"{doc_dict['name']} ({doc_dict['specialty']})",
-            details=f"Physician added to roster at {clinic_code} with consultation fee ₹{doc_dict.get('consultation_fee', 800)}",
+            details=f"Physician added to roster at {clinic_code} with fee ₹{doc_dict.get('consultation_fee', 700)}",
             clinic_code=clinic_code,
             user="Vikram Sethi (Clinic Admin)"
         )
         return doc_dict
+
+    async def add_doctor_leave(self, clinic_code: str, doctor_id: str, start_date: str, end_date: str, reason: str) -> dict:
+        today_str = datetime.utcnow().strftime("%Y-%m-%d")
+        is_today = start_date <= today_str <= end_date
+        leave_id = f"leave-{uuid.uuid4().hex[:6]}"
+        leave_data = {
+            "id": leave_id,
+            "start_date": start_date,
+            "end_date": end_date,
+            "reason": reason,
+            "created_at": datetime.utcnow().isoformat() + "Z"
+        }
+        success = await self.repository.add_leave_to_doctor(
+            clinic_code=clinic_code,
+            doctor_id=doctor_id,
+            leave_data=leave_data,
+            is_currently_on_leave=is_today,
+            leave_note=reason if is_today else ""
+        )
+        if not success:
+            raise ValueError(f"Doctor {doctor_id} not found in clinic {clinic_code}")
+
+        await self.repository.add_audit_log(
+            action="DOCTOR_LEAVE_APPROVED",
+            target=f"Doctor ID {doctor_id}",
+            details=f"Approved leave from {start_date} to {end_date} for reason: {reason}",
+            clinic_code=clinic_code,
+            user="Vikram Sethi (Clinic Admin)"
+        )
+        return leave_data
+
+    async def cancel_doctor_leave(self, clinic_code: str, doctor_id: str, leave_id: str) -> bool:
+        success = await self.repository.cancel_leave_from_doctor(
+            clinic_code=clinic_code,
+            doctor_id=doctor_id,
+            leave_id=leave_id,
+            should_clear_active_leave=True
+        )
+        if success:
+            await self.repository.add_audit_log(
+                action="DOCTOR_LEAVE_CANCELLED",
+                target=f"Doctor ID {doctor_id}",
+                details=f"Leave {leave_id} cancelled and physician restored to active duty",
+                clinic_code=clinic_code,
+                user="Vikram Sethi (Clinic Admin)"
+            )
+        return success
+
+    async def get_departments(self) -> List[dict]:
+        all_docs = await self.get_all_doctors()
+        dept_map = {}
+        for d in all_docs:
+            dept = d.get("department") or d.get("specialty") or "General Medicine"
+            if dept not in dept_map:
+                dept_map[dept] = {
+                    "department": dept,
+                    "total_doctors": 0,
+                    "active_doctors": 0,
+                    "on_leave": 0,
+                    "doctors": []
+                }
+            dept_map[dept]["total_doctors"] += 1
+            if d.get("is_active", True) is not False and not d.get("is_on_leave", False):
+                dept_map[dept]["active_doctors"] += 1
+            if d.get("is_on_leave", False):
+                dept_map[dept]["on_leave"] += 1
+            dept_map[dept]["doctors"].append({
+                "id": d.get("id"),
+                "name": d.get("name"),
+                "specialty": d.get("specialty"),
+                "clinic_name": d.get("clinic_name"),
+                "clinic_code": d.get("clinic_code"),
+                "is_active": d.get("is_active", True),
+                "is_on_leave": d.get("is_on_leave", False)
+            })
+        return list(dept_map.values())
 
     async def update_doctor(self, clinic_code: str, doctor_id: str, update_req: DoctorUpdateRequest) -> dict:
         fields = {k: v for k, v in update_req.model_dump().items() if v is not None}
@@ -99,13 +196,17 @@ class ClinicService:
         specialty: Optional[str] = None
     ) -> List[dict]:
         all_docs = await self.get_all_doctors()
-        filtered = all_docs
+        # Filter out inactive doctors and doctors currently on approved leave
+        filtered = [
+            d for d in all_docs 
+            if d.get("is_active", True) is not False and not d.get("is_on_leave", False)
+        ]
         if clinic_code and str(clinic_code).strip() and str(clinic_code).strip() not in ["{clinic_code}", ":clinic_code"]:
             filtered = [d for d in filtered if d.get("clinic_code", "").lower() == clinic_code.strip().lower()]
         if day_name and str(day_name).strip() and str(day_name).strip() not in ["{day}", ":day"]:
             filtered = [
                 d for d in filtered
-                if day_name.lower() in [day.lower() for day in d.get("available_days", [])]
+                if day_name.lower() in [day.lower() for day in (d.get("working_days") or d.get("available_days") or [])]
             ]
         if specialty and str(specialty).strip() and str(specialty).strip() not in ["{specialty}", ":specialty"]:
             filtered = [

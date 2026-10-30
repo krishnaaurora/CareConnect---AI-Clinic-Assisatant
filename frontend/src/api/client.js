@@ -126,6 +126,55 @@ export async function fetchDoctorsOnDuty(day) {
   return await res.json();
 }
 
+export async function fetchAllDoctors() {
+  const res = await fetch(`${API_BASE_URL}/clinics/doctors`);
+  if (!res.ok) throw new Error('Failed to fetch doctors roster');
+  return await res.json();
+}
+
+export async function fetchDoctorById(doctorId) {
+  const res = await fetch(`${API_BASE_URL}/clinics/doctors/${doctorId}`);
+  if (!res.ok) throw new Error('Failed to fetch doctor profile');
+  const json = await res.json();
+  return json.data;
+}
+
+export async function fetchDepartments() {
+  const res = await fetch(`${API_BASE_URL}/clinics/departments`);
+  if (!res.ok) throw new Error('Failed to fetch departments roster');
+  return await res.json();
+}
+
+export async function addDoctorLeave(clinicCode, doctorId, leavePayload) {
+  const res = await fetch(`${API_BASE_URL}/clinics/${clinicCode}/doctors/${doctorId}/leaves`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(leavePayload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to submit leave request');
+  }
+  return await res.json();
+}
+
+export async function cancelDoctorLeave(clinicCode, doctorId, leaveId) {
+  const res = await fetch(`${API_BASE_URL}/clinics/${clinicCode}/doctors/${doctorId}/leaves/${leaveId}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to cancel leave');
+  }
+  return await res.json();
+}
+
+export async function fetchDoctorAppointments(doctorName) {
+  const res = await fetch(`${API_BASE_URL}/appointments?doctor_name=${encodeURIComponent(doctorName)}`);
+  if (!res.ok) throw new Error('Failed to fetch doctor appointments');
+  return await res.json();
+}
+
 export async function fetchScheduleConfig(clinicCode = 'CARE-IND-01') {
   const res = await fetch(`${API_BASE_URL}/clinics/${clinicCode}/schedule-config`);
   if (!res.ok) throw new Error('Failed to fetch schedule config');

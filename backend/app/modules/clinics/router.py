@@ -4,6 +4,7 @@ from app.modules.clinics.service import ClinicService
 from app.modules.clinics.models import (
     DoctorCreateRequest, 
     DoctorUpdateRequest, 
+    LeaveRecordRequest,
     ScheduleConfigRequest, 
     BlockSlotRequest
 )
@@ -20,6 +21,19 @@ async def get_clinics():
 async def get_all_doctors():
     """Retrieve list of verified doctors across all clinic branches."""
     return await service.get_all_doctors()
+
+@router.get("/doctors/{doctor_id}", response_model=dict)
+async def get_single_doctor(doctor_id: str):
+    """Retrieve full physician profile by doctor ID."""
+    doc = await service.get_doctor_by_id(doctor_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"Doctor '{doctor_id}' not found.")
+    return {"success": True, "data": doc}
+
+@router.get("/departments", response_model=List[dict])
+async def get_departments_roster():
+    """Retrieve all departments with allocated physicians, total and active counts."""
+    return await service.get_departments()
 
 @router.get("/on-duty", response_model=List[dict])
 @router.get("/doctors/on-duty", response_model=List[dict])
@@ -65,6 +79,31 @@ async def toggle_doctor_active_status(clinic_code: str, doctor_id: str, payload:
         raise HTTPException(status_code=404, detail="Doctor not found or status not changed")
     status_str = "activated" if is_active else "deactivated"
     return {"success": True, "message": f"Doctor {doctor_id} has been {status_str}."}
+
+@router.post("/{clinic_code}/doctors/{doctor_id}/leaves", response_model=dict)
+async def add_doctor_leave(clinic_code: str, doctor_id: str, request: LeaveRecordRequest):
+    """Register planned leave for a doctor and block appointments during that window."""
+    try:
+        leave = await service.add_doctor_leave(
+            clinic_code=clinic_code,
+            doctor_id=doctor_id,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            reason=request.reason
+        )
+        return {"success": True, "data": leave, "message": "Leave recorded successfully."}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to record leave: {str(e)}")
+
+@router.delete("/{clinic_code}/doctors/{doctor_id}/leaves/{leave_id}", response_model=dict)
+async def cancel_doctor_leave(clinic_code: str, doctor_id: str, leave_id: str):
+    """Cancel a planned leave and restore the physician's active availability."""
+    success = await service.cancel_doctor_leave(clinic_code, doctor_id, leave_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Leave '{leave_id}' or doctor '{doctor_id}' not found.")
+    return {"success": True, "message": "Leave cancelled and duty restored."}
 
 @router.get("/schedule", response_model=dict)
 @router.get("/schedule-config", response_model=dict)
