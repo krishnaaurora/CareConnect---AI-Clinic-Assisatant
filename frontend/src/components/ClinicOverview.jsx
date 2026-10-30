@@ -20,7 +20,8 @@ import {
   RefreshCw,
   Check,
   X,
-  Users
+  Users,
+  FileText
 } from 'lucide-react';
 import { 
   fetchAppointmentsOverview, 
@@ -30,7 +31,7 @@ import {
   updateAppointmentStatus 
 } from '../api/client';
 
-export default function ClinicOverview({ onNavigateToPatients }) {
+export default function ClinicOverview({ onNavigateToPatients, onNavigateToReports }) {
   const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'cancellations' | 'doctors' | 'schedule'
   const [overviewData, setOverviewData] = useState(null);
   const [doctors, setDoctors] = useState([]);
@@ -250,6 +251,33 @@ export default function ClinicOverview({ onNavigateToPatients }) {
               >
                 <Users size={16} color="#007A65" />
                 <span>Patient Registry</span>
+              </button>
+            )}
+
+            {onNavigateToReports && (
+              <button
+                type="button"
+                onClick={onNavigateToReports}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  backgroundColor: '#EDFDF9',
+                  color: '#0F5B4C',
+                  border: '1px solid rgba(0, 201, 167, 0.4)',
+                  fontWeight: 700,
+                  fontSize: '13.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#DCFAF3'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#EDFDF9'}
+              >
+                <FileText size={16} color="#007A65" />
+                <span>Diagnostic Reports</span>
               </button>
             )}
 

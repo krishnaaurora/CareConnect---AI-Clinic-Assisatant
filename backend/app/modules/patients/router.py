@@ -120,3 +120,4 @@ async def notify_patient(patient_id: str, payload: PatientNotifyRequest):
         "message": f"Notification dispatched to {patient['name']} via {payload.channel or 'Voice AI Call & SMS'}",
         "data": updated
     }
+

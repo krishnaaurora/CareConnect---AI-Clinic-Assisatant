@@ -16,6 +16,9 @@ class Settings(BaseSettings):
         "*"
     ]
     BOLNA_AGENT_NAME: str = "Priya"
+    BOLNA_API_KEY: str = os.getenv("BOLNA_API_KEY", "bn-1c240980fc0a405686963db482b81604")
+    BOLNA_AGENT_ID: str = os.getenv("BOLNA_AGENT_ID", "007196d3-1535-41f9-9f84-4eae2664cdff")
+    BOLNA_API_BASE_URL: str = "https://api.bolna.ai"
     SUPPORTED_LANGUAGES: list[str] = ["English", "Hindi", "Telugu"]
 
     class Config:

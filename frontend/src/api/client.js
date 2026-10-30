@@ -515,3 +515,134 @@ export async function notifyPatient(patientId, payload = {}) {
   }
   return await res.json();
 }
+
+// ==========================================
+// 9. DIAGNOSTIC REPORTS & AUTOMATIC BOLNA AI CALL APIs
+// ==========================================
+
+export async function fetchDiagnosticReports(params = {}) {
+  try {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.status && params.status !== 'All') query.append('status', params.status);
+    if (params.report_type && params.report_type !== 'All') query.append('report_type', params.report_type);
+
+    const url = `${API_BASE_URL}/diagnostic-reports${query.toString() ? `?${query.toString()}` : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch diagnostic reports');
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.warn('Diagnostic reports API fallback:', err);
+    return [
+      {
+        id: "RPT-2001",
+        patient_id: "PAT-1001",
+        patient_name: "Rahul Sharma",
+        patient_phone: "9876543210",
+        masked_phone: "98XXXXXX10",
+        report_type: "Blood Test",
+        uploaded_date: "Oct 30",
+        status: "Ready",
+        file_name: "Rahul_Sharma_CBC_Report.pdf",
+        file_size: "1.4 MB",
+        communication_consent: { status: "Consented", verified: true },
+        bolna_call: {
+          triggered: true,
+          status: "COMPLETED",
+          execution_id: "bolna-exec-89a14d",
+          outcome_summary: "Automated Priya AI call completed successfully.",
+          patient_response: "Patient confirmed notification received."
+        }
+      },
+      {
+        id: "RPT-2002",
+        patient_id: "PAT-1002",
+        patient_name: "Priya Reddy",
+        patient_phone: "9988776620",
+        masked_phone: "99XXXXXX20",
+        report_type: "MRI",
+        uploaded_date: "Oct 30",
+        status: "Processing",
+        file_name: "Priya_Reddy_Lumbar_MRI.pdf",
+        file_size: "4.8 MB",
+        communication_consent: { status: "Consented", verified: true },
+        bolna_call: {
+          triggered: false,
+          status: "NOT_READY_PENDING_LAB",
+          outcome_summary: "Pending lab completion."
+        }
+      },
+      {
+        id: "RPT-2003",
+        patient_id: "PAT-1003",
+        patient_name: "Arjun Kumar",
+        patient_phone: "9765432130",
+        masked_phone: "97XXXXXX30",
+        report_type: "X-Ray",
+        uploaded_date: "Oct 30",
+        status: "Ready",
+        file_name: "Arjun_Kumar_Chest_XRay.pdf",
+        file_size: "2.1 MB",
+        communication_consent: { status: "Consented", verified: true },
+        bolna_call: {
+          triggered: true,
+          status: "COMPLETED",
+          execution_id: "bolna-exec-c7f201",
+          outcome_summary: "Automated Priya AI call completed successfully.",
+          patient_response: "Patient acknowledged report pickup."
+        }
+      }
+    ];
+  }
+}
+
+export async function fetchDiagnosticReportMetrics() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/diagnostic-reports/metrics`);
+    if (!res.ok) throw new Error('Failed to fetch diagnostic report metrics');
+    const json = await res.json();
+    return json.data;
+  } catch (err) {
+    console.warn('Diagnostic metrics fallback:', err);
+    return {
+      total_reports: 3,
+      ready_count: 2,
+      processing_count: 1,
+      calls_triggered: 2
+    };
+  }
+}
+
+export async function fetchDiagnosticReportById(reportId) {
+  const res = await fetch(`${API_BASE_URL}/diagnostic-reports/${reportId}`);
+  if (!res.ok) throw new Error(`Failed to fetch report ${reportId}`);
+  const json = await res.json();
+  return json.data;
+}
+
+export async function uploadDiagnosticReport(data) {
+  const res = await fetch(`${API_BASE_URL}/diagnostic-reports`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to upload diagnostic report');
+  }
+  return await res.json();
+}
+
+export async function updateDiagnosticReportStatus(reportId, data) {
+  const res = await fetch(`${API_BASE_URL}/diagnostic-reports/${reportId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update report status');
+  }
+  return await res.json();
+}

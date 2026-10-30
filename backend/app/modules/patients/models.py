@@ -41,3 +41,4 @@ class ConsentRecordRequest(BaseModel):
 class PatientNotifyRequest(BaseModel):
     channel: Optional[str] = "Voice AI Call & SMS"
     custom_message: Optional[str] = None
+

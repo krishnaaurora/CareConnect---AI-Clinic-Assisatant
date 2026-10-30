@@ -20,10 +20,12 @@ import {
   Radio,
   ChevronRight,
   Shield,
-  Users
+  Users,
+  FileText
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
 import PatientRegistry from './PatientRegistry';
+import DiagnosticReports from './DiagnosticReports';
 
 export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState('dashboard');
@@ -49,7 +51,14 @@ export default function AdminPage({ onNavigateHome }) {
       num: '2',
       label: 'Patient Registry',
       icon: Users,
-      badge: 'New'
+      badge: 'Directory'
+    },
+    {
+      id: 'diagnostic_reports',
+      num: '3',
+      label: 'Diagnostic Reports',
+      icon: FileText,
+      badge: 'Bolna AI'
     }
   ];
 
@@ -569,8 +578,14 @@ export default function AdminPage({ onNavigateHome }) {
           padding: '28px 32px 64px',
           boxSizing: 'border-box'
         }}>
-          {adminTab === 'dashboard' && <ClinicOverview onNavigateToPatients={() => setAdminTab('patients')} />}
+          {adminTab === 'dashboard' && (
+            <ClinicOverview 
+              onNavigateToPatients={() => setAdminTab('patients')} 
+              onNavigateToReports={() => setAdminTab('diagnostic_reports')} 
+            />
+          )}
           {adminTab === 'patients' && <PatientRegistry />}
+          {adminTab === 'diagnostic_reports' && <DiagnosticReports />}
         </main>
       </div>
 

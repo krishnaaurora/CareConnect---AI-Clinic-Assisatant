@@ -228,3 +228,4 @@ class PatientRepository:
             "consented_count": consented,
             "pending_consent_count": pending_consent
         }
+

@@ -137,3 +137,4 @@ class PatientService:
 
         await self.repo.log_notification(patient_id, log_entry)
         return await self.repo.get_by_id(patient_id)
+

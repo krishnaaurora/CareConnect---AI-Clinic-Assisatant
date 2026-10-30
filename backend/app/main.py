@@ -12,6 +12,7 @@ from app.modules.voice_agent.router import router as voice_router
 from app.modules.enquiries.router import router as enquiries_router
 from app.modules.reports.router import router as reports_router
 from app.modules.patients.router import router as patients_router
+from app.modules.diagnostic_reports.router import router as diagnostic_reports_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("careconnect")
@@ -46,6 +47,7 @@ app.include_router(voice_router, prefix=settings.API_V1_STR)
 app.include_router(enquiries_router, prefix=settings.API_V1_STR)
 app.include_router(reports_router, prefix=settings.API_V1_STR)
 app.include_router(patients_router, prefix=settings.API_V1_STR)
+app.include_router(diagnostic_reports_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
