@@ -2052,6 +2052,8 @@ export default function DoctorManagement() {
                 border: '1px solid #E2E8F0',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
                 overflowX: 'auto',
+                scrollBehavior: 'smooth',
+                WebkitOverflowScrolling: 'touch',
                 padding: '20px'
               }}>
                 <div style={{ minWidth: '950px' }}>
@@ -2236,7 +2238,9 @@ export default function DoctorManagement() {
                 borderRadius: '16px',
                 border: '1px solid #E2E8F0',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-                overflowX: 'auto'
+                overflowX: 'auto',
+                scrollBehavior: 'smooth',
+                WebkitOverflowScrolling: 'touch'
               }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
                   <thead>

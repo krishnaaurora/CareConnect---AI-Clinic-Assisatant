@@ -106,6 +106,11 @@ export default function AdminPage({ onNavigateHome }) {
     setMobileNavOpen(false);
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', `/admin#${tabId}`);
+      if (window.lenis) {
+        window.lenis.scrollTo(0, { immediate: false, duration: 0.5 });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 

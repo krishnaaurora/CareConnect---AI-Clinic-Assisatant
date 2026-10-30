@@ -1,3 +1,5 @@
+@import 'lenis/dist/lenis.css';
+
 :root {
   --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -34,6 +36,10 @@
   
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px -4px rgba(15, 23, 42, 0.05);
   --shadow-card-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 20px 40px -8px rgba(15, 23, 42, 0.08);
+
+  /* Easing curves */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -50,6 +56,28 @@ html {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Lenis Smooth Scroll Rules */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 body {
@@ -59,6 +87,20 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Global Interactive Element Transitions */
+a, button, input, select, textarea {
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hardware Acceleration on Cards & Modals */
+.white-card, .glass-card, .partner-card, [role="dialog"] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Crisp Architectural Micro-Grid Background Canvas */
@@ -88,7 +130,7 @@ h1, h2, h3, h4, .font-heading {
   border: 1px solid var(--border-card);
   border-radius: 24px;
   box-shadow: var(--shadow-card);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
@@ -98,24 +140,32 @@ h1, h2, h3, h4, .font-heading {
   border-color: rgba(0, 135, 108, 0.35);
 }
 
+/* Smooth Scrollable Container Utility */
+.smooth-scroll-panel {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 /* Global Ultra-Clean Scrollbar (eliminates bulky Windows scrollbars) */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(148, 163, 184, 0.35);
   border-radius: 999px;
+  transition: background 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
+  background: rgba(100, 116, 139, 0.65);
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
 }
 
 /* Utility to completely hide scrollbar while preserving smooth scrolling */
@@ -126,4 +176,3 @@ h1, h2, h3, h4, .font-heading {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
