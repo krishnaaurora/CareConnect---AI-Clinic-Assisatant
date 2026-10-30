@@ -1069,17 +1069,18 @@ export default function DoctorManagement() {
                   gap: '8px',
                   padding: '10px 18px',
                   border: 'none',
-                  backgroundColor: 'transparent',
-                  borderBottom: isCurrent ? '3px solid #0F5B4C' : '3px solid transparent',
+                  backgroundColor: isCurrent ? '#FFF7ED' : 'transparent',
+                  borderBottom: isCurrent ? '3px solid #EA580C' : '3px solid transparent',
+                  borderRadius: '8px 8px 0 0',
                   marginBottom: '-3px',
-                  color: isCurrent ? '#0F5B4C' : '#64748B',
+                  color: isCurrent ? '#EA580C' : '#64748B',
                   fontWeight: isCurrent ? 800 : 600,
                   fontSize: '13.5px',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <IconComponent size={16} color={isCurrent ? '#0F5B4C' : '#94A3B8'} />
+                <IconComponent size={16} color={isCurrent ? '#EA580C' : '#94A3B8'} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -1776,7 +1777,7 @@ export default function DoctorManagement() {
                         borderRadius: '7px',
                         border: 'none',
                         backgroundColor: isCurrent ? '#FFFFFF' : 'transparent',
-                        color: isCurrent ? '#0F5B4C' : '#64748B',
+                        color: isCurrent ? '#EA580C' : '#64748B',
                         fontSize: '12.5px',
                         fontWeight: isCurrent ? 800 : 600,
                         cursor: 'pointer',

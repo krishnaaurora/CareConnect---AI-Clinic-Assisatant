@@ -419,13 +419,13 @@ export default function AdminPage({ onNavigateHome }) {
                       width: '100%',
                       padding: '7px 9px',
                       borderRadius: '8px',
-                      border: isActive ? '1px solid rgba(0, 201, 167, 0.35)' : '1px solid transparent',
+                      border: isActive ? '1px solid rgba(234, 88, 12, 0.35)' : '1px solid transparent',
                       fontSize: '12.5px',
                       fontWeight: isActive ? 700 : 500,
                       cursor: 'pointer',
                       textAlign: 'left',
-                      backgroundColor: isActive ? '#EDFDF9' : 'transparent',
-                      color: isActive ? '#0F5B4C' : '#475569',
+                      backgroundColor: isActive ? '#FFF7ED' : 'transparent',
+                      color: isActive ? '#EA580C' : '#475569',
                       transition: 'all 0.15s ease',
                       fontFamily: 'Inter, sans-serif'
                     }}
@@ -446,7 +446,7 @@ export default function AdminPage({ onNavigateHome }) {
                       <Icon 
                         size={16} 
                         strokeWidth={isActive ? 2.4 : 1.8} 
-                        color={isActive ? '#007A65' : '#64748B'}
+                        color={isActive ? '#EA580C' : '#64748B'}
                         style={{ flexShrink: 0 }}
                       />
 
@@ -454,13 +454,13 @@ export default function AdminPage({ onNavigateHome }) {
                         <span style={{ 
                           fontSize: '11px', 
                           fontWeight: 700, 
-                          color: isActive ? '#007A65' : '#94A3B8' 
+                          color: isActive ? '#EA580C' : '#94A3B8' 
                         }}>
                           {item.num}.
                         </span>
                         <span style={{
                           letterSpacing: '-0.01em',
-                          color: isActive ? '#0A2520' : '#475569',
+                          color: isActive ? '#9A3412' : '#475569',
                           fontWeight: isActive ? 700 : 500,
                           fontSize: '12.5px'
                         }}>

@@ -241,9 +241,10 @@ export default function ClinicSettingsSecurity() {
             style={{
               padding: '10px 18px',
               border: 'none',
-              borderBottom: activeSection === tab.id ? '3px solid #00C9A7' : '3px solid transparent',
-              backgroundColor: 'transparent',
-              color: activeSection === tab.id ? '#0A2520' : '#64748B',
+              borderBottom: activeSection === tab.id ? '3px solid #EA580C' : '3px solid transparent',
+              backgroundColor: activeSection === tab.id ? '#FFF7ED' : 'transparent',
+              borderRadius: '8px 8px 0 0',
+              color: activeSection === tab.id ? '#EA580C' : '#64748B',
               fontWeight: activeSection === tab.id ? 800 : 600,
               fontSize: '14px',
               cursor: 'pointer',

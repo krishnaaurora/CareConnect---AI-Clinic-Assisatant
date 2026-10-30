@@ -386,16 +386,17 @@ export default function AICallActivity() {
                 gap: '8px',
                 padding: '10px 18px',
                 border: 'none',
-                borderBottom: isActive ? '2px solid #00C9A7' : '2px solid transparent',
-                backgroundColor: 'transparent',
-                color: isActive ? '#0F5B4C' : '#64748B',
+                borderBottom: isActive ? '2px solid #EA580C' : '2px solid transparent',
+                backgroundColor: isActive ? '#FFF7ED' : 'transparent',
+                borderRadius: '8px 8px 0 0',
+                color: isActive ? '#EA580C' : '#64748B',
                 fontSize: '13px',
                 fontWeight: isActive ? 800 : 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap'
               }}
             >
-              <IconComp size={15} color={isActive ? '#00C9A7' : '#94A3B8'} />
+              <IconComp size={15} color={isActive ? '#EA580C' : '#94A3B8'} />
               <span>{tab.label}</span>
               {tab.isLivePill && (
                 <span style={{
