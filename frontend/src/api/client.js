@@ -406,6 +406,8 @@ export async function fetchPatients(params = {}) {
     if (params.search) query.append('search', params.search);
     if (params.report_status && params.report_status !== 'All') query.append('report_status', params.report_status);
     if (params.consent_status && params.consent_status !== 'All') query.append('consent_status', params.consent_status);
+    if (params.gender && params.gender !== 'All') query.append('gender', params.gender);
+    if (params.blood_group && params.blood_group !== 'All') query.append('blood_group', params.blood_group);
 
     const url = `${API_BASE_URL}/patients${query.toString() ? `?${query.toString()}` : ''}`;
     const res = await fetch(url);
@@ -423,6 +425,13 @@ export async function fetchPatients(params = {}) {
         email: "rahul.sharma@example.com",
         age: 38,
         gender: "Male",
+        blood_group: "O+",
+        address: "#142, 4th Cross, 100ft Road, Indiranagar",
+        city: "Bengaluru",
+        pincode: "560038",
+        emergency_contact_name: "Sunita Sharma",
+        emergency_contact_phone: "+91 98765 43210",
+        emergency_contact_relation: "Spouse",
         report_status: "Ready",
         report_id: "RPT-1001",
         report_type: "Comprehensive Metabolic Panel",
@@ -446,6 +455,13 @@ export async function fetchPatients(params = {}) {
         email: "priya.reddy@example.com",
         age: 29,
         gender: "Female",
+        blood_group: "B+",
+        address: "Flat 302, Green Glen Heights, Koramangala 4th Block",
+        city: "Bengaluru",
+        pincode: "560034",
+        emergency_contact_name: "Vikram Reddy",
+        emergency_contact_phone: "+91 98450 12345",
+        emergency_contact_relation: "Brother",
         report_status: "Processing",
         report_id: "RPT-1002",
         report_type: "Thyroid Profile (T3, T4, TSH)",
@@ -469,6 +485,13 @@ export async function fetchPatients(params = {}) {
         email: "arjun.kumar@example.com",
         age: 45,
         gender: "Male",
+        blood_group: "A+",
+        address: "Villa 12, Sobha Primrose, HSR Layout Sector 2",
+        city: "Bengaluru",
+        pincode: "560102",
+        emergency_contact_name: "Meera Kumar",
+        emergency_contact_phone: "+91 97312 34567",
+        emergency_contact_relation: "Spouse",
         report_status: "Ready",
         report_id: "RPT-1003",
         report_type: "HbA1c & Fasting Lipid Profile",
@@ -511,6 +534,41 @@ export async function fetchPatientById(patientId) {
   if (!res.ok) throw new Error(`Failed to fetch patient ${patientId}`);
   const json = await res.json();
   return json.data;
+}
+
+export async function fetchPatientAppointments(patientId) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/patients/${patientId}/appointments`);
+    if (!res.ok) throw new Error('Failed to fetch patient appointments');
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.warn(`Appointments fetch failed for ${patientId}:`, err);
+    return [];
+  }
+}
+
+export async function fetchPatientReports(patientId) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/patients/${patientId}/reports`);
+    if (!res.ok) throw new Error('Failed to fetch patient diagnostic reports');
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.warn(`Reports fetch failed for ${patientId}:`, err);
+    return [];
+  }
+}
+
+export async function checkPhoneRegistered(phone) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/patients/check-phone/${encodeURIComponent(phone)}`);
+    if (!res.ok) throw new Error('Failed to check phone');
+    return await res.json();
+  } catch (err) {
+    console.warn('Check phone fallback:', err);
+    return { registered: false, patient: null };
+  }
 }
 
 export async function createPatient(data) {

@@ -6,6 +6,7 @@ class CommunicationConsent(BaseModel):
     channels: List[str] = Field(default_factory=lambda: ["Voice AI Call", "SMS", "WhatsApp"])
     consented_at: Optional[str] = None
     recorded_by: Optional[str] = "Front Desk Reception"
+    source: Optional[str] = "Clinical Intake Form"
     consent_notes: Optional[str] = None
 
 class PatientCreateRequest(BaseModel):
@@ -14,6 +15,13 @@ class PatientCreateRequest(BaseModel):
     email: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = "Unspecified"
+    blood_group: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = "Bengaluru"
+    pincode: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relation: Optional[str] = None
     report_status: str = "Processing"  # Ready, Processing
     report_type: Optional[str] = "General Lab Report"
     consent_status: Optional[str] = "Pending"  # Defaults to Pending until explicit consent granted
@@ -28,6 +36,13 @@ class PatientUpdateRequest(BaseModel):
     email: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
+    blood_group: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    pincode: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relation: Optional[str] = None
     report_status: Optional[str] = None
     report_type: Optional[str] = None
     clinical_notes: Optional[str] = None
@@ -46,4 +61,3 @@ class ConsentRecordRequest(BaseModel):
 class PatientNotifyRequest(BaseModel):
     channel: Optional[str] = "Voice AI Call & SMS"
     custom_message: Optional[str] = None
-

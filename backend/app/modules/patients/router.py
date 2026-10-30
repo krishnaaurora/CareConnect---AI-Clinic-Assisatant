@@ -16,13 +16,17 @@ async def list_patients(
     search: Optional[str] = Query(None, description="Search by name, phone, or ID"),
     report_status: Optional[str] = Query(None, description="Filter by report status: Ready, Processing, All"),
     consent_status: Optional[str] = Query(None, description="Filter by consent status: Consented, Pending, Revoked"),
-    limit: int = Query(100, ge=1, le=200)
+    gender: Optional[str] = Query(None, description="Filter by gender: Male, Female, Other, All"),
+    blood_group: Optional[str] = Query(None, description="Filter by blood group: O+, A+, B+, etc."),
+    limit: int = Query(150, ge=1, le=300)
 ):
     """Retrieve filtered list of registered patients."""
     patients = await patient_service.list_patients(
         search=search,
         report_status=report_status,
         consent_status=consent_status,
+        gender=gender,
+        blood_group=blood_group,
         limit=limit
     )
     return {
@@ -40,6 +44,19 @@ async def get_patient_metrics():
         "data": metrics
     }
 
+@router.get("/check-phone/{phone}", response_model=Dict[str, Any])
+async def check_phone_registered(phone: str):
+    """Check if a phone number is already registered in the clinic patient directory."""
+    existing = await patient_service.check_phone_exists(phone)
+    return {
+        "registered": existing is not None,
+        "patient": {
+            "id": existing["id"],
+            "name": existing["name"],
+            "masked_phone": existing.get("masked_phone", phone)
+        } if existing else None
+    }
+
 @router.get("/{patient_id}", response_model=Dict[str, Any])
 async def get_patient_by_id(patient_id: str):
     """Get single patient details by patient ID."""
@@ -54,6 +71,38 @@ async def get_patient_by_id(patient_id: str):
         "data": patient
     }
 
+@router.get("/{patient_id}/appointments", response_model=Dict[str, Any])
+async def get_patient_appointments(patient_id: str):
+    """Retrieve all historical and upcoming appointments for a patient from appointments collection."""
+    patient = await patient_service.get_patient(patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient {patient_id} not found"
+        )
+    appointments = await patient_service.get_patient_appointments(patient_id)
+    return {
+        "success": True,
+        "count": len(appointments),
+        "data": appointments
+    }
+
+@router.get("/{patient_id}/reports", response_model=Dict[str, Any])
+async def get_patient_diagnostic_reports(patient_id: str):
+    """Retrieve all diagnostic laboratory and imaging reports for a patient from diagnostic_reports collection."""
+    patient = await patient_service.get_patient(patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient {patient_id} not found"
+        )
+    reports = await patient_service.get_patient_reports(patient_id)
+    return {
+        "success": True,
+        "count": len(reports),
+        "data": reports
+    }
+
 @router.post("", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
 async def create_patient(payload: PatientCreateRequest):
     """Register a new patient into the registry."""
@@ -62,12 +111,15 @@ async def create_patient(payload: PatientCreateRequest):
     if not payload.phone.strip():
         raise HTTPException(status_code=400, detail="Patient phone number is required")
 
-    created = await patient_service.create_patient(payload)
-    return {
-        "success": True,
-        "message": f"Patient {created['name']} registered successfully",
-        "data": created
-    }
+    try:
+        created = await patient_service.create_patient(payload)
+        return {
+            "success": True,
+            "message": f"Patient {created['name']} registered successfully with ID {created['id']}",
+            "data": created
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
 
 @router.put("/{patient_id}", response_model=Dict[str, Any])
 async def update_patient(patient_id: str, payload: PatientUpdateRequest):
@@ -136,4 +188,3 @@ async def notify_patient(patient_id: str, payload: PatientNotifyRequest):
         "message": f"Notification dispatched to {patient['name']} via {payload.channel or 'Voice AI Call & SMS'}",
         "data": updated
     }
-

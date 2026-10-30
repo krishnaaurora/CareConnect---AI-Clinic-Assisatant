@@ -28,9 +28,11 @@ class PatientService:
         search: Optional[str] = None, 
         report_status: Optional[str] = None, 
         consent_status: Optional[str] = None,
-        limit: int = 100
+        gender: Optional[str] = None,
+        blood_group: Optional[str] = None,
+        limit: int = 150
     ) -> List[dict]:
-        return await self.repo.get_all(search, report_status, consent_status, limit)
+        return await self.repo.get_all(search, report_status, consent_status, gender, blood_group, limit)
 
     async def get_patient(self, patient_id: str) -> Optional[dict]:
         return await self.repo.get_by_id(patient_id)
@@ -38,9 +40,21 @@ class PatientService:
     async def get_metrics(self) -> Dict[str, int]:
         return await self.repo.get_summary_metrics()
 
+    async def check_phone_exists(self, phone: str) -> Optional[dict]:
+        return await self.repo.get_by_phone(phone)
+
     async def create_patient(self, req: PatientCreateRequest) -> dict:
         now_iso = datetime.utcnow().isoformat() + "Z"
-        patient_code = f"PAT-{str(uuid.uuid4())[:4].upper()}"
+        
+        # Check duplicate by phone
+        existing_phone = await self.repo.get_by_phone(req.phone)
+        if existing_phone:
+            raise ValueError(
+                f"Patient with phone {req.phone} is already registered as '{existing_phone.get('name')}' ({existing_phone.get('id')}). Duplicate registrations are prevented."
+            )
+
+        # Generate unique sequential ID
+        patient_code = await self.repo.get_next_patient_id()
         report_code = f"RPT-{str(uuid.uuid4())[:4].upper()}"
 
         masked = mask_phone_number(req.phone)
@@ -69,6 +83,13 @@ class PatientService:
             "email": req.email.strip() if req.email else None,
             "age": req.age,
             "gender": req.gender or "Unspecified",
+            "blood_group": req.blood_group.strip().upper() if req.blood_group else "O+",
+            "address": req.address.strip() if req.address else "",
+            "city": req.city.strip() if req.city else "Bengaluru",
+            "pincode": req.pincode.strip() if req.pincode else "",
+            "emergency_contact_name": req.emergency_contact_name.strip() if req.emergency_contact_name else "",
+            "emergency_contact_phone": req.emergency_contact_phone.strip() if req.emergency_contact_phone else "",
+            "emergency_contact_relation": req.emergency_contact_relation.strip() if req.emergency_contact_relation else "Family",
             "report_status": req.report_status or "Processing",
             "report_id": report_code,
             "report_type": req.report_type or "General Lab Report",
@@ -99,6 +120,20 @@ class PatientService:
             updates["age"] = req.age
         if req.gender is not None:
             updates["gender"] = req.gender
+        if req.blood_group is not None:
+            updates["blood_group"] = req.blood_group.strip().upper()
+        if req.address is not None:
+            updates["address"] = req.address.strip()
+        if req.city is not None:
+            updates["city"] = req.city.strip()
+        if req.pincode is not None:
+            updates["pincode"] = req.pincode.strip()
+        if req.emergency_contact_name is not None:
+            updates["emergency_contact_name"] = req.emergency_contact_name.strip()
+        if req.emergency_contact_phone is not None:
+            updates["emergency_contact_phone"] = req.emergency_contact_phone.strip()
+        if req.emergency_contact_relation is not None:
+            updates["emergency_contact_relation"] = req.emergency_contact_relation.strip()
         if req.report_status is not None:
             updates["report_status"] = req.report_status
             updates["report_updated_at"] = datetime.utcnow().isoformat() + "Z"
@@ -190,3 +225,16 @@ class PatientService:
         await self.repo.log_notification(patient_id, log_entry)
         return await self.repo.get_by_id(patient_id)
 
+    async def get_patient_appointments(self, patient_id: str) -> List[dict]:
+        """Retrieve all historical and upcoming appointments for patient."""
+        patient = await self.repo.get_by_id(patient_id)
+        if not patient:
+            return []
+        return await self.repo.get_patient_appointments(patient)
+
+    async def get_patient_reports(self, patient_id: str) -> List[dict]:
+        """Retrieve all diagnostic laboratory and imaging reports for patient."""
+        patient = await self.repo.get_by_id(patient_id)
+        if not patient:
+            return []
+        return await self.repo.get_patient_diagnostic_reports(patient)
