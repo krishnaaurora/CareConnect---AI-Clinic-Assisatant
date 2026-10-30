@@ -58,9 +58,23 @@ async def toggle_doctor_active_status(clinic_code: str, doctor_id: str, payload:
     status_str = "activated" if is_active else "deactivated"
     return {"success": True, "message": f"Doctor {doctor_id} has been {status_str}."}
 
+@router.get("/schedule", response_model=dict)
+@router.get("/schedule-config", response_model=dict)
+async def get_clinic_schedule_query(clinic_code: Optional[str] = Query(None, description="Clinic code (e.g. CARE-IND-01)")):
+    """
+    Retrieve clinic schedule, operating days, opening/closing hours, and slot info.
+    Called via GET /api/v1/clinics/schedule or /api/v1/clinics/schedule-config.
+    """
+    config = await service.get_schedule_config(clinic_code)
+    return {"success": True, "data": config}
+
+@router.get("/{clinic_code}/schedule", response_model=dict)
 @router.get("/{clinic_code}/schedule-config", response_model=dict)
-async def get_clinic_schedule_config(clinic_code: str):
-    """Retrieve clinic opening/closing hours, slot duration, and blocked slots."""
+async def get_clinic_schedule_path(clinic_code: str):
+    """
+    Retrieve clinic opening/closing hours, operating days, and blocked slots by clinic code.
+    Called via GET /api/v1/clinics/{clinic_code}/schedule or /api/v1/clinics/{clinic_code}/schedule-config.
+    """
     config = await service.get_schedule_config(clinic_code)
     return {"success": True, "data": config}
 

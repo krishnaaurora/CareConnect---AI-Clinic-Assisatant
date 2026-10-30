@@ -77,25 +77,74 @@ class ClinicRepository:
         )
         return res.modified_count > 0
 
-    async def get_schedule_config(self, clinic_code: str) -> dict:
-        clinic = await self.clinics_col.find_one(
-            {"code": clinic_code}, 
-            {"_id": 0, "schedule_config": 1, "blocked_slots": 1, "timings": 1}
-        )
+    async def get_schedule_config(self, clinic_code: Optional[str] = None) -> dict:
+        clinic = None
+        if clinic_code and str(clinic_code).strip() and str(clinic_code).strip() not in ["{clinic_code}", ":clinic_code"]:
+            clean_code = str(clinic_code).strip()
+            # Try case-insensitive code match
+            clinic = await self.clinics_col.find_one(
+                {"code": {"$regex": f"^{clean_code}$", "$options": "i"}},
+                {"_id": 0}
+            )
+            # Try name match if code not found
+            if not clinic:
+                clinic = await self.clinics_col.find_one(
+                    {"name": {"$regex": clean_code, "$options": "i"}},
+                    {"_id": 0}
+                )
+
+        # Fallback to primary clinic if not found or no code provided
+        if not clinic:
+            clinic = await self.clinics_col.find_one({}, {"_id": 0})
+
         if not clinic:
             return {
+                "clinic_code": "CARE-IND-01",
+                "clinic_name": "Apollo Clinic & Diagnostics Prime",
+                "branch": "Indiranagar, Bengaluru",
+                "operating_days": "Monday - Saturday",
                 "opening_time": "08:30 AM",
                 "closing_time": "08:30 PM",
+                "timings": "08:00 AM - 09:00 PM (Mon-Sat)",
                 "slot_duration": "20 mins",
                 "buffer_time": "5 mins",
+                "emergency_available": False,
+                "schedule_summary": "Open Monday to Saturday from 08:30 AM to 08:30 PM. Closed on Sundays. Consultations are available in 20-minute slots.",
                 "blocked_slots": []
             }
+
         cfg = clinic.get("schedule_config", {})
+        open_time = cfg.get("opening_time", "08:30 AM")
+        close_time = cfg.get("closing_time", "08:30 PM")
+        slot_dur = cfg.get("slot_duration", "20 mins")
+        buffer_t = cfg.get("buffer_time", "5 mins")
+        timings = clinic.get("timings", f"{open_time} - {close_time} (Mon-Sat)")
+        clinic_name = clinic.get("name", "Apollo Clinic & Diagnostics Prime")
+        branch = clinic.get("branch", "Bengaluru")
+        code = clinic.get("code", "CARE-IND-01")
+
+        # Determine operating days from timings or schedule
+        operating_days = "Monday - Saturday"
+        if "mon-sat" in timings.lower() or "monday - saturday" in timings.lower():
+            operating_days = "Monday - Saturday"
+        elif "mon-fri" in timings.lower() or "monday - friday" in timings.lower():
+            operating_days = "Monday - Friday"
+        elif "all days" in timings.lower() or "daily" in timings.lower() or "mon-sun" in timings.lower():
+            operating_days = "Monday - Sunday (All Days)"
+
         return {
-            "opening_time": cfg.get("opening_time", "08:30 AM"),
-            "closing_time": cfg.get("closing_time", "08:30 PM"),
-            "slot_duration": cfg.get("slot_duration", "20 mins"),
-            "buffer_time": cfg.get("buffer_time", "5 mins"),
+            "clinic_code": code,
+            "clinic_name": clinic_name,
+            "branch": branch,
+            "phone": clinic.get("phone", "+91 80 4125 7800"),
+            "operating_days": operating_days,
+            "opening_time": open_time,
+            "closing_time": close_time,
+            "timings": timings,
+            "slot_duration": slot_dur,
+            "buffer_time": buffer_t,
+            "emergency_available": clinic.get("emergency_available", False),
+            "schedule_summary": f"{clinic_name} ({branch}) is open {operating_days} from {open_time} to {close_time}. Consultations are scheduled in {slot_dur} slots.",
             "blocked_slots": clinic.get("blocked_slots", [])
         }
 

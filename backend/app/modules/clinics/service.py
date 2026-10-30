@@ -101,7 +101,7 @@ class ClinicService:
             if day_name.lower() in [day.lower() for day in d.get("available_days", [])]
         ]
 
-    async def get_schedule_config(self, clinic_code: str) -> dict:
+    async def get_schedule_config(self, clinic_code: Optional[str] = None) -> dict:
         return await self.repository.get_schedule_config(clinic_code)
 
     async def update_schedule_config(self, clinic_code: str, config_req: ScheduleConfigRequest) -> dict:
