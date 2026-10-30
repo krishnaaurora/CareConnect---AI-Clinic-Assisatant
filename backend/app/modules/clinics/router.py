@@ -22,9 +22,17 @@ async def get_all_doctors():
     return await service.get_all_doctors()
 
 @router.get("/on-duty", response_model=List[dict])
-async def get_doctors_on_duty(day: Optional[str] = Query(None, description="Day of the week (e.g. Wednesday)")):
-    """Retrieve doctors currently on duty for a given day."""
-    return await service.get_doctors_on_duty(day)
+@router.get("/doctors/on-duty", response_model=List[dict])
+async def get_doctors_on_duty(
+    day: Optional[str] = Query(None, description="Day of the week (e.g. Wednesday)"),
+    clinic_code: Optional[str] = Query(None, description="Clinic code (e.g. CARE-IND-01)"),
+    specialty: Optional[str] = Query(None, description="Specialty or department filter")
+):
+    """
+    Retrieve doctors on duty.
+    Used by Sarvam Inbound tool 'get_doctors_on_duty'.
+    """
+    return await service.get_doctors_on_duty(day_name=day, clinic_code=clinic_code, specialty=specialty)
 
 @router.post("/{clinic_code}/doctors", response_model=dict)
 async def add_doctor_to_clinic(clinic_code: str, request: DoctorCreateRequest):

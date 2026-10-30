@@ -16,7 +16,12 @@ class AppointmentRepository:
         return await self.collection.find_one({"reference_id": reference_id}, {"_id": 0})
 
     async def get_appointments_by_phone(self, phone: str) -> List[dict]:
-        cursor = self.collection.find({"phone": phone}, {"_id": 0}).sort("created_at", -1)
+        clean_digits = "".join(filter(str.isdigit, str(phone)))
+        query: dict = {"$or": [{"phone": phone}]}
+        if len(clean_digits) >= 10:
+            last10 = clean_digits[-10:]
+            query["$or"].append({"phone": {"$regex": last10}})
+        cursor = self.collection.find(query, {"_id": 0}).sort("created_at", -1)
         return await cursor.to_list(length=20)
 
     async def count_existing_bookings(self, clinic_code: str, doctor_name: str, preferred_date: str, preferred_time: str) -> int:

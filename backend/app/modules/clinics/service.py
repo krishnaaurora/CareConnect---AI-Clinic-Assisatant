@@ -92,14 +92,27 @@ class ClinicService:
             )
         return success
 
-    async def get_doctors_on_duty(self, day_name: Optional[str] = None) -> List[dict]:
+    async def get_doctors_on_duty(
+        self,
+        day_name: Optional[str] = None,
+        clinic_code: Optional[str] = None,
+        specialty: Optional[str] = None
+    ) -> List[dict]:
         all_docs = await self.get_all_doctors()
-        if not day_name:
-            return all_docs
-        return [
-            d for d in all_docs
-            if day_name.lower() in [day.lower() for day in d.get("available_days", [])]
-        ]
+        filtered = all_docs
+        if clinic_code and str(clinic_code).strip() and str(clinic_code).strip() not in ["{clinic_code}", ":clinic_code"]:
+            filtered = [d for d in filtered if d.get("clinic_code", "").lower() == clinic_code.strip().lower()]
+        if day_name and str(day_name).strip() and str(day_name).strip() not in ["{day}", ":day"]:
+            filtered = [
+                d for d in filtered
+                if day_name.lower() in [day.lower() for day in d.get("available_days", [])]
+            ]
+        if specialty and str(specialty).strip() and str(specialty).strip() not in ["{specialty}", ":specialty"]:
+            filtered = [
+                d for d in filtered
+                if specialty.lower() in d.get("specialty", "").lower() or specialty.lower() in d.get("department", "").lower()
+            ]
+        return filtered
 
     async def get_schedule_config(self, clinic_code: Optional[str] = None) -> dict:
         return await self.repository.get_schedule_config(clinic_code)

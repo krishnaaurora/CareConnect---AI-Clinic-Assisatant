@@ -115,6 +115,113 @@ class AppointmentService:
     async def get_by_reference(self, reference_id: str):
         return await self.repo.get_by_reference(reference_id)
 
+    async def get_by_phone(self, phone: str):
+        return await self.repo.get_appointments_by_phone(phone)
+
+    async def check_doctor_availability(
+        self,
+        doctor_name: str,
+        date_str: str,
+        clinic_code: str = "CARE-IND-01"
+    ) -> Dict[str, Any]:
+        clinic = await self.clinic_repo.get_clinic_by_code(clinic_code)
+        if not clinic:
+            raise ValueError(f"Clinic '{clinic_code}' not found.")
+
+        doctors = clinic.get("doctors", [])
+        matched_doctor = None
+        for d in doctors:
+            if doctor_name.lower() in d.get("name", "").lower() or d.get("name", "").lower() in doctor_name.lower():
+                matched_doctor = d
+                break
+
+        if not matched_doctor:
+            available_names = [d.get("name") for d in doctors if d.get("is_active", True)]
+            raise ValueError(f"Doctor '{doctor_name}' not found at {clinic.get('name')}. Available doctors: {', '.join(available_names)}.")
+
+        # Validate day of week
+        day_name = None
+        try:
+            dt = datetime.strptime(date_str.strip(), "%Y-%m-%d")
+            day_name = dt.strftime("%A")
+        except Exception:
+            pass
+
+        available_days = matched_doctor.get("available_days", [])
+        if day_name and available_days and day_name not in available_days:
+            return {
+                "doctor_name": matched_doctor["name"],
+                "specialty": matched_doctor.get("specialty", "General"),
+                "clinic_code": clinic_code,
+                "clinic_name": clinic.get("name"),
+                "date": date_str,
+                "day_of_week": day_name,
+                "is_available": False,
+                "reason": f"{matched_doctor['name']} does not consult on {day_name}s.",
+                "available_days": available_days,
+                "available_slots": [],
+                "availability_summary": f"{matched_doctor['name']} is not available on {day_name} ({date_str}). Consultation days are: {', '.join(available_days)}."
+            }
+
+        # Check leaves
+        if matched_doctor.get("is_on_leave"):
+            return {
+                "doctor_name": matched_doctor["name"],
+                "specialty": matched_doctor.get("specialty", "General"),
+                "clinic_code": clinic_code,
+                "clinic_name": clinic.get("name"),
+                "date": date_str,
+                "is_available": False,
+                "reason": f"{matched_doctor['name']} is currently on leave.",
+                "available_slots": [],
+                "availability_summary": f"{matched_doctor['name']} is on leave and unavailable for booking on {date_str}."
+            }
+
+        # Candidate slots
+        candidate_slots = matched_doctor.get("available_slots", ["09:30 AM", "11:00 AM", "02:30 PM", "04:30 PM", "06:00 PM"])
+
+        # Check existing confirmed bookings in appointments collection
+        existing_bookings = await self.repo.collection.find({
+            "clinic_code": clinic_code,
+            "doctor_name": matched_doctor["name"],
+            "preferred_date": date_str,
+            "status": "VERIFIED_CONFIRMED"
+        }, {"_id": 0, "preferred_time": 1}).to_list(100)
+        booked_times = [b.get("preferred_time") for b in existing_bookings]
+
+        # Check blocked slots in clinic
+        blocked_slots = clinic.get("blocked_slots", [])
+        blocked_times = [
+            b.get("time_slot") for b in blocked_slots
+            if b.get("doctor_name", "").lower() == matched_doctor["name"].lower() and b.get("date") == date_str
+        ]
+
+        # Available slots = candidates - booked - blocked
+        unavailable = set(booked_times + blocked_times)
+        available = [s for s in candidate_slots if s not in unavailable]
+
+        summary = (
+            f"{matched_doctor['name']} ({matched_doctor.get('specialty')}) has {len(available)} available slots on {day_name or ''} {date_str}: {', '.join(available)}."
+            if available else
+            f"All slots for {matched_doctor['name']} on {date_str} are fully booked."
+        )
+
+        return {
+            "doctor_name": matched_doctor["name"],
+            "specialty": matched_doctor.get("specialty", "General"),
+            "clinic_code": clinic_code,
+            "clinic_name": clinic.get("name"),
+            "date": date_str,
+            "day_of_week": day_name,
+            "is_available": len(available) > 0,
+            "consultation_fee": matched_doctor.get("consultation_fee", 800),
+            "consultation_duration": matched_doctor.get("consultation_duration", "20 mins"),
+            "available_slots": available,
+            "booked_slots": booked_times,
+            "blocked_slots": blocked_times,
+            "availability_summary": summary
+        }
+
     async def list_all(self):
         return await self.repo.get_recent_appointments(limit=100)
 

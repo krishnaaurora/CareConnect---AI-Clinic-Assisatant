@@ -24,32 +24,59 @@ async def create_appointment(request: AppointmentCreateRequest):
         raise HTTPException(status_code=500, detail=f"Failed to process appointment: {str(e)}")
 
 @router.get("", response_model=List[dict])
-async def list_appointments(limit: int = Query(25, ge=1, le=100)):
-    """List recent appointments stored in MongoDB."""
+@router.get("/patient", response_model=List[dict])
+async def list_appointments(
+    phone: Optional[str] = Query(None, description="Filter appointments by patient phone number"),
+    limit: int = Query(25, ge=1, le=100)
+):
+    """
+    List recent appointments or retrieve a specific patient's appointments by phone.
+    Used by Sarvam Inbound tool 'get_patient_appointments'.
+    """
+    if phone and phone.strip() and phone.strip() not in ["{phone}", ":phone"]:
+        return await service.get_by_phone(phone.strip())
     return await service.list_all()
 
-@router.get("/overview", response_model=dict)
-async def get_appointments_overview():
-    """Retrieve summarized metrics and categorized bookings for clinic overview."""
-    overview = await service.get_overview()
-    return {"success": True, "data": overview}
+@router.get("/check-availability", response_model=dict)
+@router.post("/check-availability", response_model=dict)
+async def check_doctor_availability_route(
+    doctor_name: str = Query(..., description="Doctor name (e.g. Dr. Rajesh Sharma)"),
+    date: str = Query(..., description="Date (YYYY-MM-DD, e.g. 2026-10-31)"),
+    clinic_code: str = Query("CARE-IND-01", description="Clinic identifier (e.g. CARE-IND-01)")
+):
+    """
+    Check doctor availability and return open appointment slots for a specific date.
+    Used by Sarvam Inbound tool 'check_doctor_availability'.
+    """
+    try:
+        data = await service.check_doctor_availability(
+            doctor_name=doctor_name,
+            date_str=date,
+            clinic_code=clinic_code
+        )
+        return {"success": True, "data": data}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
-@router.patch("/{reference_id}/status", response_model=dict)
-async def update_appointment_status(reference_id: str, payload: dict):
-    """Update appointment status (e.g. CANCELLED, VERIFIED_CONFIRMED, COMPLETED)."""
-    status = payload.get("status")
-    notes = payload.get("notes")
-    if not status:
-        raise HTTPException(status_code=400, detail="Status is required")
-    success = await service.update_status(reference_id, status, notes)
+@router.post("/{reference_id}/cancel", response_model=dict)
+async def cancel_appointment_route(reference_id: str, payload: Optional[dict] = None):
+    """
+    Cancel an appointment by reference ID.
+    Used by Sarvam Inbound tool 'cancel_appointment'.
+    """
+    reason = (payload or {}).get("reason", "Patient requested cancellation via Voice AI")
+    success = await service.update_status(reference_id, "CANCELLED", notes=reason)
     if not success:
-        raise HTTPException(status_code=404, detail="Appointment not found or not updated")
-    status_str = "updated"
-    return {"success": True, "message": f"Appointment {reference_id} marked as {status}"}
+        raise HTTPException(status_code=404, detail=f"Appointment '{reference_id}' not found.")
+    return {"success": True, "message": f"Appointment {reference_id} cancelled successfully."}
 
 @router.patch("/{reference_id}/reschedule", response_model=dict)
+@router.post("/{reference_id}/reschedule", response_model=dict)
 async def reschedule_appointment_route(reference_id: str, payload: dict):
-    """Reschedule appointment to a new date/time with conflict check."""
+    """
+    Reschedule appointment to a new date/time with conflict check.
+    Supports both PATCH and POST for Sarvam tool calling compatibility.
+    """
     new_date = payload.get("preferred_date")
     new_time = payload.get("preferred_time")
     doctor_name = payload.get("doctor_name")
