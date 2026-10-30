@@ -9,6 +9,9 @@ import {
   Clock,
   AlertCircle,
   Phone,
+  PhoneCall,
+  MessageSquare,
+  MessageCircle,
   Mail,
   ShieldCheck,
   Send,
@@ -72,7 +75,7 @@ export default function PatientRegistry() {
     report_status: 'Processing',
     report_type: 'Comprehensive Metabolic Panel',
     consent_status: 'Consented',
-    consent_channels: ['Voice AI Call', 'SMS'],
+    consent_channels: ['Voice AI Call', 'SMS', 'WhatsApp'],
     consent_notes: 'Explicit verbal and digital consent captured during front-desk intake.',
     clinical_notes: ''
   });
@@ -92,7 +95,7 @@ export default function PatientRegistry() {
   // Form states: Record Consent
   const [consentForm, setConsentForm] = useState({
     status: 'Consented',
-    channels: ['Voice AI Call', 'SMS'],
+    channels: ['Voice AI Call', 'SMS', 'WhatsApp'],
     source: 'Front Desk Verbal Verification',
     recorded_by: 'Staff Receptionist',
     consent_notes: ''
@@ -149,12 +152,15 @@ export default function PatientRegistry() {
   // Open Consent Modal
   const handleOpenConsent = (patient) => {
     setSelectedPatient(patient);
+    const existingChannels = patient.communication_consent?.channels;
     setConsentForm({
       status: patient.communication_consent?.status || 'Consented',
-      channels: patient.communication_consent?.channels || ['Voice AI Call', 'SMS'],
+      channels: Array.isArray(existingChannels) && existingChannels.length > 0
+        ? [...existingChannels]
+        : ['Voice AI Call', 'SMS', 'WhatsApp'],
       source: patient.communication_consent?.source || 'Front Desk Verbal Verification',
       recorded_by: 'Staff Receptionist',
-      consent_notes: patient.communication_consent?.consent_notes || 'Patient verified preference for automated voice & SMS reminders.'
+      consent_notes: patient.communication_consent?.consent_notes || 'Patient verified preference for automated voice, SMS & WhatsApp communications.'
     });
     setIsConsentModalOpen(true);
   };
@@ -195,7 +201,7 @@ export default function PatientRegistry() {
         report_status: 'Processing',
         report_type: 'Comprehensive Metabolic Panel',
         consent_status: 'Consented',
-        consent_channels: ['Voice AI Call', 'SMS'],
+        consent_channels: ['Voice AI Call', 'SMS', 'WhatsApp'],
         consent_notes: 'Explicit verbal and digital consent captured during front-desk intake.',
         clinical_notes: ''
       });
@@ -806,16 +812,55 @@ export default function PatientRegistry() {
                             borderRadius: '8px',
                             fontSize: '11.5px',
                             fontWeight: 700,
-                            backgroundColor: isConsented ? '#DCFAF3' : '#F1F5F9',
-                            color: isConsented ? '#007A65' : '#64748B',
-                            border: isConsented ? '1px solid #A7F3D0' : '1px solid #E2E8F0'
+                            backgroundColor: isConsented ? '#DCFAF3' : (p.communication_consent?.status === 'Revoked' ? '#FEE2E2' : '#F1F5F9'),
+                            color: isConsented ? '#007A65' : (p.communication_consent?.status === 'Revoked' ? '#B91C1C' : '#64748B'),
+                            border: isConsented ? '1px solid #A7F3D0' : (p.communication_consent?.status === 'Revoked' ? '1px solid #FECACA' : '1px solid #E2E8F0')
                           }}>
-                            <ShieldCheck size={13} color={isConsented ? '#007A65' : '#94A3B8'} />
+                            <ShieldCheck size={13} color={isConsented ? '#007A65' : (p.communication_consent?.status === 'Revoked' ? '#B91C1C' : '#94A3B8')} />
                             <span>{p.communication_consent?.status || 'Pending'}</span>
                           </span>
                         </div>
-                        <div style={{ fontSize: '10.5px', color: '#94A3B8', marginTop: '3px' }}>
-                          {isConsented ? (p.communication_consent?.channels || []).join(', ') : 'Verification Required'}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                          {isConsented ? (
+                            <>
+                              {(p.communication_consent?.channels || []).map(ch => (
+                                <span
+                                  key={ch}
+                                  style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '2px 6px',
+                                    borderRadius: '5px',
+                                    backgroundColor: ch.toLowerCase().includes('voice') ? '#E6FFFA' : '#F1F5F9',
+                                    color: ch.toLowerCase().includes('voice') ? '#047481' : '#475569',
+                                    border: ch.toLowerCase().includes('voice') ? '1px solid #B2F5EA' : '1px solid #E2E8F0',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {ch}
+                                </span>
+                              ))}
+                              {!(p.communication_consent?.channels || []).some(ch => ch.toLowerCase().includes('voice')) && (
+                                <span
+                                  style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '2px 6px',
+                                    borderRadius: '5px',
+                                    backgroundColor: '#FEF3C7',
+                                    color: '#B45309',
+                                    border: '1px solid #FDE68A',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                  title="Voice AI Call not consented. Automated voice calls will be blocked."
+                                >
+                                  No Voice AI
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span style={{ fontSize: '10.5px', color: '#94A3B8' }}>Verification Required</span>
+                          )}
                         </div>
                       </td>
 
@@ -1147,22 +1192,87 @@ export default function PatientRegistry() {
               </div>
 
               {/* Communication Consent Section */}
-              <div style={{ padding: '14px', backgroundColor: '#EDFDF9', borderRadius: '12px', border: '1px solid rgba(0, 201, 167, 0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 800, color: '#0F5B4C', marginBottom: '6px' }}>
-                  <ShieldCheck size={16} color="#00C9A7" />
-                  <span>Communication Consent (DPDP / HIPAA Compliance)</span>
+              <div style={{ padding: '16px', backgroundColor: '#EDFDF9', borderRadius: '12px', border: '1px solid rgba(0, 201, 167, 0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#0F5B4C' }}>
+                    <ShieldCheck size={16} color="#00C9A7" />
+                    <span>Communication Consent & Channels</span>
+                  </div>
+                  <select
+                    value={addForm.consent_status}
+                    onChange={e => setAddForm({ ...addForm, consent_status: e.target.value })}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      backgroundColor: '#FFFFFF',
+                      color: addForm.consent_status === 'Consented' ? '#007A65' : '#64748B'
+                    }}
+                  >
+                    <option value="Consented">Consented</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Revoked">Revoked</option>
+                  </select>
                 </div>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12.5px', color: '#0A2520', lineHeight: 1.4 }}>
-                  <input
-                    type="checkbox"
-                    checked={addForm.consent_status === 'Consented'}
-                    onChange={e => setAddForm({ ...addForm, consent_status: e.target.checked ? 'Consented' : 'Pending' })}
-                    style={{ marginTop: '2px', accentColor: '#00C9A7' }}
-                  />
-                  <span>
-                    Patient gives explicit consent for CareConnect AI and clinic reception to deliver automated test report updates, follow-ups, and reminders via Priya Voice AI and SMS.
-                  </span>
-                </label>
+
+                <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#0A2520', lineHeight: 1.4 }}>
+                  Select authorized notification channels for automated diagnostic report updates and appointment reminders:
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '10px' }}>
+                  {[
+                    { id: 'Voice AI Call', label: 'Voice AI Call', icon: PhoneCall, desc: 'Priya AI Receptionist (+918064269783)' },
+                    { id: 'SMS', label: 'SMS', icon: MessageSquare, desc: 'Direct text SMS notifications' },
+                    { id: 'WhatsApp', label: 'WhatsApp', icon: MessageCircle, desc: 'WhatsApp report delivery & alerts' }
+                  ].map(ch => {
+                    const isChecked = (addForm.consent_channels || []).includes(ch.id);
+                    const IconComp = ch.icon;
+                    return (
+                      <label
+                        key={ch.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '8px',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          backgroundColor: isChecked ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                          border: isChecked ? '1.5px solid #00C9A7' : '1px solid #CBD5E1',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={e => {
+                            const cur = addForm.consent_channels || [];
+                            const updated = e.target.checked
+                              ? [...cur, ch.id]
+                              : cur.filter(c => c !== ch.id);
+                            setAddForm({ ...addForm, consent_channels: updated });
+                          }}
+                          style={{ marginTop: '2px', accentColor: '#00C9A7' }}
+                        />
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#0A2520', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <IconComp size={12} color={isChecked ? '#007A65' : '#64748B'} />
+                            <span>{ch.label}</span>
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#64748B', marginTop: '1px' }}>
+                            {ch.desc}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: '11px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontWeight: 700, color: '#0F5B4C' }}>DPDP / HIPAA Notice:</span>
+                  <span>Patient explicitly authorizes selected communication preferences during intake.</span>
+                </div>
               </div>
 
               {/* Submit Buttons */}
@@ -1469,7 +1579,10 @@ export default function PatientRegistry() {
                     <button
                       key={st}
                       type="button"
-                      onClick={() => setConsentForm({ ...consentForm, status: st })}
+                      onClick={() => {
+                        const newChannels = st === 'Revoked' ? [] : (consentForm.channels.length > 0 ? consentForm.channels : ['Voice AI Call', 'SMS', 'WhatsApp']);
+                        setConsentForm({ ...consentForm, status: st, channels: newChannels });
+                      }}
                       style={{
                         padding: '10px',
                         borderRadius: '10px',
@@ -1485,6 +1598,67 @@ export default function PatientRegistry() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Authorized Communication Channels */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#0A2520', marginBottom: '6px' }}>
+                  Authorized Communication Channels
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                  {[
+                    { id: 'Voice AI Call', label: 'Voice AI Call', icon: PhoneCall, desc: 'Priya AI Receptionist (+918064269783)' },
+                    { id: 'SMS', label: 'SMS', icon: MessageSquare, desc: 'Direct text SMS notifications' },
+                    { id: 'WhatsApp', label: 'WhatsApp', icon: MessageCircle, desc: 'WhatsApp report delivery & alerts' }
+                  ].map(ch => {
+                    const isChecked = (consentForm.channels || []).includes(ch.id);
+                    const IconComp = ch.icon;
+                    return (
+                      <label
+                        key={ch.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '8px',
+                          padding: '10px',
+                          borderRadius: '10px',
+                          backgroundColor: isChecked ? '#EDFDF9' : '#F8FAFC',
+                          border: isChecked ? '1.5px solid #00C9A7' : '1px solid #CBD5E1',
+                          cursor: consentForm.status === 'Revoked' ? 'not-allowed' : 'pointer',
+                          opacity: consentForm.status === 'Revoked' ? 0.6 : 1
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={consentForm.status === 'Revoked'}
+                          onChange={e => {
+                            const cur = consentForm.channels || [];
+                            const updated = e.target.checked
+                              ? [...cur, ch.id]
+                              : cur.filter(c => c !== ch.id);
+                            setConsentForm({ ...consentForm, channels: updated });
+                          }}
+                          style={{ marginTop: '2px', accentColor: '#00C9A7' }}
+                        />
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#0A2520', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <IconComp size={13} color={isChecked ? '#007A65' : '#64748B'} />
+                            <span>{ch.label}</span>
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
+                            {ch.desc}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+                {consentForm.status === 'Consented' && !(consentForm.channels || []).some(ch => ch.toLowerCase().includes('voice')) && (
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: '#B45309', backgroundColor: '#FEF3C7', padding: '6px 10px', borderRadius: '6px', border: '1px solid #FDE68A' }}>
+                    ⚠️ Note: 'Voice AI Call' is unselected. Automated Priya voice calls will be blocked until voice consent is granted.
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1708,9 +1882,46 @@ export default function PatientRegistry() {
                 {selectedPatient.communication_consent?.consent_notes || 'Explicit consent recorded for automated voice notifications.'}
               </p>
 
-              <div style={{ fontSize: '11.5px', color: '#64748B', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ fontSize: '11.5px', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div><strong>Source:</strong> {selectedPatient.communication_consent?.source || 'Front Desk'}</div>
-                <div><strong>Channels:</strong> {(selectedPatient.communication_consent?.channels || []).join(', ') || 'Voice Call, SMS'}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <strong>Allowed Channels:</strong>
+                  {(selectedPatient.communication_consent?.channels || []).length > 0 ? (
+                    (selectedPatient.communication_consent?.channels || []).map(ch => (
+                      <span
+                        key={ch}
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          backgroundColor: ch.toLowerCase().includes('voice') ? '#E6FFFA' : '#F1F5F9',
+                          color: ch.toLowerCase().includes('voice') ? '#047481' : '#475569',
+                          border: ch.toLowerCase().includes('voice') ? '1px solid #B2F5EA' : '1px solid #CBD5E1'
+                        }}
+                      >
+                        {ch}
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ color: '#94A3B8' }}>None configured (Calls Blocked)</span>
+                  )}
+                  {selectedPatient.communication_consent?.status === 'Consented' && !(selectedPatient.communication_consent?.channels || []).some(ch => ch.toLowerCase().includes('voice')) && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: '#FEF3C7',
+                        color: '#B45309',
+                        border: '1px solid #FDE68A'
+                      }}
+                    >
+                      Voice AI Opted Out
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

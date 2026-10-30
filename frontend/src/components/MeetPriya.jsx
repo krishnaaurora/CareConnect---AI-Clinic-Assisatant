@@ -128,7 +128,7 @@ export default function MeetPriya({ onOpenDialer }) {
           </h2>
 
           <p style={{ fontSize: '16px', color: '#4B5563', lineHeight: 1.65 }}>
-            Powered by Bolna voice infrastructure, Priya handles high-volume telephony with warm tone, clinical nuance in English, Hindi, and Telugu, and built-in medical safety guardrails.
+            Powered by Sarvam Voice AI infrastructure, Priya handles high-volume telephony with warm tone, clinical nuance in English, Hindi, and Telugu, and built-in medical safety guardrails.
           </p>
         </div>
 

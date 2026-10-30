@@ -160,14 +160,14 @@ export default function AICallActivity() {
           }}>
             <Bot size={13} color="#0F5B4C" />
             <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Bolna Telephony Intelligence
+              Voice AI Telephony Intelligence
             </span>
           </div>
           <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#0A2520', margin: '0 0 4px', fontFamily: 'Manrope, sans-serif' }}>
             AI Call Activity & Telephony Analytics
           </h2>
           <p style={{ fontSize: '14px', color: '#64748B', margin: 0 }}>
-            Real-time Bolna phone bridge activity: confirmed voice bookings, escalation handoffs, and waitlist queues.
+            Real-time telephony bridge activity: confirmed voice bookings, escalation handoffs, and waitlist queues.
           </p>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function AICallActivity() {
         gap: '16px',
         marginBottom: '28px'
       }}>
-        {/* Metric 1: Booked Through Bolna */}
+        {/* Metric 1: Booked Through Voice AI */}
         <div 
           onClick={() => setOutcomeFilter('BOOKED')}
           style={{
@@ -194,7 +194,7 @@ export default function AICallActivity() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#0F5B4C', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Booked via Bolna
+              Booked via Voice AI
             </span>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EDFDF9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <CheckCircle2 size={16} color="#00C9A7" />
@@ -320,7 +320,7 @@ export default function AICallActivity() {
           <Search size={15} color="#64748B" />
           <input
             type="text"
-            placeholder="Search caller, phone, Bolna ID, doctor..."
+            placeholder="Search caller, phone, Call ID, doctor..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{
@@ -343,7 +343,7 @@ export default function AICallActivity() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {[
             { id: 'ALL', label: 'All Call Outcomes' },
-            { id: 'BOOKED', label: 'Booked via Bolna', badge: metrics.booked_through_bolna },
+            { id: 'BOOKED', label: 'Booked via Voice AI', badge: metrics.booked_through_bolna },
             { id: 'FAILED', label: 'Failed / Follow-ups', badge: metrics.failed_booking_attempts },
             { id: 'TRANSFERRED', label: 'Transferred to Staff', badge: metrics.transferred_to_human },
           ].map(tab => (
@@ -509,7 +509,7 @@ export default function AICallActivity() {
                         gap: '5px'
                       }}>
                         <CheckCircle2 size={13} color="#00C9A7" />
-                        <span>Booked via Bolna</span>
+                        <span>Booked via Voice AI</span>
                       </span>
                     )}
 

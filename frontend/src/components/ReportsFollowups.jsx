@@ -2003,7 +2003,7 @@ export default function ReportsFollowups() {
               }}>
                 <Sparkles size={16} color="#0284C7" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div style={{ fontSize: '12px', color: '#0369A1', lineHeight: 1.4 }}>
-                  <strong>Bolna Telephony Notification:</strong> Automated patient voice calls with Priya AI receptionist will be integrated in Phase 4.
+                  <strong>Sarvam Telephony Notification:</strong> Automated patient voice calls with Priya AI receptionist are powered via Sarvam Voice AI.
                 </div>
               </div>
 

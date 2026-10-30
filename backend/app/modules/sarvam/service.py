@@ -76,11 +76,12 @@ class SarvamService:
             )
 
         # Check opt-out or channel restriction
-        channels = consent.get("channels", ["Voice AI Call", "SMS"])
+        channels = consent.get("channels") or []
         if not any("voice" in str(ch).lower() for ch in channels):
+            patient_name = patient.get("name") or report.get("patient_name") or "Patient"
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Automated call blocked: Patient opted out of Voice AI calls (prefers SMS/WhatsApp only)."
+                detail=f"Automated voice call blocked: Patient '{patient_name}' has not consented to 'Voice AI Call'. Consented channels: {channels if channels else 'None'}. Please record Voice AI consent in the Patient Registry before calling."
             )
 
         # 4. Duplicate Call Prevention (within last 3 minutes)

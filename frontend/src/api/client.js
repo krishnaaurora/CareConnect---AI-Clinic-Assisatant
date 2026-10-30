@@ -517,7 +517,7 @@ export async function notifyPatient(patientId, payload = {}) {
 }
 
 // ==========================================
-// 9. DIAGNOSTIC REPORTS & AUTOMATIC BOLNA AI CALL APIs
+// 9. DIAGNOSTIC REPORTS & AUTOMATIC SARVAM AI CALL APIs
 // ==========================================
 
 export async function fetchDiagnosticReports(params = {}) {
@@ -546,12 +546,12 @@ export async function fetchDiagnosticReports(params = {}) {
         status: "Ready",
         file_name: "Rahul_Sharma_CBC_Report.pdf",
         file_size: "1.4 MB",
-        communication_consent: { status: "Consented", verified: true },
-        bolna_call: {
+        communication_consent: { status: "Consented", channels: ["Voice AI Call", "SMS"], verified: true },
+        sarvam_call: {
           triggered: true,
           status: "COMPLETED",
-          execution_id: "bolna-exec-89a14d",
-          outcome_summary: "Automated Priya AI call completed successfully.",
+          call_id: "sarvam-call-89a14d",
+          call_summary: "Automated Priya AI call completed successfully.",
           patient_response: "Patient confirmed notification received."
         }
       },
@@ -566,11 +566,11 @@ export async function fetchDiagnosticReports(params = {}) {
         status: "Processing",
         file_name: "Priya_Reddy_Lumbar_MRI.pdf",
         file_size: "4.8 MB",
-        communication_consent: { status: "Consented", verified: true },
-        bolna_call: {
+        communication_consent: { status: "Consented", channels: ["Voice AI Call", "SMS", "WhatsApp"], verified: true },
+        sarvam_call: {
           triggered: false,
           status: "NOT_READY_PENDING_LAB",
-          outcome_summary: "Pending lab completion."
+          call_summary: "Pending lab completion."
         }
       },
       {
@@ -584,12 +584,12 @@ export async function fetchDiagnosticReports(params = {}) {
         status: "Ready",
         file_name: "Arjun_Kumar_Chest_XRay.pdf",
         file_size: "2.1 MB",
-        communication_consent: { status: "Consented", verified: true },
-        bolna_call: {
+        communication_consent: { status: "Consented", channels: ["Voice AI Call", "SMS"], verified: true },
+        sarvam_call: {
           triggered: true,
           status: "COMPLETED",
-          execution_id: "bolna-exec-c7f201",
-          outcome_summary: "Automated Priya AI call completed successfully.",
+          call_id: "sarvam-call-c7f201",
+          call_summary: "Automated Priya AI call completed successfully.",
           patient_response: "Patient acknowledged report pickup."
         }
       }

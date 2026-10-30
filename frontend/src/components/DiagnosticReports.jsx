@@ -137,7 +137,7 @@ export default function DiagnosticReports() {
     }
   };
 
-  // Handle Report Upload & Automatic Bolna AI Call Trigger
+  // Handle Report Upload & Automatic Sarvam Voice AI Call Trigger
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     if (!uploadForm.patient_id) {
@@ -151,7 +151,7 @@ export default function DiagnosticReports() {
       const isReady = uploadForm.status === 'Ready';
       
       if (isReady) {
-        showToast(`Report uploaded successfully! Automatic Priya AI voice call initiated via Bolna API for ${res.data?.patient_name || 'patient'}.`);
+        showToast(`Report uploaded successfully! Automatic Priya AI voice call initiated via Sarvam AI for ${res.data?.patient_name || 'patient'}.`);
       } else {
         showToast(`Diagnostic report saved in Processing state. Automated AI call will trigger once marked Ready.`);
       }
@@ -271,7 +271,7 @@ export default function DiagnosticReports() {
             Diagnostic Reports
           </h1>
           <p style={{ margin: 0, fontSize: '14px', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
-            Upload patient reports and monitor automated Priya Voice AI calls via Bolna API. Zero manual notification required.
+            Upload patient reports and monitor automated Priya Voice AI calls via Sarvam AI. Zero manual notification required.
           </p>
         </div>
 
@@ -346,17 +346,17 @@ export default function DiagnosticReports() {
           </div>
           <div>
             <div style={{ fontSize: '14.5px', fontWeight: 800, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Automatic Bolna Voice AI Notification Engine
+              Sarvam Voice AI Notification Engine
             </div>
             <div style={{ fontSize: '12px', color: '#A7F3D0', marginTop: '2px' }}>
-              Select Patient → Upload PDF → Mark READY → Consent Verified → Bolna API Outbound Call → Call Outcome Logged
+              Select Patient → Upload PDF → Mark READY → Consent Verified → Sarvam Voice AI Outbound Call → Call Outcome Logged
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(255, 255, 255, 0.08)', padding: '6px 12px', borderRadius: '8px', fontSize: '11.5px', fontWeight: 700 }}>
           <Sparkles size={14} color="#00C9A7" />
-          <span>Active Bolna Key: bn-1c24...1604</span>
+          <span>Agent: Careconnect Receptionist (v4)</span>
         </div>
       </div>
 
@@ -406,7 +406,7 @@ export default function DiagnosticReports() {
               Auto-Notified
             </span>
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Bolna outbound call triggered</p>
+          <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Sarvam outbound call triggered</p>
         </div>
 
         {/* Card 3: Processing */}
@@ -437,7 +437,7 @@ export default function DiagnosticReports() {
           <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#94A3B8' }}>Calls withheld until Ready</p>
         </div>
 
-        {/* Card 4: Bolna Calls Dispatched */}
+        {/* Card 4: Sarvam Calls Dispatched */}
         <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -840,7 +840,7 @@ export default function DiagnosticReports() {
                   Upload Diagnostic Report
                 </h3>
                 <p style={{ margin: 0, fontSize: '12.5px', color: '#64748B' }}>
-                  When marked <strong>READY</strong>, Bolna AI will automatically call the patient.
+                  When marked <strong>READY</strong>, Sarvam Voice AI will automatically call the patient.
                 </p>
               </div>
             </div>

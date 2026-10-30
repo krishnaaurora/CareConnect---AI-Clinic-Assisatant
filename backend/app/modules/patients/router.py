@@ -114,6 +114,22 @@ async def notify_patient(patient_id: str, payload: PatientNotifyRequest):
             detail="Cannot notify patient: Diagnostic report is still Processing"
         )
 
+    consent = patient.get("communication_consent", {})
+    consent_status = consent.get("status", "Pending")
+    if consent_status != "Consented":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Cannot notify patient: Communication consent status is '{consent_status}'. Explicit consent is required."
+        )
+
+    channels = consent.get("channels") or []
+    req_channel = payload.channel or "Voice AI Call & SMS"
+    if "voice" in req_channel.lower() and not any("voice" in str(ch).lower() for ch in channels):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Automated voice call blocked: Patient '{patient.get('name')}' has not consented to 'Voice AI Call'. Consented channels: {channels if channels else 'None'}. Please record Voice AI consent in the Patient Registry before calling."
+        )
+
     updated = await patient_service.notify_patient(patient_id, payload)
     return {
         "success": True,

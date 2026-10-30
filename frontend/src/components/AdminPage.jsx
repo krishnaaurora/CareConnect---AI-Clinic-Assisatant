@@ -58,7 +58,7 @@ export default function AdminPage({ onNavigateHome }) {
       num: '3',
       label: 'Diagnostic Reports',
       icon: FileText,
-      badge: 'Bolna AI'
+      badge: 'Sarvam AI'
     }
   ];
 

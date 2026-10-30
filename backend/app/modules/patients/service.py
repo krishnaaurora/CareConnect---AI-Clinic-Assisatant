@@ -44,9 +44,10 @@ class PatientService:
         report_code = f"RPT-{str(uuid.uuid4())[:4].upper()}"
 
         masked = mask_phone_number(req.phone)
+        consent_channels = req.consent_channels if req.consent_channels is not None else (["Voice AI Call", "SMS", "WhatsApp"] if (req.consent_status or "Consented") == "Consented" else [])
         consent_record = {
             "status": req.consent_status or "Consented",
-            "channels": req.consent_channels or ["Voice AI Call", "SMS"],
+            "channels": consent_channels,
             "consented_at": now_iso if (req.consent_status or "Consented") == "Consented" else None,
             "recorded_by": "Front Desk Reception",
             "source": "Clinical Intake Form",
@@ -109,9 +110,10 @@ class PatientService:
             return None
 
         now_iso = datetime.utcnow().isoformat() + "Z"
+        channels = req.channels if req.channels is not None else (["Voice AI Call", "SMS", "WhatsApp"] if req.status == "Consented" else [])
         consent_record = {
             "status": req.status,
-            "channels": req.channels or ["Voice AI Call", "SMS"],
+            "channels": channels,
             "consented_at": now_iso if req.status == "Consented" else None,
             "recorded_by": req.recorded_by or "Front Desk Reception",
             "source": req.source or "Front Desk Verbal Verification",

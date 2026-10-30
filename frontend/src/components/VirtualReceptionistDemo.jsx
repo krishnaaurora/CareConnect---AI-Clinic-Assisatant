@@ -683,7 +683,7 @@ export default function VirtualReceptionistDemo() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748B' }}>Architecture:</span>
-                    <strong style={{ color: '#0B4236' }}>Bolna Voice AI + FastAPI</strong>
+                    <strong style={{ color: '#0B4236' }}>Sarvam Voice AI + FastAPI</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#64748B' }}>Languages:</span>
@@ -708,7 +708,7 @@ export default function VirtualReceptionistDemo() {
                 borderRadius: '8px',
                 border: '1px solid #E2E8F0'
               }}>
-                ℹ️ <strong>Demo Voice Note:</strong> Audio playback utilizes your browser's Web Speech API for interactive preview. The production platform uses Bolna telephony voice models.
+                ℹ️ <strong>Demo Voice Note:</strong> Audio playback utilizes your browser's Web Speech API for interactive preview. The production platform uses Sarvam Voice AI telephony models.
               </div>
 
             </div>

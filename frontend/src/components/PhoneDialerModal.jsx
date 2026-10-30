@@ -131,7 +131,7 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="pulse-green"></span>
             <span style={{ fontSize: '12px', fontWeight: 800, color: '#0D3E33' }}>
-              Bolna Telephony Simulator
+              Sarvam Telephony Simulator
             </span>
           </div>
 
