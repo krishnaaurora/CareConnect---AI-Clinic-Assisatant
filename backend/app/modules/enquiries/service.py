@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Optional, List
 from app.modules.enquiries.models import CallbackRequest
 from app.modules.enquiries.repository import EnquiryRepository
 
@@ -21,5 +22,8 @@ class EnquiryService:
         }
         return await self.repo.save_callback(doc)
 
-    async def get_all(self):
-        return await self.repo.list_recent()
+    async def get_all(self) -> List[dict]:
+        return await self.repo.list_recent(limit=50)
+
+    async def update_status(self, callback_id: str, status: str, notes: Optional[str] = None) -> bool:
+        return await self.repo.update_status(callback_id, status, notes)

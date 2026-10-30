@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
+from fastapi import APIRouter, HTTPException, Body
+from typing import Dict, Any, Optional
 from app.modules.voice_agent.models import VoiceUtteranceRequest, VoiceUtteranceResponse
 from app.modules.voice_agent.service import VoiceAgentService
 
@@ -38,21 +38,36 @@ async def bolna_webhook(payload: Dict[str, Any]):
 @router.get("/activity", response_model=dict)
 async def get_voice_call_activity():
     """
-    Retrieve real-time Bolna AI call activity from MongoDB:
-    - Recent calls and their outcomes
-    - Appointments booked through Bolna
-    - Failed booking attempts and follow-up requests
+    Retrieve real-time Bolna & Sarvam AI call activity from MongoDB:
+    - Inbound and Outbound calls with duration and intent
+    - Appointments booked through AI
+    - Failed booking attempts, retry queues, and callback requests
     - Calls transferred to human staff
     """
     data = await service.get_call_activity()
     return {"success": True, "data": data}
 
+@router.post("/activity/{call_id}/retry", response_model=dict)
+async def retry_call_route(call_id: str):
+    """
+    Trigger automated Priya Voice AI retry for a failed or missed call.
+    Increments retry count and dispatches follow-up call.
+    """
+    try:
+        res = await service.retry_call(call_id)
+        return {"success": True, "data": res, "message": res.get("message")}
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retry call: {str(e)}")
+
 @router.patch("/activity/{call_id}/resolve", response_model=dict)
-async def resolve_call_followup_route(call_id: str):
+async def resolve_call_followup_route(call_id: str, payload: Optional[Dict[str, Any]] = Body(None)):
     """
-    Marks a failed booking attempt follow-up as resolved in MongoDB.
+    Marks a failed booking attempt or callback follow-up as resolved in MongoDB.
     """
-    success = await service.resolve_call_followup(call_id)
+    notes = (payload or {}).get("notes")
+    success = await service.resolve_call_followup(call_id, resolution_notes=notes)
     if not success:
         raise HTTPException(status_code=404, detail="Call log not found or already resolved")
     return {"success": True, "message": f"Follow-up for call {call_id} marked as resolved."}

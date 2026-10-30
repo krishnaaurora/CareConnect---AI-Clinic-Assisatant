@@ -300,12 +300,38 @@ export async function fetchAICallActivity() {
   return json.data;
 }
 
-export async function resolveCallFollowup(callId) {
+export async function resolveCallFollowup(callId, notes = '') {
   const res = await fetch(`${API_BASE_URL}/voice/activity/${callId}/resolve`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notes })
   });
   if (!res.ok) throw new Error('Failed to resolve follow-up');
+  return await res.json();
+}
+
+export async function retryCall(callId) {
+  const res = await fetch(`${API_BASE_URL}/voice/activity/${callId}/retry`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to retry call');
+  }
+  return await res.json();
+}
+
+export async function updateCallbackStatus(callbackId, status = 'RESOLVED', notes = '') {
+  const res = await fetch(`${API_BASE_URL}/enquiries/callbacks/${callbackId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, notes })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update callback status');
+  }
   return await res.json();
 }
 
