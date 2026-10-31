@@ -439,15 +439,19 @@ export default function AdminPage({ onNavigateHome }) {
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: '26px',
-                      height: '26px',
+                      width: '28px',
+                      height: '28px',
                       borderRadius: '6px',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      color: '#64748B',
-                      cursor: 'pointer'
+                      backgroundColor: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      color: '#475569',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
-                    title="Collapse sidebar"
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FFF7ED'; e.currentTarget.style.color = '#EA580C'; e.currentTarget.style.borderColor = '#FDBA74'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F8FAFC'; e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = '#E2E8F0'; }}
+                    title="Collapse navigation sidebar"
+                    aria-label="Collapse navigation sidebar"
                   >
                     <PanelLeftClose size={15} />
                   </button>
@@ -497,17 +501,21 @@ export default function AdminPage({ onNavigateHome }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
                     backgroundColor: '#F8FAFC',
                     border: '1px solid #E2E8F0',
                     color: '#0F5B4C',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
                   }}
-                  title="Expand sidebar"
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FFF7ED'; e.currentTarget.style.color = '#EA580C'; e.currentTarget.style.borderColor = '#FDBA74'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F8FAFC'; e.currentTarget.style.color = '#0F5B4C'; e.currentTarget.style.borderColor = '#E2E8F0'; }}
+                  title="Expand navigation sidebar"
+                  aria-label="Expand navigation sidebar"
                 >
-                  <PanelLeftOpen size={15} />
+                  <PanelLeftOpen size={16} />
                 </button>
               </div>
             )}
@@ -743,31 +751,6 @@ export default function AdminPage({ onNavigateHome }) {
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flexShrink: 1 }}>
-            <button
-              type="button"
-              onClick={() => setIsSidebarCollapsed(prev => !prev)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                border: '1px solid #CBD5E1',
-                backgroundColor: '#F8FAFC',
-                color: '#0F5B4C',
-                cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDFDF9'; e.currentTarget.style.borderColor = '#00C9A7'; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F8FAFC'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
-              title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              aria-label="Toggle navigation sidebar"
-            >
-              {isSidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-            </button>
-
             <div style={{ minWidth: 0 }}>
               <h1 style={{ 
                 fontSize: '20px', 
