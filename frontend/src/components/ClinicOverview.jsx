@@ -241,8 +241,8 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
       title: 'Voice intake consultation scheduled',
       subtext: 'Priya Voice Assistant • 11:30 AM Slot Reserved',
       time: '1 hour ago',
-      iconBg: '#FFF7ED',
-      iconColor: '#EA580C',
+      iconBg: '#EDFDF9',
+      iconColor: '#0F5B4C',
       icon: Activity
     }
   ];
@@ -403,11 +403,11 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
                 width: '38px',
                 height: '38px',
                 borderRadius: '10px',
-                backgroundColor: '#FFF7ED',
+                backgroundColor: '#EDFDF9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#EA580C'
+                color: '#0F5B4C'
               }}>
                 <Stethoscope size={18} />
               </div>
@@ -619,7 +619,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
                     <span style={{ fontSize: '13px', fontWeight: 800, color: '#0A2520' }}>88.5%</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#F1F5F9', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{ width: '88.5%', height: '100%', backgroundColor: '#EA580C', borderRadius: '999px' }} />
+                    <div style={{ width: '88.5%', height: '100%', backgroundColor: '#00C9A7', borderRadius: '999px' }} />
                   </div>
                 </div>
 

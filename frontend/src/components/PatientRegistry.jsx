@@ -2236,17 +2236,17 @@ export default function PatientRegistry() {
                       gap: '8px',
                       padding: '10px 16px',
                       border: 'none',
-                      borderBottom: isActive ? '2px solid #EA580C' : '2px solid transparent',
-                      backgroundColor: isActive ? '#FFF7ED' : 'transparent',
+                      borderBottom: isActive ? '2px solid #0F5B4C' : '2px solid transparent',
+                      backgroundColor: isActive ? '#EDFDF9' : 'transparent',
                       borderRadius: '8px 8px 0 0',
-                      color: isActive ? '#EA580C' : '#64748B',
+                      color: isActive ? '#0F5B4C' : '#64748B',
                       fontSize: '13px',
                       fontWeight: isActive ? 800 : 600,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <IconComp size={15} color={isActive ? '#EA580C' : '#94A3B8'} />
+                    <IconComp size={15} color={isActive ? '#0F5B4C' : '#94A3B8'} />
                     <span>{tab.label}</span>
                   </button>
                 );

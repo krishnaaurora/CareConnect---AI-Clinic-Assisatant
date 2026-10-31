@@ -52,6 +52,7 @@ export default function AdminPage({ onNavigateHome }) {
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hoveredNav, setHoveredNav] = useState(null); // Tooltip for collapsed sidebar
   const [bookingNotification, setBookingNotification] = useState(null);
   const knownAppointmentIds = useRef(new Set());
   const isInitialLoad = useRef(true);
@@ -318,7 +319,7 @@ export default function AdminPage({ onNavigateHome }) {
             width: 68px !important;
           }
           .admin-sidebar:not(.collapsed) {
-            width: 232px !important;
+            width: 248px !important;
           }
           .admin-main-panel {
             min-width: 0 !important;
@@ -329,8 +330,8 @@ export default function AdminPage({ onNavigateHome }) {
             width: calc(100% - 68px) !important;
           }
           .admin-main-panel:not(.sidebar-collapsed) {
-            margin-left: 232px !important;
-            width: calc(100% - 232px) !important;
+            margin-left: 248px !important;
+            width: calc(100% - 248px) !important;
           }
         }
       `}</style>
@@ -435,7 +436,7 @@ export default function AdminPage({ onNavigateHome }) {
       <aside 
         className={`admin-sidebar no-scrollbar ${mobileNavOpen ? 'open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}
         style={{
-          width: isSidebarCollapsed ? '68px' : '232px',
+          width: isSidebarCollapsed ? '68px' : '248px',
           height: '100vh',
           flexShrink: 0,
           backgroundColor: '#FFFFFF',
@@ -489,7 +490,7 @@ export default function AdminPage({ onNavigateHome }) {
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FFF7ED'; e.currentTarget.style.color = '#EA580C'; e.currentTarget.style.borderColor = '#FDBA74'; }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDFDF9'; e.currentTarget.style.color = '#0F5B4C'; e.currentTarget.style.borderColor = '#A7F3D0'; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F8FAFC'; e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = '#E2E8F0'; }}
                     title="Collapse navigation sidebar"
                     aria-label="Collapse navigation sidebar"
@@ -551,7 +552,7 @@ export default function AdminPage({ onNavigateHome }) {
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FFF7ED'; e.currentTarget.style.color = '#EA580C'; e.currentTarget.style.borderColor = '#FDBA74'; }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#EDFDF9'; e.currentTarget.style.color = '#0F5B4C'; e.currentTarget.style.borderColor = '#A7F3D0'; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F8FAFC'; e.currentTarget.style.color = '#0F5B4C'; e.currentTarget.style.borderColor = '#E2E8F0'; }}
                   title="Expand navigation sidebar"
                   aria-label="Expand navigation sidebar"
@@ -569,51 +570,53 @@ export default function AdminPage({ onNavigateHome }) {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: isSidebarCollapsed ? '0' : '6px',
-                padding: isSidebarCollapsed ? '8px 0' : '6px 10px',
-                borderRadius: '8px',
+                gap: isSidebarCollapsed ? '0' : '8px',
+                padding: isSidebarCollapsed ? '8px 0' : '8px 12px',
+                borderRadius: '9px',
                 backgroundColor: '#F8FAFC',
-                color: '#64748B',
+                color: '#475569',
                 border: '1px solid #E2E8F0',
-                fontSize: '11.5px',
-                fontWeight: 600,
+                fontSize: '12.5px',
+                fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 width: '100%',
                 justifyContent: isSidebarCollapsed ? 'center' : 'flex-start'
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = '#F1F5F9';
+                e.currentTarget.style.backgroundColor = '#EDFDF9';
                 e.currentTarget.style.color = '#0F5B4C';
+                e.currentTarget.style.borderColor = 'rgba(0, 201, 167, 0.4)';
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.backgroundColor = '#F8FAFC';
-                e.currentTarget.style.color = '#64748B';
+                e.currentTarget.style.color = '#475569';
+                e.currentTarget.style.borderColor = '#E2E8F0';
               }}
             >
-              <ArrowLeft size={13} color="#00C9A7" />
+              <ArrowLeft size={15} color="#00C9A7" strokeWidth={2.2} />
               {!isSidebarCollapsed && <span>Back to Website</span>}
             </button>
           </div>
 
           {/* Navigation Items Section */}
-          <div style={{ padding: isSidebarCollapsed ? '10px 4px 6px' : '10px 8px 6px' }}>
+          <div style={{ padding: isSidebarCollapsed ? '10px 4px 6px' : '12px 10px 6px' }}>
             {!isSidebarCollapsed && (
               <div style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: 800,
                 color: '#94A3B8',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                padding: '0 8px',
-                marginBottom: '6px',
+                padding: '0 10px',
+                marginBottom: '8px',
                 fontFamily: 'Inter, sans-serif'
               }}>
                 Clinic Console Menu
               </div>
             )}
 
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = adminTab === item.id;
@@ -629,53 +632,60 @@ export default function AdminPage({ onNavigateHome }) {
                       alignItems: 'center',
                       justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
                       width: '100%',
-                      padding: isSidebarCollapsed ? '9px 0' : '7px 9px',
-                      borderRadius: '8px',
-                      border: isActive ? '1px solid rgba(234, 88, 12, 0.35)' : '1px solid transparent',
-                      fontSize: '12.5px',
-                      fontWeight: isActive ? 700 : 500,
+                      padding: isSidebarCollapsed ? '10px 0' : '9px 12px',
+                      borderRadius: '10px',
+                      border: isActive ? '1px solid rgba(0, 201, 167, 0.45)' : '1px solid transparent',
+                      fontSize: '14.5px',
+                      fontWeight: isActive ? 800 : 600,
                       cursor: 'pointer',
                       textAlign: 'left',
-                      backgroundColor: isActive ? '#FFF7ED' : 'transparent',
-                      color: isActive ? '#EA580C' : '#475569',
+                      backgroundColor: isActive ? '#EDFDF9' : 'transparent',
+                      color: isActive ? '#0F5B4C' : '#475569',
                       transition: 'all 0.15s ease',
-                      fontFamily: 'Inter, sans-serif'
+                      fontFamily: 'Inter, sans-serif',
+                      boxShadow: isActive ? '0 2px 6px rgba(15, 91, 76, 0.08)' : 'none'
                     }}
                     onMouseEnter={e => {
-                      if (!isActive) {
+                      if (isSidebarCollapsed) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setHoveredNav({ label: item.label, num: item.num, top: rect.top + rect.height / 2 });
+                      } else if (!isActive) {
                         e.currentTarget.style.backgroundColor = '#F8FAFC';
                         e.currentTarget.style.color = '#0A2520';
                       }
                     }}
                     onMouseLeave={e => {
+                      if (isSidebarCollapsed) {
+                        setHoveredNav(null);
+                      }
                       if (!isActive) {
                         e.currentTarget.style.backgroundColor = 'transparent';
                         e.currentTarget.style.color = '#475569';
                       }
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                       <Icon 
-                        size={17} 
-                        strokeWidth={isActive ? 2.4 : 1.8} 
-                        color={isActive ? '#EA580C' : '#64748B'}
+                        size={20} 
+                        strokeWidth={isActive ? 2.4 : 1.9} 
+                        color={isActive ? '#0F5B4C' : '#64748B'}
                         style={{ flexShrink: 0 }}
                       />
 
                       {!isSidebarCollapsed && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <span style={{ 
-                            fontSize: '11px', 
-                            fontWeight: 700, 
-                            color: isActive ? '#EA580C' : '#94A3B8' 
+                            fontSize: '13px', 
+                            fontWeight: 800, 
+                            color: isActive ? '#00A389' : '#94A3B8' 
                           }}>
                             {item.num}.
                           </span>
                           <span style={{
-                            letterSpacing: '-0.01em',
-                            color: isActive ? '#9A3412' : '#475569',
-                            fontWeight: isActive ? 700 : 500,
-                            fontSize: '12.5px'
+                            letterSpacing: '-0.015em',
+                            color: isActive ? '#0F5B4C' : '#334155',
+                            fontWeight: isActive ? 800 : 600,
+                            fontSize: '14.5px'
                           }}>
                             {item.label}
                           </span>
@@ -922,6 +932,46 @@ export default function AdminPage({ onNavigateHome }) {
         </main>
       </div>
 
+      {/* ── Collapsed Sidebar Tooltip on Hover ── */}
+      {isSidebarCollapsed && hoveredNav && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '74px',
+            top: `${hoveredNav.top}px`,
+            transform: 'translateY(-50%)',
+            backgroundColor: '#0A2520',
+            color: '#FFFFFF',
+            padding: '7px 14px',
+            borderRadius: '8px',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 8px 24px rgba(10, 37, 32, 0.28)',
+            pointerEvents: 'none',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+            fontFamily: 'Inter, sans-serif'
+          }}
+        >
+          <span style={{ color: '#00C9A7', fontSize: '11.5px', fontWeight: 800 }}>{hoveredNav.num}.</span>
+          <span>{hoveredNav.label}</span>
+          <div style={{
+            position: 'absolute',
+            right: '100%',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 0,
+            height: 0,
+            borderTop: '5px solid transparent',
+            borderBottom: '5px solid transparent',
+            borderRight: '6px solid #0A2520'
+          }} />
+        </div>
+      )}
+
       {/* ── Real-time Appointment Booked Toast/Popup ── */}
       {bookingNotification && (
         <div style={{
@@ -933,8 +983,8 @@ export default function AdminPage({ onNavigateHome }) {
           width: 'calc(100% - 48px)',
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
-          boxShadow: '0 16px 40px rgba(10, 37, 32, 0.16), 0 4px 14px rgba(234, 88, 12, 0.18)',
-          border: '1.5px solid #EA580C',
+          boxShadow: '0 16px 40px rgba(10, 37, 32, 0.16), 0 4px 14px rgba(0, 201, 167, 0.18)',
+          border: '1.5px solid #00C9A7',
           padding: '16px 18px',
           display: 'flex',
           alignItems: 'flex-start',
@@ -946,20 +996,20 @@ export default function AdminPage({ onNavigateHome }) {
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            backgroundColor: '#FFF7ED',
-            color: '#EA580C',
+            backgroundColor: '#EDFDF9',
+            color: '#0F5B4C',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            border: '1.5px solid #FDBA74'
+            border: '1.5px solid rgba(0, 201, 167, 0.4)'
           }}>
-            <CalendarCheck2 size={22} color="#EA580C" />
+            <CalendarCheck2 size={22} color="#00C9A7" />
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '3px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#EA580C', letterSpacing: '0.06em' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#0F5B4C', letterSpacing: '0.06em' }}>
                 Appointment Confirmed
               </span>
               {bookingNotification.time && (
@@ -969,7 +1019,7 @@ export default function AdminPage({ onNavigateHome }) {
               )}
             </div>
             <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0A2520', lineHeight: 1.45 }}>
-              Appointment booked for <span style={{ color: '#EA580C', fontWeight: 800 }}>"{bookingNotification.patient_name}"</span> with <span style={{ color: '#0A2520', fontWeight: 800 }}>"{bookingNotification.doctor_name}"</span>
+              Appointment booked for <span style={{ color: '#0F5B4C', fontWeight: 800 }}>"{bookingNotification.patient_name}"</span> with <span style={{ color: '#0A2520', fontWeight: 800 }}>"{bookingNotification.doctor_name}"</span>
             </div>
             {bookingNotification.reference_id && (
               <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '4px', fontWeight: 600 }}>

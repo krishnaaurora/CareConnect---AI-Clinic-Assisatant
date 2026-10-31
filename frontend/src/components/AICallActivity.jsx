@@ -391,17 +391,17 @@ export default function AICallActivity() {
                 gap: '8px',
                 padding: '10px 18px',
                 border: 'none',
-                borderBottom: isActive ? '2px solid #EA580C' : '2px solid transparent',
-                backgroundColor: isActive ? '#FFF7ED' : 'transparent',
+                borderBottom: isActive ? '2px solid #0F5B4C' : '2px solid transparent',
+                backgroundColor: isActive ? '#EDFDF9' : 'transparent',
                 borderRadius: '8px 8px 0 0',
-                color: isActive ? '#EA580C' : '#64748B',
+                color: isActive ? '#0F5B4C' : '#64748B',
                 fontSize: '13px',
                 fontWeight: isActive ? 800 : 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap'
               }}
             >
-              <IconComp size={15} color={isActive ? '#EA580C' : '#94A3B8'} />
+              <IconComp size={15} color={isActive ? '#0F5B4C' : '#94A3B8'} />
               <span>{tab.label}</span>
               {tab.isLivePill && (
                 <span style={{
@@ -1284,13 +1284,13 @@ export default function AICallActivity() {
                         justifyContent: 'center',
                         flexShrink: 0
                       }}>
-                        {isAgent ? <Bot size={18} color="#0F5B4C" /> : <User size={18} color="#EA580C" />}
+                        {isAgent ? <Bot size={18} color="#0F5B4C" /> : <User size={18} color="#0284C7" />}
                       </div>
 
                       <div style={{
                         maxWidth: '82%',
                         backgroundColor: isAgent ? '#F8FAFC' : '#FFFFFF',
-                        border: isAgent ? '1px solid #E2E8F0' : '1.5px solid #FDBA74',
+                        border: isAgent ? '1px solid #E2E8F0' : '1.5px solid #BAE6FD',
                         padding: '12px 16px',
                         borderRadius: isAgent ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
@@ -1305,7 +1305,7 @@ export default function AICallActivity() {
                           <span style={{
                             fontSize: '11.5px',
                             fontWeight: 800,
-                            color: isAgent ? '#0F5B4C' : '#EA580C'
+                            color: isAgent ? '#0F5B4C' : '#0284C7'
                           }}>
                             {isAgent ? 'Priya Voice AI (Receptionist)' : (turn.speaker || transcriptModalCall.caller_name || 'Caller')}
                           </span>
