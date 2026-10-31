@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import careconnectLogoWhite from '../assets/careconnect-logo-white-text.png';
 import careconnectLogo from '../assets/careconnect-logo-transparent.png';
+import careconnectEmblem from '../assets/careconnect-emblem-transparent.png';
 import { 
   Building2, 
   ArrowLeft, 
@@ -394,7 +395,7 @@ export default function AdminPage({ onNavigateHome }) {
           <img
             src={careconnectLogoWhite}
             alt="CareConnect AI"
-            style={{ height: '24px', width: 'auto', display: 'block', objectFit: 'contain' }}
+            style={{ height: '28px', maxWidth: '180px', width: 'auto', display: 'block', objectFit: 'contain' }}
           />
           <span style={{
             fontSize: '10px',
@@ -470,7 +471,7 @@ export default function AdminPage({ onNavigateHome }) {
                 <img
                   src={careconnectLogo}
                   alt="CareConnect"
-                  style={{ height: '26px', width: 'auto', display: 'block', objectFit: 'contain' }}
+                  style={{ height: '30px', maxWidth: '170px', width: 'auto', display: 'block', objectFit: 'contain' }}
                 />
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -522,20 +523,16 @@ export default function AdminPage({ onNavigateHome }) {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: '#0F5B4C',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900,
-                  fontSize: '12px'
-                }}>
-                  CC
-                </div>
+                <img
+                  src={careconnectEmblem}
+                  alt="CareConnect"
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
+                />
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(false)}
