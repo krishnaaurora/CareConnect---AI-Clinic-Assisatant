@@ -68,23 +68,23 @@ export default function AICallActivity() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const data = await fetchAICallActivity();
       setActivityData(data);
     } catch (err) {
       console.error('Failed to load call activity:', err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
-    // Live real-time polling: auto-refresh call activity every 3 seconds so live agent & caller speech updates immediately
+    // Live real-time polling: auto-refresh call activity silently every 3 seconds so live agent & caller speech updates immediately
     const interval = setInterval(() => {
-      loadData();
+      loadData(true);
     }, 3000);
     return () => clearInterval(interval);
   }, []);

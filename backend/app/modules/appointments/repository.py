@@ -46,6 +46,17 @@ class AppointmentRepository:
 
         return await self.collection.count_documents(query)
 
+    async def get_by_doctor_and_date(self, clinic_code: str, doctor_name: str, date_str: str) -> List[dict]:
+        query = {
+            "doctor_name": {"$regex": f"^{doctor_name}$", "$options": "i"},
+            "preferred_date": date_str,
+            "status": {"$in": ["VERIFIED_CONFIRMED", "IN_CONSULTATION"]}
+        }
+        if clinic_code:
+            query["clinic_code"] = clinic_code
+        cursor = self.collection.find(query, {"_id": 0})
+        return await cursor.to_list(length=100)
+
     async def get_recent_appointments(self, limit: int = 150) -> List[dict]:
         cursor = self.collection.find({}, {"_id": 0}).sort("preferred_date", -1).limit(limit)
         return await cursor.to_list(length=limit)

@@ -366,7 +366,7 @@ class VoiceAgentService:
         Throttled to once every 10 seconds.
         """
         now = datetime.now(timezone.utc)
-        if VoiceAgentService._last_sarvam_sync and (now - VoiceAgentService._last_sarvam_sync).total_seconds() < 10:
+        if VoiceAgentService._last_sarvam_sync and (now - VoiceAgentService._last_sarvam_sync).total_seconds() < 3:
             return
 
         VoiceAgentService._last_sarvam_sync = now

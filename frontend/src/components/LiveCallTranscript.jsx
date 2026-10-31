@@ -62,12 +62,10 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
     if (initialCallId) {
       setSelectedCallId(initialCallId);
       userSelectedRef.current = true;
-      setCurrentStep(0);
-      setIsPlaying(true);
+      setShowFullTranscript(true);
     } else if (!userSelectedRef.current && realCalls.length > 0) {
       setSelectedCallId(realCalls[0].call_id);
-      setCurrentStep(0);
-      setIsPlaying(true);
+      setShowFullTranscript(true);
     }
   }, [initialCallId, realCalls]);
 
@@ -104,12 +102,12 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
   const inboundCount = realCalls.filter(c => c.call_direction === 'INBOUND').length;
   const outboundCount = realCalls.filter(c => c.call_direction === 'OUTBOUND').length;
 
-  // Playback & Stream State
+  // Playback & Stream State - Defaults to showing full conversation immediately
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [showFullTranscript, setShowFullTranscript] = useState(false);
+  const [showFullTranscript, setShowFullTranscript] = useState(true);
   const [copiedText, setCopiedText] = useState(false);
 
   const transcriptScrollRef = useRef(null);
@@ -153,10 +151,10 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
     userSelectedRef.current = true;
     if (timerRef.current) clearTimeout(timerRef.current);
     setSelectedCallId(callId);
-    setShowFullTranscript(false);
+    setShowFullTranscript(true);
     setCurrentStep(0);
     setIsProcessing(false);
-    setIsPlaying(true);
+    setIsPlaying(false);
   };
 
   const handlePlay = () => {

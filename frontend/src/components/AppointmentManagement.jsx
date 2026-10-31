@@ -213,21 +213,43 @@ export default function AppointmentManagement() {
   // Open Book Modal
   const handleOpenBookModal = () => {
     const today = new Date().toISOString().split('T')[0];
-    const initialDoctor = doctors[0]?.name || '';
-    setBookForm({
-      patient_name: '',
-      phone: '',
-      email: '',
-      age: '',
-      gender: 'Male',
-      clinic_code: 'CARE-IND-01',
-      doctor_name: initialDoctor,
-      preferred_date: today,
-      preferred_time: '10:00 AM',
-      visit_type: 'In-Person Consultation',
-      notes: '',
-      booking_source: 'Clinic Console / Staff'
-    });
+    const initialDoctor = doctors[0]?.name || 'Dr. Ramesh Kumar';
+    const defaultPatient = patients.find(p => p.phone?.includes('8897371942') || p.name?.toLowerCase().includes('mubeen')) || patients[0];
+    
+    if (defaultPatient) {
+      setSelectedPatientId(defaultPatient.id);
+      setPatientMode('existing');
+      setBookForm({
+        patient_name: defaultPatient.name || 'Mubeen',
+        phone: defaultPatient.phone || '8897371942',
+        email: defaultPatient.email || '',
+        age: defaultPatient.age || 32,
+        gender: defaultPatient.gender || 'Male',
+        clinic_code: 'CARE-IND-01',
+        doctor_name: initialDoctor,
+        preferred_date: today,
+        preferred_time: '11:00 AM',
+        visit_type: 'In-Person Consultation',
+        notes: 'Consultation booked via CareConnect Console',
+        booking_source: 'Clinic Console / Staff',
+        patient_id: defaultPatient.id
+      });
+    } else {
+      setBookForm({
+        patient_name: 'Mubeen',
+        phone: '8897371942',
+        email: '',
+        age: '32',
+        gender: 'Male',
+        clinic_code: 'CARE-IND-01',
+        doctor_name: initialDoctor,
+        preferred_date: today,
+        preferred_time: '11:00 AM',
+        visit_type: 'In-Person Consultation',
+        notes: 'Consultation booked via CareConnect Console',
+        booking_source: 'Clinic Console / Staff'
+      });
+    }
     setSelectedPatientId('');
     setPatientMode('existing');
     setIsBookModalOpen(true);

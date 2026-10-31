@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection, get_database
@@ -52,12 +52,28 @@ app.include_router(patients_router, prefix=settings.API_V1_STR)
 app.include_router(diagnostic_reports_router, prefix=settings.API_V1_STR)
 app.include_router(sarvam_router, prefix=settings.API_V1_STR)
 
+# Register aliases for Sarvam voice tools and unversioned integrations
+app.include_router(appointments_router, prefix="/api")
+app.include_router(appointments_router, prefix="")
+
 # Dedicated Sarvam webhook route without version prefix for instant hook compatibility
 @app.post("/api/voice/sarvam/webhook")
 async def sarvam_direct_webhook(payload: dict):
     """Direct root webhook route for Sarvam Instant Outbound call events."""
     service = SarvamService()
     return await service.process_webhook(payload)
+
+@app.api_route("/check-availability", methods=["GET", "POST"])
+@app.api_route("/api/check-availability", methods=["GET", "POST"])
+async def root_check_availability(request: Request):
+    from app.modules.appointments.router import check_doctor_availability_route
+    return await check_doctor_availability_route(request)
+
+@app.api_route("/book-appointment", methods=["GET", "POST"])
+@app.api_route("/api/book-appointment", methods=["GET", "POST"])
+async def root_book_appointment(request: Request):
+    from app.modules.appointments.router import create_appointment
+    return await create_appointment(request)
 
 @app.get("/")
 async def root():

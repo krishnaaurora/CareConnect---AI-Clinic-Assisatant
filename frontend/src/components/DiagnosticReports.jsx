@@ -77,6 +77,8 @@ export default function DiagnosticReports() {
   // Upload Form State
   const [uploadForm, setUploadForm] = useState({
     patient_id: '',
+    patient_name: '',
+    patient_phone: '',
     report_type: 'Blood Test',
     status: 'Ready',
     uploaded_date: 'Oct 30',
@@ -115,7 +117,13 @@ export default function DiagnosticReports() {
       setPatients(patientList || []);
 
       if (patientList && patientList.length > 0 && !uploadForm.patient_id) {
-        setUploadForm(prev => ({ ...prev, patient_id: patientList[0].id }));
+        const firstP = patientList.find(p => p.phone?.includes('8897371942') || p.name?.toLowerCase().includes('mubeen')) || patientList[0];
+        setUploadForm(prev => ({
+          ...prev,
+          patient_id: firstP.id,
+          patient_name: firstP.name,
+          patient_phone: firstP.phone || ''
+        }));
       }
     } catch (err) {
       console.error('Error loading diagnostic reports:', err);
@@ -964,7 +972,15 @@ export default function DiagnosticReports() {
                 <select
                   required
                   value={uploadForm.patient_id}
-                  onChange={e => setUploadForm({ ...uploadForm, patient_id: e.target.value })}
+                  onChange={e => {
+                    const sel = patients.find(p => p.id === e.target.value);
+                    setUploadForm({
+                      ...uploadForm,
+                      patient_id: e.target.value,
+                      patient_name: sel?.name || '',
+                      patient_phone: sel?.phone || ''
+                    });
+                  }}
                   style={{
                     width: '100%',
                     padding: '10px 14px',
@@ -978,10 +994,36 @@ export default function DiagnosticReports() {
                   <option value="" disabled>-- Select registered patient --</option>
                   {patients.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.id}) · {p.masked_phone || p.phone} · Consent: {p.communication_consent?.status || 'Pending'}
+                      {p.name} ({p.id}) · {p.phone || p.masked_phone} · Consent: {p.communication_consent?.status || 'Consented'}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Patient Phone Number for Direct Voice Call */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#0A2520', marginBottom: '6px' }}>
+                  Patient Mobile Phone (for Instant Priya Voice AI Call) *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="+91 88973 71942"
+                  value={uploadForm.patient_phone || ''}
+                  onChange={e => setUploadForm({ ...uploadForm, patient_phone: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '13.5px',
+                    backgroundColor: '#FFFFFF',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <p style={{ margin: '4px 0 0', fontSize: '11.5px', color: '#0F5B4C', fontWeight: 600 }}>
+                  Priya Voice AI will place an automated phone call to this number immediately upon upload if Status is "Ready".
+                </p>
               </div>
 
               {/* Field 2: Report Category */}

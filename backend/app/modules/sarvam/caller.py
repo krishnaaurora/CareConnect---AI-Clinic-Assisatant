@@ -111,9 +111,14 @@ class SarvamVoiceClient:
         self,
         recipient_phone: str,
         patient_name: str,
-        test_name: str,
-        report_id: str,
-        patient_id: str,
+        test_name: Optional[str] = "Diagnostic Lab Report",
+        report_id: Optional[str] = None,
+        patient_id: Optional[str] = None,
+        call_purpose: str = "REPORT_READY",
+        doctor_name: Optional[str] = None,
+        appointment_date: Optional[str] = None,
+        appointment_time: Optional[str] = None,
+        reference_id: Optional[str] = None,
         webhook_override_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -122,6 +127,26 @@ class SarvamVoiceClient:
         """
         formatted_phone = self.format_phone_number(recipient_phone)
         wh_url = webhook_override_url or self.webhook_url or f"{settings.BACKEND_URL.rstrip('/')}/api/voice/sarvam/webhook"
+
+        agent_vars = {
+            "patient_name": patient_name,
+            "call_purpose": call_purpose,
+            "test_name": test_name or "Diagnostic Lab Report"
+        }
+        if doctor_name:
+            agent_vars["doctor_name"] = doctor_name
+        if appointment_date:
+            agent_vars["appointment_date"] = appointment_date
+        if appointment_time:
+            agent_vars["appointment_time"] = appointment_time
+
+        meta = {}
+        if report_id:
+            meta["report_id"] = report_id
+        if patient_id:
+            meta["patient_id"] = patient_id
+        if reference_id:
+            meta["reference_id"] = reference_id
 
         payload = {
             "app_config": {
@@ -132,21 +157,14 @@ class SarvamVoiceClient:
                     "connection_id": self.connection_id,
                     "agent_phone_number": self.agent_phone
                 },
-                "agent_variables": {
-                    "patient_name": patient_name,
-                    "call_purpose": "REPORT_READY",
-                    "test_name": test_name
-                }
+                "agent_variables": agent_vars
             },
             "user_config": {
                 "user_phone_number": formatted_phone
             },
             "webhook_config": {
                 "url": wh_url,
-                "metadata": {
-                    "report_id": report_id,
-                    "patient_id": patient_id
-                }
+                "metadata": meta
             }
         }
         return payload
@@ -155,9 +173,14 @@ class SarvamVoiceClient:
         self,
         recipient_phone: str,
         patient_name: str,
-        test_name: str,
-        report_id: str,
-        patient_id: str,
+        test_name: Optional[str] = "Diagnostic Lab Report",
+        report_id: Optional[str] = None,
+        patient_id: Optional[str] = None,
+        call_purpose: str = "REPORT_READY",
+        doctor_name: Optional[str] = None,
+        appointment_date: Optional[str] = None,
+        appointment_time: Optional[str] = None,
+        reference_id: Optional[str] = None,
         webhook_override_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -170,6 +193,11 @@ class SarvamVoiceClient:
             test_name=test_name,
             report_id=report_id,
             patient_id=patient_id,
+            call_purpose=call_purpose,
+            doctor_name=doctor_name,
+            appointment_date=appointment_date,
+            appointment_time=appointment_time,
+            reference_id=reference_id,
             webhook_override_url=webhook_override_url
         )
 

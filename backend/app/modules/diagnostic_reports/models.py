@@ -3,6 +3,8 @@ from typing import Optional, List, Dict, Any
 
 class DiagnosticReportCreateRequest(BaseModel):
     patient_id: str
+    patient_name: Optional[str] = None
+    patient_phone: Optional[str] = None
     report_type: str = "Blood Test"  # Blood Test, X-Ray, MRI, CT Scan, Ultrasound, Other Diagnostic Report
     uploaded_date: Optional[str] = "Oct 30"
     status: str = "Ready"  # Ready, Processing

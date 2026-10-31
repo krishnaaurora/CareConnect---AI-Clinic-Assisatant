@@ -75,9 +75,10 @@ class DiagnosticReportService:
                 }
             }
 
-        patient_name = patient.get("name", "Patient")
-        patient_phone = patient.get("phone", "+91 98765 43210")
-        masked_phone = patient.get("masked_phone", "98XXXXXX10")
+        patient_name = req.patient_name or patient.get("name", "Patient")
+        patient_phone = req.patient_phone or patient.get("phone", "8897371942")
+        clean_d = "".join(filter(str.isdigit, str(patient_phone)))
+        masked_phone = f"{clean_d[:2]}XXXXXX{clean_d[-2:]}" if len(clean_d) >= 10 else patient_phone
         consent = patient.get("communication_consent", {})
         consent_status = consent.get("status", "Pending")
 
