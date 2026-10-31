@@ -230,7 +230,6 @@ export default function ClinicSettingsSecurity() {
       }}>
         {[
           { id: 'general', label: 'Clinic Details & Operating Hours' },
-          { id: 'ai', label: 'AI Voice Greeting & Languages' },
           { id: 'staff', label: 'Staff Roles & Permissions' },
           { id: 'audit', label: 'Security Audit Log' },
         ].map(tab => (

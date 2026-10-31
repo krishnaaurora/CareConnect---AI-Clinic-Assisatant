@@ -1041,99 +1041,52 @@ export default function DoctorManagement() {
           </div>
         </div>
 
-        {/* ── Sub-Navigation: Dropdown Selector & Quick View Pills ── */}
+        {/* ── Sub-Navigation Tabs with Orange Highlight ── */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
+          gap: '8px',
           borderBottom: '2px solid #E2E8F0',
-          paddingBottom: '14px',
+          paddingBottom: '2px',
           marginBottom: '20px',
-          flexWrap: 'wrap'
+          overflowX: 'auto'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Select View:
-            </span>
-            <div style={{ position: 'relative', display: 'inline-block', minWidth: '260px' }}>
-              <select
-                value={activeTab}
-                onChange={(e) => setActiveTab(e.target.value)}
+          {[
+            { id: 'directory', label: 'Doctor Directory', icon: Stethoscope },
+            { id: 'departments', label: 'Doctors', icon: Building2 },
+            { id: 'schedule', label: 'Working Schedules', icon: Clock },
+            { id: 'appointments', label: 'Doctor-wise Appointments', icon: Calendar }
+          ].map(tab => {
+            const IconComp = tab.icon;
+            const isCurrent = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
                 style={{
-                  width: '100%',
-                  padding: '9px 38px 9px 14px',
-                  borderRadius: '10px',
-                  border: '2px solid #EA580C',
-                  backgroundColor: '#FFF7ED',
-                  color: '#EA580C',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  border: 'none',
+                  backgroundColor: isCurrent ? '#FFF7ED' : 'transparent',
+                  borderBottom: isCurrent ? '3px solid #EA580C' : '3px solid transparent',
+                  borderRadius: '8px 8px 0 0',
+                  marginBottom: '-3px',
+                  color: isCurrent ? '#EA580C' : '#64748B',
+                  fontWeight: isCurrent ? 800 : 600,
                   fontSize: '13.5px',
-                  fontWeight: 800,
                   cursor: 'pointer',
-                  outline: 'none',
-                  fontFamily: 'Inter, sans-serif',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.15)'
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                <option value="directory">🩺 Doctor Directory</option>
-                <option value="departments">🏢 Doctors</option>
-                <option value="schedule">🕒 Working Schedules</option>
-                <option value="appointments">📅 Doctor-wise Appointments</option>
-              </select>
-              <div style={{
-                position: 'absolute',
-                right: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: '#EA580C',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <ChevronDown size={18} />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Tab Indicators with Orange Highlight */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            {[
-              { id: 'directory', label: 'Doctor Directory', icon: Stethoscope },
-              { id: 'departments', label: 'Doctors', icon: Building2 },
-              { id: 'schedule', label: 'Working Schedules', icon: Clock },
-              { id: 'appointments', label: 'Doctor-wise Appointments', icon: Calendar }
-            ].map(tab => {
-              const IconComp = tab.icon;
-              const isCurrent = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    border: isCurrent ? '1.5px solid #EA580C' : '1px solid #E2E8F0',
-                    backgroundColor: isCurrent ? '#EA580C' : '#FFFFFF',
-                    color: isCurrent ? '#FFFFFF' : '#64748B',
-                    fontWeight: isCurrent ? 800 : 600,
-                    fontSize: '12.5px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    boxShadow: isCurrent ? '0 2px 8px rgba(234, 88, 12, 0.25)' : 'none'
-                  }}
-                >
-                  <IconComp size={14} color={isCurrent ? '#FFFFFF' : '#94A3B8'} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+                <IconComp size={16} color={isCurrent ? '#EA580C' : '#94A3B8'} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
