@@ -61,7 +61,7 @@ export default function AnimatedGridPattern({
     });
   };
 
-  // Generate randomized grid cell coordinates for glowing animations
+  // Generate randomized grid cell coordinates for glowing animations (excluding circle around text)
   const glowingSquares = useMemo(() => {
     const cols = Math.max(1, Math.floor(dimensions.width / width));
     const rows = Math.max(1, Math.floor(dimensions.height / height));
@@ -70,23 +70,27 @@ export default function AnimatedGridPattern({
     const usedCoords = new Set();
     const targetCount = Math.min(numSquares, cols * rows);
 
+    // Center coordinates of headline text
+    const textCenterCol = cols / 2;
+    const textCenterRow = Math.min(rows * 0.27, 4.5);
+    const textRadiusCol = Math.max(3, cols * 0.28);
+    const textRadiusRow = 3.2;
+
     for (let i = 0; i < targetCount; i++) {
       let col, row, key;
       let attempts = 0;
       do {
-        // Cluster half of the squares around the upper-center area where the headline text sits
-        if (i % 2 === 0 && rows > 3) {
-          row = Math.floor(1 + Math.random() * Math.min(6, rows - 1));
-          const colMin = Math.floor(cols * 0.15);
-          const colMax = Math.max(colMin + 1, Math.floor(cols * 0.85));
-          col = Math.floor(colMin + Math.random() * (colMax - colMin));
-        } else {
-          col = Math.floor(Math.random() * cols);
-          row = Math.floor(Math.random() * rows);
-        }
+        col = Math.floor(Math.random() * cols);
+        row = Math.floor(Math.random() * rows);
         key = `${col},${row}`;
         attempts++;
-      } while (usedCoords.has(key) && attempts < 25);
+
+        // Exclude if inside the circle shape around the headline text
+        const distNorm = Math.pow((col - textCenterCol) / textRadiusCol, 2) + Math.pow((row - textCenterRow) / textRadiusRow, 2);
+        if (distNorm < 1.0 && attempts < 35) {
+          continue;
+        }
+      } while (usedCoords.has(key) && attempts < 40);
 
       usedCoords.add(key);
 
@@ -190,6 +194,18 @@ export default function AnimatedGridPattern({
         }}
       >
         <defs>
+          {/* ── Circular Knockout Mask: Ensures no grid boxes are visible in a circle around the text ── */}
+          <mask id={`mask-knockout-${patternId}`}>
+            <rect width="100%" height="100%" fill="white" />
+            <ellipse cx="50%" cy="27%" rx="390" ry="170" fill={`url(#gradient-knockout-${patternId})`} />
+          </mask>
+          <radialGradient id={`gradient-knockout-${patternId}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#000000" stopOpacity="1" />
+            <stop offset="68%" stopColor="#000000" stopOpacity="0.96" />
+            <stop offset="86%" stopColor="#000000" stopOpacity="0.38" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </radialGradient>
+
           <pattern
             id={patternId}
             width={width}
@@ -216,11 +232,11 @@ export default function AnimatedGridPattern({
           </pattern>
         </defs>
 
-        {/* Base Grid or Dot Fill */}
-        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+        {/* Base Grid or Dot Fill with Circular Knockout */}
+        <rect width="100%" height="100%" fill={`url(#${patternId})`} mask={`url(#mask-knockout-${patternId})`} />
 
-        {/* Animated Glowing Cells or Dots */}
-        <svg x={-1} y={-1} style={{ overflow: 'visible' }}>
+        {/* Animated Glowing Cells or Dots with Circular Knockout */}
+        <svg x={-1} y={-1} style={{ overflow: 'visible' }} mask={`url(#mask-knockout-${patternId})`}>
           {glowingSquares.map((sq) => (
             patternType === 'dots' ? (
               <motion.circle

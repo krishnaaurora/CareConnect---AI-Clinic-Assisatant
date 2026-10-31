@@ -347,13 +347,35 @@ export default function Hero({ onOpenDialer }) {
 
           {/* ── Parallax Header Content Block ── */}
           <div style={{
+            position: 'relative',
             transform: `translate3d(0, -${pScroll * 0.35}px, 0)`,
             opacity: Math.max(0, 1 - pScroll / 380),
             willChange: 'transform, opacity',
             transition: 'transform 0.05s linear, opacity 0.05s linear',
           }}>
+            {/* Circular clearing around headline: ensures NO grid boxes appear directly around text */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -55%)',
+                width: '780px',
+                maxWidth: '92vw',
+                height: '320px',
+                borderRadius: '50%',
+                background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #FFFFFF 0%, #FFFFFF 52%, rgba(255, 255, 255, 0.94) 68%, rgba(255, 255, 255, 0.45) 86%, transparent 100%)',
+                pointerEvents: 'none',
+                zIndex: 0,
+                filter: 'blur(10px)'
+              }}
+            />
+
             {/* ── Headline ── */}
           <h1 style={{
+            position: 'relative',
+            zIndex: 1,
             fontSize: 'clamp(2.6rem, 5.2vw, 4.4rem)',
             fontWeight: 900,
             color: '#0A2520',
