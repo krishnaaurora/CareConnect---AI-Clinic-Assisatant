@@ -13,8 +13,10 @@ import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 import PhoneDialerModal from './components/PhoneDialerModal';
 import AdminPage from './components/AdminPage';
+import PageLoader from './components/PageLoader';
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [dialerOpen, setDialerOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [view, setView] = useState(() => {
@@ -131,6 +133,9 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-[#F8FAFC] text-[#0A2520] selection:bg-[#DCFAF3] selection:text-[#0F5B4C] overflow-x-hidden">
+      {/* ── Initial Splash Preloader: Logo Sign Draw Animation ── */}
+      {isLoading && <PageLoader onComplete={() => setIsLoading(false)} />}
+
       {/* ── Precision Scroll Reading Progress Bar (Top of Viewport) ── */}
       <div 
         aria-hidden="true"
