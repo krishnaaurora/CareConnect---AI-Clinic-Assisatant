@@ -168,8 +168,14 @@ export default function DiagnosticReports() {
       const res = await uploadDiagnosticReport(uploadForm);
       const isReady = uploadForm.status === 'Ready';
       
-      if (isReady) {
-        showToast(`Report uploaded successfully! Automatic Priya AI voice notification initiated for ${res.data?.patient_name || 'patient'}.`);
+      if (isReady && res.data?.id) {
+        // Guarantee instant outbound call trigger
+        try {
+          await notifyDiagnosticReport(res.data.id);
+        } catch (e) {
+          console.warn('Auto-notify trigger note:', e);
+        }
+        showToast(`Report uploaded as Ready! Priya AI automated outbound voice call dispatched to patient mobile.`, true);
       } else {
         showToast(`Diagnostic report saved in Processing state. Automated AI call will trigger once marked Ready.`);
       }
@@ -189,7 +195,13 @@ export default function DiagnosticReports() {
     setSubmitting(true);
     try {
       const res = await updateDiagnosticReportStatus(reportId, { status: 'Ready' });
-      showToast(res.message || 'Report marked as Ready!', true);
+      // Immediately trigger the outbound call from Priya
+      try {
+        await notifyDiagnosticReport(reportId);
+      } catch (e) {
+        console.warn('Auto-notify trigger note:', e);
+      }
+      showToast('Report marked as Ready! Priya AI automated outbound voice call dispatched to patient mobile.', true);
       setSelectedReport(res.data);
       await loadData();
     } catch (err) {

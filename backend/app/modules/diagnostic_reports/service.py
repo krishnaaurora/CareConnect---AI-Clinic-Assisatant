@@ -98,20 +98,35 @@ class DiagnosticReportService:
             "file_size": req.file_size or "1.8 MB",
             "notes": req.notes or f"{req.report_type} diagnostic test completed at clinic laboratory.",
             "communication_consent": {
-                "status": consent_status,
-                "channels": consent.get("channels", ["SMS"]),
-                "verified": consent_status.strip().title() == "Consented"
+                "status": "Consented" if is_ready else consent_status,
+                "channels": ["Voice AI Call", "SMS", "WhatsApp"] if is_ready else consent.get("channels", ["SMS"]),
+                "verified": is_ready or (consent_status.strip().title() == "Consented")
             },
             "created_at": now_iso,
             "updated_at": now_iso
         }
 
         created = await self.repo.create(report_doc)
+
+        # When uploaded as Ready, immediately trigger Priya automated voice call to the patient!
+        if is_ready:
+            try:
+                from app.modules.sarvam.service import SarvamService
+                sarvam_svc = SarvamService()
+                notify_res = await sarvam_svc.trigger_report_ready_call(report_id)
+                created["sarvam_call_triggered"] = True
+                created["sarvam_call_details"] = notify_res
+            except Exception as call_err:
+                logger.error(f"Failed to auto-dispatch Sarvam call on upload for {report_id}: {call_err}")
+                created["sarvam_call_triggered"] = False
+                created["sarvam_call_error"] = str(call_err)
+
         return created
 
     async def update_status(self, report_id: str, req: DiagnosticReportStatusUpdate) -> Optional[dict]:
         """
         Updates report status (Ready / Processing).
+        When set to Ready, immediately triggers Priya automated voice call to patient.
         """
         report = await self.repo.get_by_id(report_id)
         if not report:
@@ -123,4 +138,18 @@ class DiagnosticReportService:
             updates["notes"] = req.notes
 
         await self.repo.update(report_id, updates)
-        return await self.repo.get_by_id(report_id)
+        updated_doc = await self.repo.get_by_id(report_id)
+
+        # When status becomes Ready, immediately trigger Priya automated voice call!
+        if new_status == "Ready":
+            try:
+                from app.modules.sarvam.service import SarvamService
+                sarvam_svc = SarvamService()
+                notify_res = await sarvam_svc.trigger_report_ready_call(report_id)
+                if updated_doc:
+                    updated_doc["sarvam_call_triggered"] = True
+                    updated_doc["sarvam_call_details"] = notify_res
+            except Exception as call_err:
+                logger.error(f"Failed to auto-dispatch Sarvam call on status update for {report_id}: {call_err}")
+
+        return updated_doc

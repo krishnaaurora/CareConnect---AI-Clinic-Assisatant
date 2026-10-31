@@ -155,16 +155,16 @@ export default function AICallActivity() {
   };
 
   const metrics = activityData?.metrics || {
-    total_calls: 48,
-    inbound_calls: 32,
-    outbound_calls: 16,
-    booked_through_ai: 28,
-    failed_booking_attempts: 7,
-    transferred_to_human: 9,
-    pending_callbacks: 3,
-    average_duration: "2m 04s",
-    ai_success_rate: "89.5%",
-    languages_detected: ["English", "Hindi", "Telugu"]
+    total_calls: 0,
+    inbound_calls: 0,
+    outbound_calls: 0,
+    booked_through_ai: 0,
+    failed_booking_attempts: 0,
+    transferred_to_human: 0,
+    pending_callbacks: 0,
+    average_duration: "0s",
+    ai_success_rate: "100%",
+    languages_detected: ["English", "Hindi"]
   };
 
   const allCalls = activityData?.calls || [];
