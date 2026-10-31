@@ -455,7 +455,13 @@ export default function AppointmentManagement() {
     if (dateFilter === 'TODAY') matchesDate = appt.preferred_date === todayStr;
     if (dateFilter === 'UPCOMING') matchesDate = (appt.preferred_date || '') >= todayStr;
 
-    return matchesSearch && matchesStatus && matchesDate;
+    let matchesSource = true;
+    const srcStr = `${appt.source || ''} ${appt.booked_by || ''} ${appt.channel || ''}`.toLowerCase();
+    if (sourceFilter === 'AI') matchesSource = srcStr.includes('ai') || srcStr.includes('priya') || srcStr.includes('voice') || srcStr.includes('telephony');
+    if (sourceFilter === 'STAFF') matchesSource = srcStr.includes('staff') || srcStr.includes('reception') || srcStr.includes('walk');
+    if (sourceFilter === 'WEB') matchesSource = srcStr.includes('web') || srcStr.includes('portal') || srcStr.includes('online');
+
+    return matchesSearch && matchesStatus && matchesDate && matchesSource;
   });
 
   return (
@@ -574,7 +580,7 @@ export default function AppointmentManagement() {
         marginBottom: '24px'
       }}>
         {/* Card 1: Total Bookings */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>All Bookings</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.total}
@@ -582,7 +588,7 @@ export default function AppointmentManagement() {
         </div>
 
         {/* Card 2: Today's OPD */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#EDFDF9', border: '1px solid rgba(0, 201, 167, 0.4)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#EDFDF9', border: '1px solid rgba(0, 201, 167, 0.4)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase' }}>Today's OPD</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#0F5B4C', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.today}
@@ -590,7 +596,7 @@ export default function AppointmentManagement() {
         </div>
 
         {/* Card 3: Confirmed */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#007A65', textTransform: 'uppercase' }}>Confirmed</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#007A65', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.confirmed}
@@ -598,7 +604,7 @@ export default function AppointmentManagement() {
         </div>
 
         {/* Card 4: In Consultation */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#7C3AED', textTransform: 'uppercase' }}>In OPD Doctor</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#7C3AED', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.inConsult}
@@ -606,7 +612,7 @@ export default function AppointmentManagement() {
         </div>
 
         {/* Card 5: Completed */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase' }}>Completed</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#1D4ED8', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.completed}
@@ -614,7 +620,7 @@ export default function AppointmentManagement() {
         </div>
 
         {/* Card 6: Cancelled / Released */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#DC2626', textTransform: 'uppercase' }}>Cancelled</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#DC2626', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {counts.cancelled}
@@ -623,69 +629,90 @@ export default function AppointmentManagement() {
       </div>
 
       {/* ── Search & Filter Toolbar ── */}
-      <div style={{
+      <div className="admin-card" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         padding: '16px 20px',
         border: '1px solid #E2E8F0',
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '14px',
+        flexDirection: 'column',
+        gap: '12px',
         marginBottom: '20px'
       }}>
-        {/* Search */}
-        <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '380px' }}>
-          <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-          <input
-            type="text"
-            placeholder="Search by patient, phone, doctor or Ref ID..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '9px 14px 9px 38px',
-              borderRadius: '10px',
-              border: '1px solid #CBD5E1',
-              fontSize: '13px',
-              color: '#0A2520',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-          />
+        {/* Top Row: Search (Left) & Status Filter Pills (Right) */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '14px'
+        }}>
+          {/* Search Box */}
+          <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: '380px' }}>
+            <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              placeholder="Search by patient, phone, doctor or Ref ID..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 14px 9px 38px',
+                borderRadius: '10px',
+                border: '1px solid #CBD5E1',
+                fontSize: '13px',
+                color: '#0A2520',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {/* Status Pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              { id: 'ALL', label: 'All Status' },
+              { id: 'CONFIRMED', label: 'Confirmed' },
+              { id: 'IN_CONSULTATION', label: 'In OPD' },
+              { id: 'PENDING', label: 'Pending' },
+              { id: 'COMPLETED', label: 'Completed' },
+              { id: 'CANCELLED', label: 'Cancelled' }
+            ].map(tab => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.id)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    backgroundColor: isActive ? '#0F5B4C' : '#F1F5F9',
+                    color: isActive ? '#FFFFFF' : '#1E293B',
+                    transition: 'all 0.15s ease',
+                    boxShadow: isActive ? '0 2px 8px rgba(15, 91, 76, 0.25)' : 'none'
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = '#E2E8F0';
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = '#F1F5F9';
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Filter Controls: Status, Date & Source Dropdowns */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Status Selector Dropdown */}
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: statusFilter !== 'ALL' ? '1.5px solid #EA580C' : '1px solid #CBD5E1',
-              backgroundColor: statusFilter !== 'ALL' ? '#FFF7ED' : '#FFFFFF',
-              fontSize: '12.5px',
-              color: statusFilter !== 'ALL' ? '#EA580C' : '#0A2520',
-              fontWeight: 700,
-              cursor: 'pointer',
-              outline: 'none',
-              fontFamily: 'Inter, sans-serif',
-              height: '38px',
-              boxSizing: 'border-box'
-            }}
-          >
-            <option value="ALL">All Status</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="IN_CONSULTATION">In OPD</option>
-            <option value="PENDING">Pending</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-
+        {/* Bottom Row: Date & Channel Dropdowns */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {/* Date Selector */}
           <select
             value={dateFilter}
@@ -701,7 +728,7 @@ export default function AppointmentManagement() {
               cursor: 'pointer',
               outline: 'none',
               fontFamily: 'Inter, sans-serif',
-              height: '38px',
+              height: '36px',
               boxSizing: 'border-box'
             }}
           >
@@ -709,11 +736,36 @@ export default function AppointmentManagement() {
             <option value="TODAY">Today Only</option>
             <option value="UPCOMING">Upcoming & Today</option>
           </select>
+
+          {/* Booking Channel Selector */}
+          <select
+            value={sourceFilter}
+            onChange={e => setSourceFilter(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: sourceFilter !== 'ALL' ? '1.5px solid #EA580C' : '1px solid #CBD5E1',
+              backgroundColor: sourceFilter !== 'ALL' ? '#FFF7ED' : '#FFFFFF',
+              fontSize: '12.5px',
+              color: sourceFilter !== 'ALL' ? '#EA580C' : '#0A2520',
+              fontWeight: 700,
+              cursor: 'pointer',
+              outline: 'none',
+              fontFamily: 'Inter, sans-serif',
+              height: '36px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <option value="ALL">All Booking Channels</option>
+            <option value="STAFF">Staff / Clinic Walk-in</option>
+            <option value="AI">AI Phone Call (Priya)</option>
+            <option value="WEB">Online Portal</option>
+          </select>
         </div>
       </div>
 
       {/* ── Appointments Directory Table ── */}
-      <div style={{
+      <div className="admin-card" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         border: '1px solid #E2E8F0',

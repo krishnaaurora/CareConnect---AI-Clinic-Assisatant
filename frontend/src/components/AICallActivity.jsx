@@ -298,7 +298,7 @@ export default function AICallActivity() {
         marginBottom: '24px'
       }}>
         {/* Card 1: Total Calls */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>All AI Calls</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#0A2520', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {metrics.total_calls}
@@ -309,7 +309,7 @@ export default function AICallActivity() {
         </div>
 
         {/* Card 2: Booked via Priya */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#EDFDF9', border: '1px solid rgba(0, 201, 167, 0.4)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#EDFDF9', border: '1px solid rgba(0, 201, 167, 0.4)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0F5B4C', textTransform: 'uppercase' }}>Booked Through AI</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#0F5B4C', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {metrics.booked_through_ai ?? metrics.booked_through_bolna ?? 28}
@@ -320,7 +320,7 @@ export default function AICallActivity() {
         </div>
 
         {/* Card 3: AI Resolution Rate */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#007A65', textTransform: 'uppercase' }}>AI Success Rate</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#007A65', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {metrics.ai_success_rate}
@@ -331,7 +331,7 @@ export default function AICallActivity() {
         </div>
 
         {/* Card 4: Transferred to Human */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#B45309', textTransform: 'uppercase' }}>Desk Transfers</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#B45309', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {metrics.transferred_to_human}
@@ -342,7 +342,7 @@ export default function AICallActivity() {
         </div>
 
         {/* Card 5: Pending Callbacks */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#7C3AED', textTransform: 'uppercase' }}>Callback Queue</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#7C3AED', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {metrics.pending_callbacks || callbacks.length}
@@ -353,7 +353,7 @@ export default function AICallActivity() {
         </div>
 
         {/* Card 6: Failed & Retry Queue */}
-        <div style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div className="admin-card" style={{ padding: '16px 18px', borderRadius: '14px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#DC2626', textTransform: 'uppercase' }}>Failed / Retries</div>
           <div style={{ fontSize: '26px', fontWeight: 900, color: '#DC2626', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: '4px' }}>
             {metrics.failed_booking_attempts}
@@ -441,7 +441,7 @@ export default function AICallActivity() {
       {activeTab === 'all_calls' && (
         <>
           {/* Search & Filter Toolbar */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '16px 20px',
@@ -549,7 +549,7 @@ export default function AICallActivity() {
           </div>
 
           {/* Calls Table */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             border: '1px solid #E2E8F0',
@@ -913,7 +913,7 @@ export default function AICallActivity() {
 
       {/* ── TAB 3: CALLBACK REQUESTS QUEUE ── */}
       {activeTab === 'callbacks' && (
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',
@@ -1032,7 +1032,7 @@ export default function AICallActivity() {
 
       {/* ── TAB 3: FAILED CALLS & RETRY RECOVERY ── */}
       {activeTab === 'failed_retries' && (
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',

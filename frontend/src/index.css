@@ -140,6 +140,45 @@ h1, h2, h3, h4, .font-heading {
   border-color: rgba(0, 135, 108, 0.35);
 }
 
+/* ── Universal Admin Cards: Ambient Overlay Shadow & Hover Lift-off ── */
+.admin-card,
+.admin-main-panel main > div > div[style*="border-radius"],
+.admin-main-panel main > div > div[style*="borderRadius"],
+.admin-main-panel main > form,
+.admin-main-panel main div[style*="border-radius: 16px"],
+.admin-main-panel main div[style*="border-radius: 18px"],
+.admin-main-panel main div[style*="border-radius: 20px"] {
+  box-shadow: 0 4px 20px -2px rgba(10, 37, 32, 0.06), 0 2px 8px -1px rgba(0, 0, 0, 0.04) !important;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease !important;
+  will-change: transform, box-shadow;
+  position: relative;
+}
+
+.admin-card:hover,
+.admin-main-panel main > div > div[style*="border-radius"]:hover,
+.admin-main-panel main > div > div[style*="borderRadius"]:hover,
+.admin-main-panel main > form:hover,
+.admin-main-panel main div[style*="border-radius: 16px"]:hover,
+.admin-main-panel main div[style*="border-radius: 18px"]:hover,
+.admin-main-panel main div[style*="border-radius: 20px"]:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 36px -4px rgba(10, 37, 32, 0.12), 0 6px 18px -2px rgba(234, 88, 12, 0.08) !important;
+  border-color: #CBD5E1 !important;
+  z-index: 2;
+}
+
+/* Prevent inputs, buttons, tables, badges inside cards from lifting off */
+.admin-main-panel main button,
+.admin-main-panel main input,
+.admin-main-panel main select,
+.admin-main-panel main textarea,
+.admin-main-panel main table,
+.admin-main-panel main tr,
+.admin-main-panel main td,
+.admin-main-panel main th {
+  transform: none !important;
+}
+
 /* Smooth Scrollable Container Utility */
 .smooth-scroll-panel {
   scroll-behavior: smooth;

@@ -531,7 +531,7 @@ export default function PatientRegistry() {
         marginBottom: '26px'
       }}>
         {/* Card 1: Total Patients */}
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           padding: '18px 20px',
@@ -563,7 +563,7 @@ export default function PatientRegistry() {
         </div>
 
         {/* Card 2: Reports Ready */}
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           padding: '18px 20px',
@@ -595,7 +595,7 @@ export default function PatientRegistry() {
         </div>
 
         {/* Card 3: Processing Reports */}
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           padding: '18px 20px',
@@ -627,7 +627,7 @@ export default function PatientRegistry() {
         </div>
 
         {/* Card 4: Communication Consented */}
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           padding: '18px 20px',
@@ -659,7 +659,7 @@ export default function PatientRegistry() {
         </div>
 
         {/* Card 5: Pending Verification */}
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           padding: '18px 20px',
@@ -692,7 +692,7 @@ export default function PatientRegistry() {
       </div>
 
       {/* ── Search & Multi-Filters Toolbar ── */}
-      <div style={{
+      <div className="admin-card" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         padding: '16px 20px',
@@ -831,7 +831,7 @@ export default function PatientRegistry() {
       </div>
 
       {/* ── Patient Directory Table ── */}
-      <div style={{
+      <div className="admin-card" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         border: '1px solid #E2E8F0',

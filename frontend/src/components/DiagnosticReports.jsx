@@ -361,7 +361,7 @@ export default function DiagnosticReports() {
         marginBottom: '28px'
       }}>
         {/* Card 1: Total Reports */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
+        <div className="admin-card" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Total Reports
@@ -376,6 +376,7 @@ export default function DiagnosticReports() {
 
         {/* Card 2: Reports Ready */}
         <div 
+          className="admin-card"
           onClick={() => setStatusFilter(statusFilter === 'Ready' ? 'All' : 'Ready')}
           style={{
             backgroundColor: statusFilter === 'Ready' ? '#EDFDF9' : '#FFFFFF',
@@ -406,6 +407,7 @@ export default function DiagnosticReports() {
 
         {/* Card 3: Processing */}
         <div 
+          className="admin-card"
           onClick={() => setStatusFilter(statusFilter === 'Processing' ? 'All' : 'Processing')}
           style={{
             backgroundColor: statusFilter === 'Processing' ? '#FFFBEB' : '#FFFFFF',
@@ -433,7 +435,7 @@ export default function DiagnosticReports() {
         </div>
 
         {/* Card 4: Voice Calls Dispatched & Completed */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
+        <div className="admin-card" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '20px', border: '1px solid rgba(15, 91, 76, 0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Priya Clinical Telephony
@@ -463,7 +465,7 @@ export default function DiagnosticReports() {
       </div>
 
       {/* ── Search & Filter Bar ── */}
-      <div style={{
+      <div className="admin-card" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         padding: '16px 20px',
@@ -565,7 +567,7 @@ export default function DiagnosticReports() {
 
       {/* ── 1. EXACT REQUESTED TABLE ── */}
       {/* Columns: Patient | Report type | Uploaded date | Status | Action */}
-      <div style={{
+      <div className="admin-card" style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '16px',
         border: '1px solid #E2E8F0',

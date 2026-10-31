@@ -897,7 +897,7 @@ export default function DoctorManagement() {
           marginBottom: '26px'
         }}>
           {/* Card 1: Total Doctors */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '18px 20px',
@@ -933,7 +933,7 @@ export default function DoctorManagement() {
           </div>
 
           {/* Card 2: Active Doctors */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '18px 20px',
@@ -969,7 +969,7 @@ export default function DoctorManagement() {
           </div>
 
           {/* Card 3: Currently Available */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '18px 20px',
@@ -1005,7 +1005,7 @@ export default function DoctorManagement() {
           </div>
 
           {/* Card 4: Doctors on Leave */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '18px 20px',
@@ -1094,7 +1094,7 @@ export default function DoctorManagement() {
       {activeTab === 'directory' && (
         <div>
           {/* Filters Toolbar */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '16px 20px',
@@ -1285,6 +1285,7 @@ export default function DoctorManagement() {
                 return (
                   <div
                     key={doc.id || doc.name}
+                    className="admin-card"
                     style={{
                       backgroundColor: '#FFFFFF',
                       borderRadius: '18px',

@@ -262,7 +262,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
           gap: '16px'
         }}>
           {/* Card 1: Total Consultations (Sales style) */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '20px',
@@ -304,7 +304,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
           </div>
 
           {/* Card 2: Active Patients (Users style) */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '20px',
@@ -346,7 +346,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
           </div>
 
           {/* Card 3: Appointments Today (Orders style) */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '20px',
@@ -388,7 +388,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
           </div>
 
           {/* Card 4: Doctors on Duty (Products style) */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             padding: '20px',
@@ -439,7 +439,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
         }}>
           
           {/* ── Left Card: Recent Activity (Exact Style from Image) ── */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             border: '1px solid #E2E8F0',
@@ -588,7 +588,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
           {/* ── Right Column: Quick Stats with Progress Bars (Exact Style from Image) ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             
-            <div style={{
+            <div className="admin-card" style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
               border: '1px solid #E2E8F0',
@@ -649,7 +649,7 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
             </div>
 
             {/* Clinic Facility Quick Info Card */}
-            <div style={{
+            <div className="admin-card" style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
               border: '1px solid #E2E8F0',

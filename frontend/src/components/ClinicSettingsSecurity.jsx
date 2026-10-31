@@ -258,7 +258,7 @@ export default function ClinicSettingsSecurity() {
 
       {/* ── SECTION 1: CLINIC DETAILS & OPENING HOURS ── */}
       {activeSection === 'general' && (
-        <form onSubmit={handleSaveSettings} style={{
+        <form onSubmit={handleSaveSettings} className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',
@@ -444,7 +444,7 @@ export default function ClinicSettingsSecurity() {
 
       {/* ── SECTION 2: AI VOICE GREETING & SUPPORTED LANGUAGES ── */}
       {activeSection === 'ai' && (
-        <form onSubmit={handleSaveSettings} style={{
+        <form onSubmit={handleSaveSettings} className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',
@@ -610,7 +610,7 @@ export default function ClinicSettingsSecurity() {
       {activeSection === 'staff' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '20px',
             border: '1px solid rgba(15, 91, 76, 0.1)',
@@ -702,7 +702,7 @@ export default function ClinicSettingsSecurity() {
           </div>
 
           {/* Role-Based Permissions Matrix */}
-          <div style={{
+          <div className="admin-card" style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '16px',
             border: '1px solid #E2E8F0',
@@ -755,7 +755,7 @@ export default function ClinicSettingsSecurity() {
 
       {/* ── SECTION 4: AUDIT LOG FOR IMPORTANT BOOKING CHANGES ── */}
       {activeSection === 'audit' && (
-        <div style={{
+        <div className="admin-card" style={{
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',
