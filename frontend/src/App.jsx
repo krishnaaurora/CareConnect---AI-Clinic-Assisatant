@@ -12,12 +12,14 @@ import TrustPrivacy from './components/TrustPrivacy';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 import PhoneDialerModal from './components/PhoneDialerModal';
+import RealtimeVoiceModal from './components/RealtimeVoiceModal';
 import AdminPage from './components/AdminPage';
 import PageLoader from './components/PageLoader';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [dialerOpen, setDialerOpen] = useState(false);
+  const [realtimeVoiceOpen, setRealtimeVoiceOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [view, setView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -181,7 +183,10 @@ export default function App() {
 
       {/* Main Sections: Hero → Voice Infra Partners → Partner Clinics → About → Features → How It Works → Trust & Privacy → FAQs */}
       <main>
-        <Hero onOpenDialer={() => setDialerOpen(true)} />
+        <Hero 
+          onOpenDialer={() => setDialerOpen(true)} 
+          onOpenRealtimeVoice={() => setRealtimeVoiceOpen(true)}
+        />
         <VoiceInfraPartners />
         <PartnerClinics />
         <About />
@@ -193,6 +198,12 @@ export default function App() {
 
       {/* Footer & Emergency Disclaimer */}
       <Footer />
+
+      {/* Real-Time Sarvam AI Voice Receptionist Modal */}
+      <RealtimeVoiceModal
+        isOpen={realtimeVoiceOpen}
+        onClose={() => setRealtimeVoiceOpen(false)}
+      />
 
       {/* Interactive 3D Phone Dialer Simulator */}
       <PhoneDialerModal 

@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/v1`
+  : 'http://localhost:8000/api/v1';
 
 export async function fetchHealth() {
   try {
@@ -873,5 +875,21 @@ export async function fetchSarvamHealth() {
     console.warn('Sarvam health fallback:', err);
     return { status: 'offline', provider: 'Sarvam AI Voice Agents' };
   }
+}
+
+export async function createSarvamBrowserSession(userName = 'Website Visitor', preferredLanguage = 'English') {
+  const res = await fetch(`${API_BASE_URL}/sarvam/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_name: userName,
+      preferred_language: preferredLanguage
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to establish Sarvam voice session');
+  }
+  return await res.json();
 }
 

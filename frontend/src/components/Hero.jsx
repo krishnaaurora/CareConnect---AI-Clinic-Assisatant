@@ -162,7 +162,7 @@ const CONVERSATION_STATES = [
   },
 ];
 
-export default function Hero({ onOpenDialer }) {
+export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
   const [currentStateIdx, setCurrentStateIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -226,23 +226,6 @@ export default function Hero({ onOpenDialer }) {
     }, 4600);
     return () => clearTimeout(timer);
   }, [currentStateIdx, isPlaying]);
-
-  /* Optional Speech Synthesis when voice enabled */
-  useEffect(() => {
-    if (!soundEnabled || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    if (state.priya) {
-      const utterance = new SpeechSynthesisUtterance(state.priya);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.05;
-      if (state.lang === 'हिंदी') {
-        utterance.lang = 'hi-IN';
-      } else {
-        utterance.lang = 'en-IN';
-      }
-      window.speechSynthesis.speak(utterance);
-    }
-  }, [currentStateIdx, soundEnabled, state]);
 
   const scrollToPhone = () => {
     phoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -420,7 +403,7 @@ export default function Hero({ onOpenDialer }) {
             {/* Primary: See it in action */}
             <button
               type="button"
-              onClick={scrollToPhone}
+              onClick={onOpenRealtimeVoice || scrollToPhone}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -948,21 +931,22 @@ export default function Hero({ onOpenDialer }) {
                   </div>
 
                   <div 
-                    onClick={onOpenDialer}
+                    onClick={onOpenRealtimeVoice || onOpenDialer}
                     style={{
                       width: '42px',
                       height: '42px',
                       borderRadius: '50%',
-                      backgroundColor: '#EF4444',
+                      backgroundColor: '#0F5B4C',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.35)',
+                      boxShadow: '0 4px 12px rgba(15, 91, 76, 0.35)',
+                      transition: 'transform 0.15s ease'
                     }} 
-                    title="End Call / Test Live Dialer"
+                    title="Speak with Priya (Real-Time Voice AI)"
                   >
-                    <PhoneOff size={18} color="#FFFFFF" />
+                    <Mic size={18} color="#FFFFFF" />
                   </div>
 
                   <div style={{

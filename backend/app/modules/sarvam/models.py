@@ -50,3 +50,14 @@ class ReportNotifyRequest(BaseModel):
     preferred_language: Optional[str] = "English"
     custom_notes: Optional[str] = None
 
+class BrowserSessionRequest(BaseModel):
+    user_name: Optional[str] = "Website Visitor"
+    preferred_language: Optional[str] = "English"
+
+class BrowserSessionResponse(BaseModel):
+    success: bool
+    signed_url: str
+    reference_id: str
+    expires_at: Optional[int] = None
+    config: Dict[str, Any]
+

@@ -17,11 +17,12 @@ class SarvamVoiceClient:
         """
         Normalizes Sarvam API key format:
         - Strips surrounding whitespace and quotes.
-        - Corrects accidental UI key label prefixes, e.g., 'sk_samvaad_33d0gu06_...' -> 'sk_33d0gu06_...'.
+        - Preserves the sk_samvaad_ workspace prefix required by the Sarvam Voice Agent Runtime API.
+        - Ensures sk_samvaad_ is present if provided as sk_ for conversational runtime.
         """
         key = str(raw_key or "").strip().strip("'\" \r\n\t")
-        if key.startswith("sk_samvaad_"):
-            key = "sk_" + key[len("sk_samvaad_"):]
+        if not key.startswith("sk_samvaad_") and key.startswith("sk_"):
+            key = "sk_samvaad_" + key[3:]
         return key
 
     def __init__(self):
@@ -38,6 +39,56 @@ class SarvamVoiceClient:
     @property
     def outbound_url(self) -> str:
         return f"{self.base_url}/outbounds/v1/orgs/{self.org_id}/workspaces/{self.workspace_id}/outbounds"
+
+    @property
+    def runtime_url_endpoint(self) -> str:
+        return f"https://apps.sarvam.ai/api/app-runtime/orgs/{self.org_id}/workspaces/{self.workspace_id}/apps/{self.agent_id}/url"
+
+    async def request_browser_session_url(
+        self,
+        interaction_type: str = "call",
+        version: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Requests a fresh signed WebSocket URL from Sarvam Voice Agent Runtime API.
+        Endpoint: GET https://apps.sarvam.ai/api/app-runtime/orgs/{org_id}/workspaces/{workspace_id}/apps/{app_id}/url
+        Authentication: X-API-Key header (preserving full sk_samvaad_ key prefix).
+        Never logs or exposes the API key or raw signed session tokens.
+        """
+        target_version = version or self.agent_version
+        params = {
+            "interaction_type": interaction_type,
+            "version": str(target_version)
+        }
+        active_key = self.sanitize_api_key(self.api_key or settings.SARVAM_API_KEY)
+        headers = {
+            "X-API-Key": active_key
+        }
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(self.runtime_url_endpoint, params=params, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                return {
+                    "success": True,
+                    "signed_url": data.get("url"),
+                    "reference_id": data.get("reference_id"),
+                    "expires_at": data.get("expires_at"),
+                    "config": {
+                        "org_id": self.org_id,
+                        "workspace_id": self.workspace_id,
+                        "app_id": self.agent_id,
+                        "version": target_version,
+                        "interaction_type": interaction_type
+                    }
+                }
+            else:
+                logger.error(f"Sarvam runtime session creation failed with status {resp.status_code}: {resp.text}")
+                return {
+                    "success": False,
+                    "status_code": resp.status_code,
+                    "error": f"Sarvam runtime returned status {resp.status_code}"
+                }
 
     @staticmethod
     def format_phone_number(raw_phone: str) -> str:

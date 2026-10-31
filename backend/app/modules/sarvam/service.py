@@ -208,6 +208,27 @@ class SarvamService:
     async def list_recent_calls(self, limit: int = 50) -> List[Dict[str, Any]]:
         return await self.call_repo.list_calls(limit=limit)
 
+    async def create_browser_voice_session(
+        self,
+        user_name: Optional[str] = None,
+        language: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Creates a fresh signed browser voice session for Priya AI receptionist.
+        Preserves Sarvam API credentials securely on the backend.
+        Never logs or persists temporary signed tokens or URLs.
+        """
+        result = await self.caller.request_browser_session_url(
+            interaction_type="call",
+            version=settings.SARVAM_AGENT_VERSION
+        )
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=result.get("error", "Failed to establish Sarvam voice session.")
+            )
+        return result
+
     def check_health(self) -> Dict[str, Any]:
         """Check Sarvam integration configuration status without making outbound calls."""
         configured = bool(settings.SARVAM_API_KEY)
