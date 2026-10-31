@@ -36,14 +36,16 @@ export async function queryAppointmentStatus(referenceId) {
   return await res.json();
 }
 
-export async function interactVoiceAgent(message, language = 'English', clinicCode = 'CARE-IND-01') {
+export async function interactVoiceAgent(message, language = 'English', clinicCode = 'CARE-IND-01', callId = null, callerName = 'Caller (Inbound Voice)') {
   const res = await fetch(`${API_BASE_URL}/voice/interact`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       message,
       language,
-      clinic_code: clinicCode
+      clinic_code: clinicCode,
+      call_id: callId,
+      caller_name: callerName
     })
   });
   if (!res.ok) throw new Error('Voice agent connection failed');

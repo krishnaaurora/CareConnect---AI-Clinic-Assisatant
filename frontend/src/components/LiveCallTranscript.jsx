@@ -189,6 +189,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
       if (match) {
         setSelectedHistoricalCall(match);
         setSelectedCallSource('historical');
+        setCurrentStep(0);
       }
     }
   }, [initialCallId, historicalCalls]);
@@ -196,10 +197,12 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
   // Determine current conversation items
   const currentMessages = selectedCallSource === 'live_stream' 
     ? activeScenario.messages 
-    : (selectedHistoricalCall?.transcript_dialogue || [
-        { speaker: 'Patient', text: selectedHistoricalCall?.summary || 'Patient called clinic.', time: '09:00 AM' },
-        { speaker: 'Priya', text: `Apex Care Clinic Priya AI assisted. Call status: ${selectedHistoricalCall?.status || 'Resolved'}.`, time: '09:01 AM' }
-      ]);
+    : (selectedHistoricalCall?.transcript_dialogue && selectedHistoricalCall.transcript_dialogue.length > 0
+        ? selectedHistoricalCall.transcript_dialogue
+        : [
+            { speaker: selectedHistoricalCall?.caller_name || 'Patient', text: selectedHistoricalCall?.summary || 'Patient called clinic.', time: selectedHistoricalCall?.timestamp || '09:00 AM' },
+            { speaker: 'Priya', text: `Apex Care Clinic Priya AI assisted. Call status: ${selectedHistoricalCall?.outcome || selectedHistoricalCall?.status || 'Resolved'}.`, time: selectedHistoricalCall?.timestamp || '09:01 AM' }
+          ]);
 
   const visibleMessages = currentMessages.slice(0, currentStep);
   const isFinished = currentStep >= currentMessages.length;
@@ -815,7 +818,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                       fontWeight: 800,
                       color: isPriya ? '#00C9A7' : '#A7F3D0'
                     }}>
-                      <span>{isPriya ? 'Priya (Clinical Assistant)' : (selectedCallSource === 'live_stream' ? activeScenario.caller : 'Patient')}</span>
+                      <span>{isPriya ? 'Priya Voice AI (Receptionist)' : (selectedCallSource === 'live_stream' ? activeScenario.caller : (msg.speaker || selectedHistoricalCall?.caller_name || 'Caller'))}</span>
                       <span style={{ fontWeight: 600, color: isPriya ? '#94A3B8' : 'rgba(255, 255, 255, 0.7)' }}>
                         {msg.time}
                       </span>

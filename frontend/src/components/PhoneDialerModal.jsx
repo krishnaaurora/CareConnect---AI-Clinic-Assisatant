@@ -6,6 +6,7 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
   const [callActive, setCallActive] = useState(false);
   const [selectedLang, setSelectedLang] = useState('English');
   const [callSeconds, setCallSeconds] = useState(0);
+  const [currentCallId, setCurrentCallId] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState([
     {
@@ -55,6 +56,8 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
   };
 
   const handleStartCall = () => {
+    const newCallId = `CALL-${Date.now().toString(36).toUpperCase()}`;
+    setCurrentCallId(newCallId);
     setCallActive(true);
     let initialGreeting = "Hello! Welcome to CareConnect Clinic. I'm Priya. How may I assist you today?";
     if (selectedLang === 'Hindi') {
@@ -70,6 +73,7 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setCallActive(false);
     setIsSpeaking(false);
+    setCurrentCallId(null);
   };
 
   const handleSendMessage = async (msgText) => {
@@ -81,7 +85,10 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
     setInputMsg('');
 
     try {
-      const res = await interactVoiceAgent(textToSend, selectedLang, "CARE-IND-01");
+      const res = await interactVoiceAgent(textToSend, selectedLang, "CARE-IND-01", currentCallId);
+      if (res.call_id) {
+        setCurrentCallId(res.call_id);
+      }
       setTranscript([...newTranscript, { speaker: 'Priya', text: res.spoken_text }]);
       speakPriya(res.spoken_text, selectedLang);
 

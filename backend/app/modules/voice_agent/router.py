@@ -16,7 +16,10 @@ async def process_voice_utterance(req: VoiceUtteranceRequest):
     res = await service.process_utterance(
         message=req.message,
         language=req.language,
-        clinic_code=req.clinic_code or "CARE-IND-01"
+        clinic_code=req.clinic_code or "CARE-IND-01",
+        call_id=req.call_id,
+        caller_name=req.caller_name or "Caller (Inbound Voice)",
+        caller_phone=req.patient_phone or "+91 98860 77123"
     )
     return res
 

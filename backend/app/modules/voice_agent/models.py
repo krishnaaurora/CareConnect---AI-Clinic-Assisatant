@@ -6,6 +6,8 @@ class VoiceUtteranceRequest(BaseModel):
     language: str = Field(default="English", example="English | Hindi | Telugu")
     clinic_code: Optional[str] = "CARE-IND-01"
     patient_phone: Optional[str] = "+91 98765 43210"
+    call_id: Optional[str] = None
+    caller_name: Optional[str] = "Caller (Inbound Voice)"
 
 class VoiceUtteranceResponse(BaseModel):
     agent_name: str = "Priya"
@@ -16,3 +18,6 @@ class VoiceUtteranceResponse(BaseModel):
     requires_human_handoff: bool = False
     verified_data: Optional[Dict[str, Any]] = None
     bolna_trace_id: str
+    call_id: Optional[str] = None
+    appointment_reference: Optional[str] = None
+    transcript_dialogue: Optional[List[Dict[str, Any]]] = None
