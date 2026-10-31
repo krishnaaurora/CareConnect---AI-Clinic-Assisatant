@@ -657,43 +657,34 @@ export default function AppointmentManagement() {
           />
         </div>
 
-        {/* Status Filter Pills with Orange Highlight */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          {[
-            { id: 'ALL', label: 'All Status' },
-            { id: 'CONFIRMED', label: 'Confirmed' },
-            { id: 'IN_CONSULTATION', label: 'In OPD' },
-            { id: 'PENDING', label: 'Pending' },
-            { id: 'COMPLETED', label: 'Completed' },
-            { id: 'CANCELLED', label: 'Cancelled' }
-          ].map(tab => {
-            const isCurrent = statusFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setStatusFilter(tab.id)}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  border: isCurrent ? '1.5px solid #EA580C' : '1px solid #E2E8F0',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  backgroundColor: isCurrent ? '#EA580C' : '#FFFFFF',
-                  color: isCurrent ? '#FFFFFF' : '#475569',
-                  boxShadow: isCurrent ? '0 2px 8px rgba(234, 88, 12, 0.28)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Date Selector */}
+        {/* Filter Controls: Status, Date & Source Dropdowns */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Status Selector Dropdown */}
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: statusFilter !== 'ALL' ? '1.5px solid #EA580C' : '1px solid #CBD5E1',
+              backgroundColor: statusFilter !== 'ALL' ? '#FFF7ED' : '#FFFFFF',
+              fontSize: '12.5px',
+              color: statusFilter !== 'ALL' ? '#EA580C' : '#0A2520',
+              fontWeight: 700,
+              cursor: 'pointer',
+              outline: 'none',
+              fontFamily: 'Inter, sans-serif',
+              height: '38px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <option value="ALL">All Status</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="IN_CONSULTATION">In OPD</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
 
           {/* Date Selector */}
           <select
@@ -702,11 +693,11 @@ export default function AppointmentManagement() {
             style={{
               padding: '8px 12px',
               borderRadius: '8px',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
+              border: dateFilter !== 'ALL' ? '1.5px solid #EA580C' : '1px solid #CBD5E1',
+              backgroundColor: dateFilter !== 'ALL' ? '#FFF7ED' : '#FFFFFF',
               fontSize: '12.5px',
-              color: '#0A2520',
-              fontWeight: 600,
+              color: dateFilter !== 'ALL' ? '#EA580C' : '#0A2520',
+              fontWeight: 700,
               cursor: 'pointer',
               outline: 'none',
               fontFamily: 'Inter, sans-serif',
