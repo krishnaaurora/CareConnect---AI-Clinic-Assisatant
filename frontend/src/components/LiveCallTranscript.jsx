@@ -26,7 +26,8 @@ import {
   Search, 
   ListFilter,
   Eye,
-  FastForward
+  FastForward,
+  RefreshCw
 } from 'lucide-react';
 import priyaImg from '../assets/priya-avatar.png';
 import BackgroundPattern from './common/BackgroundPattern';
@@ -152,7 +153,7 @@ const DEFAULT_CLINIC_CALLS = [
   }
 ];
 
-export default function LiveCallTranscript({ historicalCalls = [], initialCallId = null }) {
+export default function LiveCallTranscript({ historicalCalls = [], initialCallId = null, onRefresh = null, loading = false }) {
   // Merge live database calls with verified fallbacks
   const mergedCalls = useMemo(() => {
     if (historicalCalls && historicalCalls.length > 0) {
@@ -164,14 +165,14 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
           caller_name: c.caller_name || c.name || 'Caller',
           caller_phone: c.caller_phone || c.phone || '—',
           call_direction: dir,
-          call_purpose: c.call_purpose || c.purpose || (dir === 'OUTBOUND' ? 'Outbound Care Notification' : 'General Inbound Query'),
+          call_purpose: c.call_purpose || c.purpose || (dir === 'OUTBOUND' ? 'Outbound Care Notification' : 'Inbound Mobile Phone Call'),
           doctor_name: c.doctor_name || c.physician || 'Apollo Clinic Indiranagar',
           specialty: c.specialty || 'General Consultation',
           duration: c.duration || '1m 45s',
           timestamp: c.timestamp || 'Today',
           outcome: c.outcome || c.status || 'COMPLETED',
           sentiment: c.sentiment || (dir === 'OUTBOUND' ? 'Proactive Alert' : 'Inquiring'),
-          appointment_id: c.appointment_id || c.appointment_reference || 'REF-AUTO',
+          appointment_id: c.appointment_id || c.appointment_reference || (c.call_id?.startsWith('SARVAM') ? c.call_id : 'REF-AUTO'),
           summary: c.summary || 'Turn-by-turn conversation recorded by Priya Voice AI.',
           transcript_dialogue: c.transcript_dialogue && c.transcript_dialogue.length > 0 
             ? c.transcript_dialogue 
@@ -216,20 +217,25 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
   const [searchQuery, setSearchQuery] = useState('');
 
   // Selected Call
+  const userSelectedRef = useRef(false);
   const [selectedCallId, setSelectedCallId] = useState(() => {
     if (initialCallId) return initialCallId;
     return mergedCalls[0]?.call_id || 'CALL-1001';
   });
 
-  // Track initialCallId changes from outside (e.g. clicking Live Monitor in Tab 1)
+  // Track initialCallId changes or when new calls arrive
   useEffect(() => {
     if (initialCallId) {
       setSelectedCallId(initialCallId);
-      // Auto-start streaming playback for this call
+      userSelectedRef.current = true;
+      setCurrentStep(0);
+      setIsPlaying(true);
+    } else if (!userSelectedRef.current && mergedCalls.length > 0) {
+      setSelectedCallId(mergedCalls[0].call_id);
       setCurrentStep(0);
       setIsPlaying(true);
     }
-  }, [initialCallId]);
+  }, [initialCallId, mergedCalls]);
 
   // Find active call
   const activeCall = useMemo(() => {
@@ -415,8 +421,33 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
             </div>
           </div>
 
-          {/* Inbound vs Outbound Filter Pills */}
+          {/* Inbound vs Outbound Filter Pills & Live Sync */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {onRefresh && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                title="Sync live incoming & outgoing calls from Sarvam Telephony Engine"
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  border: '1px solid rgba(0, 201, 167, 0.4)',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F5B4C',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}
+              >
+                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} color="#00C9A7" />
+                <span>Sync Live Calls</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setDirectionFilter('ALL')}

@@ -44,34 +44,52 @@ class SarvamCallRepository:
     async def update_call_from_webhook(self, webhook_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Idempotent update of voice call record from Sarvam webhook payload.
-        Also syncs the outcome into the diagnostic_reports collection.
+        Also syncs the outcome into the diagnostic_reports and call_logs collections.
         """
-        attempt_id = webhook_data.get("attempt_id") or webhook_data.get("id")
-        if not attempt_id:
-            logger.warning("Webhook received without attempt_id")
-            return None
+        attempt_id = (
+            webhook_data.get("attempt_id") or 
+            webhook_data.get("id") or 
+            webhook_data.get("call_id") or 
+            webhook_data.get("interaction_id") or 
+            f"SARVAM-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        )
 
         status = webhook_data.get("status", "completed").upper()
-        duration = webhook_data.get("duration", 0.0)
+        duration = webhook_data.get("duration") or webhook_data.get("duration_in_seconds") or 0.0
         failure_reason = webhook_data.get("failure_reason")
-        agent_vars = webhook_data.get("final_agent_variables") or {}
-        transcript = webhook_data.get("interaction_transcript")
-        interaction_id = webhook_data.get("interaction_id")
+        agent_vars = webhook_data.get("final_agent_variables") or webhook_data.get("agent_variables") or {}
+        transcript = webhook_data.get("interaction_transcript") or webhook_data.get("original_transcript") or webhook_data.get("transcript")
+        interaction_id = webhook_data.get("interaction_id") or attempt_id
         metadata = (webhook_data.get("webhook_config") or {}).get("metadata") or {}
 
-        report_id = metadata.get("report_id")
-        patient_id = metadata.get("patient_id")
+        report_id = metadata.get("report_id") or webhook_data.get("report_id")
+        patient_id = metadata.get("patient_id") or webhook_data.get("patient_id")
 
         now_iso = datetime.utcnow().isoformat() + "Z"
         now_str = datetime.utcnow().strftime("%I:%M %p")
 
         # Extracted variables from Priya call
         patient_confirmed = agent_vars.get("patient_confirmed")
-        patient_response = agent_vars.get("patient_response") or "Patient acknowledged report notification."
+        patient_response = agent_vars.get("patient_response") or "Patient acknowledged Priya AI call."
         preferred_collection_date = agent_vars.get("collection_date")
         callback_requested = agent_vars.get("callback_requested", False)
-        call_outcome = agent_vars.get("call_outcome") or f"Call {status.lower()}"
-        call_summary = agent_vars.get("call_summary") or f"Priya AI notified patient of ready diagnostic report. Status: {status}."
+        call_outcome = agent_vars.get("call_outcome") or status
+        call_summary = agent_vars.get("call_summary") or f"Priya AI call completed. Status: {status}."
+        call_summary = call_summary.replace("Apex Care Clinic", "Apollo Clinic Indiranagar")
+
+        # Parse transcript dialogue
+        dialogue = []
+        if isinstance(transcript, list):
+            for turn in transcript:
+                is_agent = turn.get("role") in ["agent", "assistant"]
+                spk = "Priya" if is_agent else (agent_vars.get("patient_name") or "Caller")
+                txt = turn.get("text") or turn.get("content") or ""
+                clean_text = txt.replace("Apex Care Clinic", "Apollo Clinic Indiranagar").replace("एपेक्स केयर क्लिनिक", "अपोलो क्लिनिक इंदिरा नगर")
+                dialogue.append({
+                    "speaker": spk,
+                    "text": clean_text,
+                    "time": now_str
+                })
 
         update_fields = {
             "status": status,
@@ -86,6 +104,7 @@ class SarvamCallRepository:
             "call_outcome": call_outcome,
             "call_summary": call_summary,
             "interaction_transcript": transcript,
+            "transcript_dialogue": dialogue,
             "updated_at": now_iso
         }
 
@@ -124,19 +143,34 @@ class SarvamCallRepository:
 
         # Log into general call_logs for unified dashboard activity feed
         try:
-            await self.logs_col.insert_one({
-                "call_id": f"SARVAM-{attempt_id[:8].upper() if len(attempt_id) >= 8 else attempt_id}",
-                "caller_name": agent_vars.get("patient_name") or "Patient",
-                "caller_phone": "Verified Patient",
-                "timestamp": f"Today, {now_str}",
-                "duration": f"{int(duration)}s" if duration else "0s",
-                "language": "English / Hindi / Telugu",
-                "outcome": "REPORT_READY_NOTIFIED" if status == "COMPLETED" else f"OUTBOUND_{status}",
-                "summary": call_summary,
-                "sentiment": "Satisfied" if status == "COMPLETED" else "Neutral",
-                "sarvam_attempt_id": attempt_id,
-                "created_at": now_iso
-            })
+            direction = (webhook_data.get("channel_direction") or webhook_data.get("direction") or ("OUTBOUND" if report_id else "INBOUND")).upper()
+            caller_phone = webhook_data.get("user_contact") or webhook_data.get("from_number") or webhook_data.get("phone") or "+91 80642 69783"
+            
+            clean_cid = f"SARVAM-{attempt_id.replace(':', '').replace('-', '')[-10:].upper()}"
+            await self.logs_col.update_one(
+                {"call_id": clean_cid},
+                {"$set": {
+                    "call_id": clean_cid,
+                    "sarvam_interaction_id": interaction_id,
+                    "caller_name": agent_vars.get("patient_name") or ("Patient" if direction == "OUTBOUND" else "Caller (Mobile)"),
+                    "caller_phone": caller_phone,
+                    "call_direction": direction,
+                    "call_purpose": agent_vars.get("call_purpose") or ("Diagnostic Report Delivery" if report_id else "Inbound Mobile Phone Call"),
+                    "doctor_name": agent_vars.get("doctor_name") or "Apollo Clinic Indiranagar",
+                    "specialty": "OPD Consultation Desk",
+                    "timestamp": f"Today, {now_str}",
+                    "duration": f"{int(duration)}s" if duration else "0s",
+                    "language": webhook_data.get("language_name") or "English / Hindi",
+                    "outcome": call_outcome,
+                    "summary": call_summary,
+                    "sentiment": "Positive" if status == "COMPLETED" else "Neutral",
+                    "transcript_dialogue": dialogue,
+                    "sarvam_attempt_id": attempt_id,
+                    "created_at": now_iso,
+                    "updated_at": now_iso
+                }},
+                upsert=True
+            )
         except Exception as log_err:
             logger.warning(f"Failed to append to call_logs: {log_err}")
 

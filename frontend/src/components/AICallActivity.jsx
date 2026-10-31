@@ -908,6 +908,8 @@ export default function AICallActivity() {
         <LiveCallTranscript 
           historicalCalls={allCalls} 
           initialCallId={selectedTranscriptCallId} 
+          onRefresh={loadData}
+          loading={loading}
         />
       )}
 
