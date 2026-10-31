@@ -84,6 +84,22 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
       const res = await interactVoiceAgent(textToSend, selectedLang, "CARE-IND-01");
       setTranscript([...newTranscript, { speaker: 'Priya', text: res.spoken_text }]);
       speakPriya(res.spoken_text, selectedLang);
+
+      if ((res.intent === 'APPOINTMENT_BOOKING' || (res.spoken_text && res.spoken_text.toLowerCase().includes('appointment with'))) && typeof window !== 'undefined') {
+        // Extract doctor name from response if possible
+        let docName = 'Attending Physician';
+        const docMatch = res.spoken_text?.match(/Dr\.\s+[A-Za-z\s]+/);
+        if (docMatch) {
+          docName = docMatch[0].trim();
+        }
+        window.dispatchEvent(new CustomEvent('appointment-booked', {
+          detail: {
+            patient_name: 'Caller',
+            doctor_name: docName,
+            reference_id: res.appointment_reference || ''
+          }
+        }));
+      }
     } catch (err) {
       const fallback = `I noted your request regarding "${textToSend}". Checking our verified doctor database.`;
       setTranscript([...newTranscript, { speaker: 'Priya', text: fallback }]);

@@ -268,6 +268,15 @@ export default function AppointmentManagement() {
         age: bookForm.age ? parseInt(bookForm.age, 10) : undefined
       });
       showToast(res.message || `Appointment ${res.data?.reference_id} confirmed successfully!`);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('appointment-booked', {
+          detail: {
+            patient_name: bookForm.patient_name,
+            doctor_name: bookForm.doctor_name,
+            reference_id: res.data?.reference_id || ''
+          }
+        }));
+      }
       setIsBookModalOpen(false);
       loadData();
     } catch (err) {
@@ -422,8 +431,6 @@ export default function AppointmentManagement() {
     pending: appointments.filter(a => normalizeStatus(a.status) === 'PENDING').length,
     completed: appointments.filter(a => normalizeStatus(a.status) === 'COMPLETED').length,
     cancelled: appointments.filter(a => normalizeStatus(a.status) === 'CANCELLED').length,
-    ai: appointments.filter(a => (a.source || '').toLowerCase().includes('ai') || (a.source || '').toLowerCase().includes('priya')).length,
-    staff: appointments.filter(a => !(a.source || '').toLowerCase().includes('ai') && !(a.source || '').toLowerCase().includes('priya')).length,
   };
 
   // Filter Appointments
@@ -444,16 +451,11 @@ export default function AppointmentManagement() {
     if (statusFilter === 'COMPLETED') matchesStatus = norm === 'COMPLETED';
     if (statusFilter === 'CANCELLED') matchesStatus = norm === 'CANCELLED';
 
-    let matchesSource = true;
-    const isAi = (appt.source || '').toLowerCase().includes('ai') || (appt.source || '').toLowerCase().includes('priya');
-    if (sourceFilter === 'AI') matchesSource = isAi;
-    if (sourceFilter === 'STAFF') matchesSource = !isAi;
-
     let matchesDate = true;
     if (dateFilter === 'TODAY') matchesDate = appt.preferred_date === todayStr;
     if (dateFilter === 'UPCOMING') matchesDate = (appt.preferred_date || '') >= todayStr;
 
-    return matchesSearch && matchesStatus && matchesSource && matchesDate;
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   return (
@@ -655,34 +657,43 @@ export default function AppointmentManagement() {
           />
         </div>
 
-        {/* Filter Controls: Status, Date & Source Dropdowns */}
+        {/* Status Filter Pills with Orange Highlight */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          {[
+            { id: 'ALL', label: 'All Status' },
+            { id: 'CONFIRMED', label: 'Confirmed' },
+            { id: 'IN_CONSULTATION', label: 'In OPD' },
+            { id: 'PENDING', label: 'Pending' },
+            { id: 'COMPLETED', label: 'Completed' },
+            { id: 'CANCELLED', label: 'Cancelled' }
+          ].map(tab => {
+            const isCurrent = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id)}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  border: isCurrent ? '1.5px solid #EA580C' : '1px solid #E2E8F0',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  backgroundColor: isCurrent ? '#EA580C' : '#FFFFFF',
+                  color: isCurrent ? '#FFFFFF' : '#475569',
+                  boxShadow: isCurrent ? '0 2px 8px rgba(234, 88, 12, 0.28)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Date Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Status Selector Dropdown */}
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12.5px',
-              color: '#0A2520',
-              fontWeight: 600,
-              cursor: 'pointer',
-              outline: 'none',
-              fontFamily: 'Inter, sans-serif',
-              height: '38px',
-              boxSizing: 'border-box'
-            }}
-          >
-            <option value="ALL">All Status</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="IN_CONSULTATION">In OPD</option>
-            <option value="PENDING">Pending</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
 
           {/* Date Selector */}
           <select
@@ -706,30 +717,6 @@ export default function AppointmentManagement() {
             <option value="ALL">All Dates</option>
             <option value="TODAY">Today Only</option>
             <option value="UPCOMING">Upcoming & Today</option>
-          </select>
-
-          {/* Booking Source */}
-          <select
-            value={sourceFilter}
-            onChange={e => setSourceFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid #CBD5E1',
-              backgroundColor: '#FFFFFF',
-              fontSize: '12.5px',
-              color: '#0A2520',
-              fontWeight: 600,
-              cursor: 'pointer',
-              outline: 'none',
-              fontFamily: 'Inter, sans-serif',
-              height: '38px',
-              boxSizing: 'border-box'
-            }}
-          >
-            <option value="ALL">All Booking Channels</option>
-            <option value="AI">Priya Voice AI Bookings</option>
-            <option value="STAFF">Staff / Reception Desk</option>
           </select>
         </div>
       </div>
@@ -812,15 +799,6 @@ export default function AppointmentManagement() {
                           >
                             {copiedRef === appt.reference_id ? <Check size={12} color="#00C9A7" /> : <Copy size={12} />}
                           </button>
-                          {isAi ? (
-                            <span style={{ fontSize: '10px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', backgroundColor: '#EDFDF9', color: '#0F5B4C' }}>
-                              Voice AI
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#64748B' }}>
-                              Staff
-                            </span>
-                          )}
                         </div>
 
                         <div style={{ fontWeight: 800, color: '#0A2520', fontSize: '14px' }}>

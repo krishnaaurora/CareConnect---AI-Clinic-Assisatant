@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import careconnectLogoWhite from '../assets/careconnect-logo-white-text.png';
 import careconnectLogo from '../assets/careconnect-logo-transparent.png';
 import { 
@@ -27,7 +27,8 @@ import {
   Sparkles,
   PanelLeftClose,
   PanelLeftOpen,
-  PanelLeft
+  PanelLeft,
+  CalendarCheck2
 } from 'lucide-react';
 import ClinicOverview from './ClinicOverview';
 import DoctorManagement from './DoctorManagement';
@@ -37,6 +38,7 @@ import DiagnosticReports from './DiagnosticReports';
 import AICallActivity from './AICallActivity';
 import ClinicSettingsSecurity from './ClinicSettingsSecurity';
 import BackgroundPattern from './common/BackgroundPattern';
+import { fetchAllAppointments } from '../api/client';
 
 export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState(() => {
@@ -50,6 +52,75 @@ export default function AdminPage({ onNavigateHome }) {
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [bookingNotification, setBookingNotification] = useState(null);
+  const knownAppointmentIds = useRef(new Set());
+  const isInitialLoad = useRef(true);
+
+  // 1. Listen for global custom event 'appointment-booked'
+  useEffect(() => {
+    const handleAppointmentBooked = (event) => {
+      const { patient_name, doctor_name, reference_id } = event.detail || {};
+      if (patient_name && doctor_name) {
+        setBookingNotification({
+          patient_name,
+          doctor_name,
+          reference_id: reference_id || '',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+      }
+    };
+    window.addEventListener('appointment-booked', handleAppointmentBooked);
+    return () => window.removeEventListener('appointment-booked', handleAppointmentBooked);
+  }, []);
+
+  // 2. Background polling: Detect newly booked appointments in MongoDB from phone calls
+  useEffect(() => {
+    const pollForNewBookings = async () => {
+      try {
+        const appts = await fetchAllAppointments();
+        if (Array.isArray(appts)) {
+          if (isInitialLoad.current) {
+            appts.forEach(a => {
+              const id = a.reference_id || a._id || a.id;
+              if (id) knownAppointmentIds.current.add(id);
+            });
+            isInitialLoad.current = false;
+          } else {
+            // Check for new appointment
+            for (const a of appts) {
+              const id = a.reference_id || a._id || a.id;
+              if (id && !knownAppointmentIds.current.has(id)) {
+                knownAppointmentIds.current.add(id);
+                setBookingNotification({
+                  patient_name: a.patient_name || 'Patient',
+                  doctor_name: a.doctor_name || 'Attending Physician',
+                  reference_id: a.reference_id || id,
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                });
+                break;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Silently continue polling
+      }
+    };
+
+    pollForNewBookings();
+    const interval = setInterval(pollForNewBookings, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 3. Auto-dismiss popup after 7 seconds
+  useEffect(() => {
+    if (bookingNotification) {
+      const timer = setTimeout(() => {
+        setBookingNotification(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [bookingNotification]);
 
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -826,6 +897,87 @@ export default function AdminPage({ onNavigateHome }) {
           {adminTab === 'clinic_settings' && <ClinicSettingsSecurity />}
         </main>
       </div>
+
+      {/* ── Real-time Appointment Booked Toast/Popup ── */}
+      {bookingNotification && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 99999,
+          maxWidth: '430px',
+          width: 'calc(100% - 48px)',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '16px',
+          boxShadow: '0 16px 40px rgba(10, 37, 32, 0.16), 0 4px 14px rgba(234, 88, 12, 0.18)',
+          border: '1.5px solid #EA580C',
+          padding: '16px 18px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '14px',
+          backdropFilter: 'blur(10px)',
+          animation: 'fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            backgroundColor: '#FFF7ED',
+            color: '#EA580C',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            border: '1.5px solid #FDBA74'
+          }}>
+            <CalendarCheck2 size={22} color="#EA580C" />
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '3px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#EA580C', letterSpacing: '0.06em' }}>
+                Appointment Confirmed
+              </span>
+              {bookingNotification.time && (
+                <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
+                  {bookingNotification.time}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0A2520', lineHeight: 1.45 }}>
+              Appointment booked for <span style={{ color: '#EA580C', fontWeight: 800 }}>"{bookingNotification.patient_name}"</span> with <span style={{ color: '#0A2520', fontWeight: 800 }}>"{bookingNotification.doctor_name}"</span>
+            </div>
+            {bookingNotification.reference_id && (
+              <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '4px', fontWeight: 600 }}>
+                Ref ID: <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#0F5B4C' }}>{bookingNotification.reference_id}</span>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setBookingNotification(null)}
+            type="button"
+            aria-label="Close notification"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = '#0A2520'}
+            onMouseLeave={e => e.currentTarget.style.color = '#94A3B8'}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
     </div>
   );
