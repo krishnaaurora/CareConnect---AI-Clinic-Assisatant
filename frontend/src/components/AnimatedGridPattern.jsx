@@ -74,11 +74,19 @@ export default function AnimatedGridPattern({
       let col, row, key;
       let attempts = 0;
       do {
-        col = Math.floor(Math.random() * cols);
-        row = Math.floor(Math.random() * rows);
+        // Cluster half of the squares around the upper-center area where the headline text sits
+        if (i % 2 === 0 && rows > 3) {
+          row = Math.floor(1 + Math.random() * Math.min(6, rows - 1));
+          const colMin = Math.floor(cols * 0.15);
+          const colMax = Math.max(colMin + 1, Math.floor(cols * 0.85));
+          col = Math.floor(colMin + Math.random() * (colMax - colMin));
+        } else {
+          col = Math.floor(Math.random() * cols);
+          row = Math.floor(Math.random() * rows);
+        }
         key = `${col},${row}`;
         attempts++;
-      } while (usedCoords.has(key) && attempts < 20);
+      } while (usedCoords.has(key) && attempts < 25);
 
       usedCoords.add(key);
 

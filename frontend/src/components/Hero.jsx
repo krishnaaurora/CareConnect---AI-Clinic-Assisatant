@@ -315,11 +315,11 @@ export default function Hero({ onOpenDialer }) {
           patternType="grid"
           width={44}
           height={44}
-          numSquares={20}
-          strokeColor="rgba(203, 213, 225, 0.35)"
-          cellFill="rgba(99, 102, 241, 0.12)"
-          cellStroke="rgba(99, 102, 241, 0.25)"
-          maxCellOpacity={0.45}
+          numSquares={52}
+          strokeColor="rgba(148, 163, 184, 0.48)"
+          cellFill="rgba(99, 102, 241, 0.22)"
+          cellStroke="rgba(99, 102, 241, 0.45)"
+          maxCellOpacity={0.80}
           spotlight={true}
           withScanLine={false}
           style={{ zIndex: 0 }}
