@@ -110,7 +110,7 @@ export default function Navbar({ onOpenDialer, onNavigateAdmin }) {
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#EDFDF9'; e.currentTarget.style.color = '#0F5B4C'; }}
           >
             <ShieldCheck size={15} color="#00C9A7" />
-            <span>Demo</span>
+            <span>Workspace</span>
           </button>
 
           <button
@@ -163,7 +163,7 @@ export default function Navbar({ onOpenDialer, onNavigateAdmin }) {
             }}
           >
             <ShieldCheck size={16} />
-            <span>Open Demo</span>
+            <span>Open Workspace</span>
           </button>
         </div>
       )}
