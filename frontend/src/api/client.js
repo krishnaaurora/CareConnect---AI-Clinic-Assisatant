@@ -1,6 +1,8 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/v1`
-  : 'http://localhost:8000/api/v1';
+  : (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
+    ? 'https://careconnect-ai-clinic-assisatant.onrender.com/api/v1'
+    : 'http://localhost:8000/api/v1';
 
 export async function fetchHealth() {
   try {

@@ -177,7 +177,7 @@ export default function App() {
 
       {/* Top Navbar */}
       <Navbar 
-        onOpenDialer={() => setDialerOpen(true)} 
+        onOpenDialer={() => setRealtimeVoiceOpen(true)} 
         onNavigateAdmin={() => navigateTo('admin')} 
       />
 

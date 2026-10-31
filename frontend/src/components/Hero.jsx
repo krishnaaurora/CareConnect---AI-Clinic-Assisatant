@@ -446,7 +446,7 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             {/* Secondary: Request a Demo */}
             <button
               type="button"
-              onClick={onOpenDialer}
+              onClick={onOpenRealtimeVoice || onOpenDialer}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1107,23 +1107,23 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             <span style={{ width: '1px', height: '14px', backgroundColor: '#CBD5E1' }} />
 
             <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
+              onClick={onOpenRealtimeVoice}
               style={{
                 background: 'none',
                 border: 'none',
-                color: soundEnabled ? '#00C9A7' : '#64748B',
+                color: '#0F5B4C',
                 fontSize: '12px',
-                fontWeight: 600,
+                fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
                 cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
               }}
-              title="Toggle Browser Voice Readout"
+              title="Speak with Priya (Real-Time Sarvam Voice AI)"
             >
-              {soundEnabled ? <Volume2 size={13} color="#00C9A7" /> : <VolumeX size={13} color="#64748B" />}
-              <span>{soundEnabled ? 'Voice On' : 'Voice Off'}</span>
+              <Mic size={13} color="#00C9A7" />
+              <span>Live Voice with Priya</span>
             </button>
           </div>
 

@@ -101,20 +101,13 @@ export default function VirtualReceptionistDemo() {
   const timerRef = useRef(null);
   const chatScrollRef = useRef(null);
 
-  // Web Speech API Voice synthesis helper
+  // Web Speech API Voice synthesis helper disabled to prevent robotic browser voices
   const speakText = (text) => {
-    if (!audioEnabled || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US';
-    u.rate = 0.95;
-    u.pitch = 1.05;
-
-    u.onstart = () => setIsSpeakingAudio(true);
-    u.onend = () => setIsSpeakingAudio(false);
-    u.onerror = () => setIsSpeakingAudio(false);
-
-    window.speechSynthesis.speak(u);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeakingAudio(true);
+    setTimeout(() => setIsSpeakingAudio(false), 2000);
   };
 
   // Scroll to bottom of chat when new message appears

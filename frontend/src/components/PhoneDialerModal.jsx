@@ -37,22 +37,12 @@ export default function PhoneDialerModal({ isOpen, onClose }) {
   };
 
   const speakPriya = (text, lang) => {
-    if ('speechSynthesis' in window) {
+    // Cancel any legacy browser synthetic speech to avoid robotic voices
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      if (lang === 'Hindi' || /[\u0900-\u097F]/.test(text)) u.lang = 'hi-IN';
-      else if (lang === 'Telugu' || /[\u0C00-\u0C7F]/.test(text)) u.lang = 'te-IN';
-      else u.lang = 'en-US';
-      u.rate = 0.95;
-      u.pitch = 1.05;
-      u.onstart = () => setIsSpeaking(true);
-      u.onend = () => setIsSpeaking(false);
-      u.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(u);
-    } else {
-      setIsSpeaking(true);
-      setTimeout(() => setIsSpeaking(false), 3000);
     }
+    setIsSpeaking(true);
+    setTimeout(() => setIsSpeaking(false), 2000);
   };
 
   const handleStartCall = () => {

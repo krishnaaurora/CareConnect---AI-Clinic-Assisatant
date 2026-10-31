@@ -207,29 +207,13 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
   const visibleMessages = currentMessages.slice(0, currentStep);
   const isFinished = currentStep >= currentMessages.length;
 
-  // Speech synthesis
+  // Speech synthesis disabled to prevent robotic browser voices
   const speakText = (text, speaker) => {
-    if (!audioEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = speaker === 'Priya' ? 1.05 * playbackSpeed : 1.0 * playbackSpeed;
-      utterance.pitch = speaker === 'Priya' ? 1.15 : 0.95;
-      
-      const voices = window.speechSynthesis.getVoices();
-      if (speaker === 'Priya') {
-        const femaleVoice = voices.find(v => (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Google UK English Female') || v.name.includes('Zira') || v.lang.includes('en-IN')));
-        if (femaleVoice) utterance.voice = femaleVoice;
-      }
-
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-
-      window.speechSynthesis.speak(utterance);
-    } catch {
-      setIsSpeaking(false);
     }
+    setIsSpeaking(true);
+    setTimeout(() => setIsSpeaking(false), 1500);
   };
 
   // Stream progression logic
