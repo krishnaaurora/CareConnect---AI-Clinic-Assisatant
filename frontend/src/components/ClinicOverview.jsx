@@ -85,6 +85,11 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
 
   useEffect(() => {
     loadData();
+    // Live polling: auto-refresh dashboard metrics every 10 seconds so live bookings reflect immediately
+    const interval = setInterval(() => {
+      loadData();
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Handle Status Update (Cancel / Complete)

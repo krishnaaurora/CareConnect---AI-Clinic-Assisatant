@@ -82,6 +82,11 @@ export default function AICallActivity() {
 
   useEffect(() => {
     loadData();
+    // Live polling: auto-refresh call activity every 10 seconds so new voice calls appear live
+    const interval = setInterval(() => {
+      loadData();
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleCopy = (text, label) => {

@@ -137,6 +137,11 @@ export default function AppointmentManagement() {
 
   useEffect(() => {
     loadData();
+    // Live polling: auto-refresh appointments every 10 seconds so voice calls appear live
+    const interval = setInterval(() => {
+      loadData();
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Status mapping
