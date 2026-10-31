@@ -203,49 +203,29 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
 
   const displayedList = getDisplayedAppointments();
 
-  // Activity events matching the user's template
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'confirmed',
-      title: 'Appointment confirmed: Ananya Sharma',
-      subtext: 'Dr. Ramesh Kumar • General Medicine',
-      time: '2 min ago',
-      iconBg: '#EDFDF9',
-      iconColor: '#00C9A7',
-      icon: Check
-    },
-    {
-      id: 2,
-      type: 'patient',
-      title: 'New patient registered: Rajesh Nair',
-      subtext: 'Patient ID: PT-1042 • Cardiology Consultation',
-      time: '5 min ago',
-      iconBg: '#EFF6FF',
-      iconColor: '#2563EB',
-      icon: User
-    },
-    {
-      id: 3,
-      type: 'report',
-      title: 'Diagnostic report verified: CBC Panel',
-      subtext: 'Patient: Kavita Sundaram • Notification Dispatched',
-      time: '10 min ago',
-      iconBg: '#FAF5FF',
-      iconColor: '#7C3AED',
-      icon: FileText
-    },
-    {
-      id: 4,
-      type: 'voice',
-      title: 'Voice intake consultation scheduled',
-      subtext: 'Priya Voice Assistant • 11:30 AM Slot Reserved',
-      time: '1 hour ago',
-      iconBg: '#EDFDF9',
-      iconColor: '#0F5B4C',
-      icon: Activity
-    }
-  ];
+  // Dynamic Real Activity Feed from MongoDB Database
+  const recentActivities = React.useMemo(() => {
+    const list = overviewData?.all_recent || [];
+    if (!list || list.length === 0) return [];
+    return list.slice(0, 5).map((a, idx) => {
+      const isCancelled = a.status === 'CANCELLED';
+      const isVoice = (a.source || '').toLowerCase().includes('voice') || (a.booking_source || '').toLowerCase().includes('priya') || (a.booking_source || '').toLowerCase().includes('sarvam');
+      return {
+        id: a.reference_id || a._id || idx,
+        type: isCancelled ? 'cancelled' : (isVoice ? 'voice' : 'confirmed'),
+        title: isCancelled
+          ? `Appointment cancelled: ${a.patient_name || 'Patient'}`
+          : isVoice
+          ? `Voice AI booked: ${a.patient_name || 'Patient'}`
+          : `Appointment confirmed: ${a.patient_name || 'Patient'}`,
+        subtext: `${a.doctor_name || 'Attending Physician'} • ${a.specialty || 'General Consultation'} • ${a.preferred_time || ''}`,
+        time: a.preferred_date ? `Date: ${a.preferred_date}` : 'Recent',
+        iconBg: isCancelled ? '#FEE2E2' : (isVoice ? '#EDFDF9' : '#EFF6FF'),
+        iconColor: isCancelled ? '#DC2626' : (isVoice ? '#00C9A7' : '#2563EB'),
+        icon: isCancelled ? X : (isVoice ? Sparkles : Check)
+      };
+    });
+  }, [overviewData]);
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', paddingBottom: '40px' }}>

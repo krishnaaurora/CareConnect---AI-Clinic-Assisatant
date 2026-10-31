@@ -33,10 +33,10 @@ async def connect_to_mongo():
         await db_instance.db["patient_reports"].create_index("id", unique=True)
         await db_instance.db["report_followups"].create_index("id", unique=True)
         
-        # Auto seed/enrich initial clinics, doctors, appointments, calls, settings, staff, audit logs, reports
+        # Auto seed/enrich initial clinics, doctors, appointments, settings, staff, audit logs, reports
         await seed_initial_clinics_if_needed()
         await seed_initial_appointments_if_needed()
-        await seed_initial_call_logs_if_needed()
+        # Strictly NO dummy/mock call logs seeding: call_logs strictly populated from real Sarvam telephony sessions
         await seed_initial_settings_if_needed()
         await seed_initial_staff_if_needed()
         await seed_initial_audit_logs_if_needed()

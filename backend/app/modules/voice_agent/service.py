@@ -524,11 +524,7 @@ class VoiceAgentService:
                 "call_purpose": purpose,
                 "outcome": oc.get("status", "COMPLETED"),
                 "summary": oc.get("call_summary") or oc.get("spoken_script") or "Priya Voice AI dispatched notification call.",
-                "transcript_dialogue": oc.get("transcript_dialogue") or [
-                    {"speaker": "Priya Voice AI", "text": oc.get("spoken_script") or oc.get("call_summary") or f"Hello, this is Priya calling from Apollo Clinic Indiranagar regarding your upcoming {purpose.lower()}.", "time": ts},
-                    {"speaker": oc.get("patient_name") or "Patient", "text": "Hello Priya, yes thank you for the update.", "time": ts},
-                    {"speaker": "Priya Voice AI", "text": "You are welcome! Have a healthy day.", "time": ts}
-                ],
+                "transcript_dialogue": oc.get("transcript_dialogue") or [],
                 "doctor_name": oc.get("doctor_name"),
                 "failure_reason": oc.get("failure_reason"),
                 "retry_count": oc.get("retry_count", 0),
@@ -544,7 +540,7 @@ class VoiceAgentService:
             item.setdefault("call_direction", "INBOUND")
             if not item.get("call_purpose"):
                 outcome = item.get("outcome", "")
-                if outcome == "BOOKED_THROUGH_BOLNA":
+                if outcome == "BOOKED_THROUGH_BOLNA" or outcome == "BOOKED":
                     item["call_purpose"] = "Appointment Booking"
                 elif outcome == "TRANSFERRED_TO_HUMAN":
                     item["call_purpose"] = "Clinical Triage / Desk Transfer"
@@ -553,25 +549,7 @@ class VoiceAgentService:
                 else:
                     item["call_purpose"] = "General Clinic Inquiry"
             item.setdefault("retry_count", 0)
-            if not item.get("transcript_dialogue"):
-                ts = item.get("timestamp", "Today")
-                c_name = item.get("caller_name", "Caller")
-                summary = item.get("summary", "Inbound query handled by Priya.")
-                ref = item.get("appointment_reference", "")
-                if "booked" in summary.lower() or item.get("outcome") == "BOOKED_THROUGH_BOLNA":
-                    item["transcript_dialogue"] = [
-                        {"speaker": "Priya Voice AI", "text": "Namaste! Welcome to Apollo Clinic Indiranagar. I am Priya, your AI receptionist. How may I assist you today?", "time": ts},
-                        {"speaker": c_name, "text": "Hello, I would like to book a consultation with a doctor.", "time": ts},
-                        {"speaker": "Priya Voice AI", "text": f"I can certainly help with that. {summary}", "time": ts},
-                        {"speaker": c_name, "text": "That time slot works perfectly for me. Please confirm it.", "time": ts},
-                        {"speaker": "Priya Voice AI", "text": f"Your appointment is confirmed! Reference ID: {ref or 'CC-BOOKED'}. A confirmation SMS has been sent to your mobile.", "time": ts}
-                    ]
-                else:
-                    item["transcript_dialogue"] = [
-                        {"speaker": "Priya Voice AI", "text": "Namaste! Welcome to Apollo Clinic Indiranagar. I am Priya, your voice assistant. How may I assist you?", "time": ts},
-                        {"speaker": c_name, "text": summary.split('.')[0] if summary else "I have a question regarding clinic timings.", "time": ts},
-                        {"speaker": "Priya Voice AI", "text": summary if summary else "Apollo Clinic Indiranagar is open Monday through Saturday from 08:00 AM to 08:30 PM.", "time": ts}
-                    ]
+            item["transcript_dialogue"] = ic.get("transcript_dialogue") or []
             mapped_inbound.append(item)
 
         # Merge & sort by created_at desc
