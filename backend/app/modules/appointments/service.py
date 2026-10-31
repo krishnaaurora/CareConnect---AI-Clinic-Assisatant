@@ -31,7 +31,7 @@ class AppointmentService:
             if not clinic:
                 raise ValueError(f"Clinic with code '{req.clinic_code}' not found.")
 
-        clinic_name = clinic.get("name", "Apex Care Clinic & Diagnostics")
+        clinic_name = clinic.get("name", "Apollo Clinic Indiranagar")
         clinic_code = clinic.get("code", req.clinic_code)
         doctors = clinic.get("doctors", [])
         

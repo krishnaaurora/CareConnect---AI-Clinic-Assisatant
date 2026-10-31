@@ -123,7 +123,7 @@ class VoiceAgentService:
             elif language == "Telugu":
                 spoken = "ఇది అత్యవసర వైద్య పరిస్థితిగా కనిపిస్తోంది. దయచేసి వెంటనే 108కి కాల్ చేయండి లేదా సమీపంలోని అత్యవసర గదిని సంప్రదించండి."
             else:
-                spoken = "This appears to be a medical emergency. Please immediately call 108 or proceed to the nearest Emergency Room. Apex Care Clinic provides outpatient consultations only."
+                spoken = "This appears to be a medical emergency. Please immediately call 108 or proceed to the nearest Emergency Room. Apollo Clinic Indiranagar provides outpatient consultations only."
 
             cid, dialogue = await self._record_call_dialogue(
                 call_id=call_id,
@@ -220,7 +220,7 @@ class VoiceAgentService:
                         "patient_name": c_name,
                         "phone": c_phone,
                         "clinic_code": clinic_code,
-                        "clinic_name": "Apex Care Clinic & Diagnostics Prime",
+                        "clinic_name": "Apollo Clinic Indiranagar",
                         "doctor_name": doctor_name,
                         "specialty": "Cardiology Department",
                         "preferred_date": pref_date,
@@ -243,7 +243,7 @@ class VoiceAgentService:
             elif language == "Telugu":
                 spoken = f"ధన్యవాదాలు! {doctor_name} గారితో మీ అపాయింట్‌మెంట్ {pref_date} {pref_time} కి విజయవంతంగా బుక్ చేయబడింది. మీ బుకింగ్ రిఫరెన్స్ ID {ref_id}. నిర్ధారణ SMS మీ ఫోన్‌కు పంపబడింది."
             else:
-                spoken = f"Your appointment with {doctor_name} has been successfully scheduled for {pref_date} at {pref_time}. Your booking reference ID is {ref_id}. A confirmation SMS has been dispatched to your mobile number. We look forward to seeing you at Apex Care Clinic!"
+                spoken = f"Your appointment with {doctor_name} has been successfully scheduled for {pref_date} at {pref_time}. Your booking reference ID is {ref_id}. A confirmation SMS has been dispatched to your mobile number. We look forward to seeing you at Apollo Clinic Indiranagar!"
 
             cid, dialogue = await self._record_call_dialogue(
                 call_id=call_id,
@@ -299,7 +299,7 @@ class VoiceAgentService:
 
         # 4. Clinic Timings & Schedule
         if any(w in msg_lower for w in ["timing", "timings", "open", "hours", "sunday", "address"]):
-            spoken = "Apex Care Clinic & Diagnostics Prime is open Monday through Saturday from 08:00 AM to 08:30 PM, and Sunday from 08:00 AM to 01:00 PM. We are located at Indiranagar, Bengaluru."
+            spoken = "Apollo Clinic Indiranagar is open Monday through Saturday from 08:00 AM to 08:30 PM, and Sunday from 08:00 AM to 01:00 PM. We are located at Indiranagar, Bengaluru."
             cid, dialogue = await self._record_call_dialogue(
                 call_id=call_id,
                 caller_name=c_name,
@@ -401,7 +401,7 @@ class VoiceAgentService:
                 "outcome": oc.get("status", "COMPLETED"),
                 "summary": oc.get("call_summary") or oc.get("spoken_script") or "Priya Voice AI dispatched notification call.",
                 "transcript_dialogue": oc.get("transcript_dialogue") or [
-                    {"speaker": "Priya Voice AI", "text": oc.get("spoken_script") or oc.get("call_summary") or f"Hello, this is Priya calling from Apex Care Clinic regarding your upcoming {purpose.lower()}.", "time": ts},
+                    {"speaker": "Priya Voice AI", "text": oc.get("spoken_script") or oc.get("call_summary") or f"Hello, this is Priya calling from Apollo Clinic Indiranagar regarding your upcoming {purpose.lower()}.", "time": ts},
                     {"speaker": oc.get("patient_name") or "Patient", "text": "Hello Priya, yes thank you for the update.", "time": ts},
                     {"speaker": "Priya Voice AI", "text": "You are welcome! Have a healthy day.", "time": ts}
                 ],
@@ -436,7 +436,7 @@ class VoiceAgentService:
                 ref = item.get("appointment_reference", "")
                 if "booked" in summary.lower() or item.get("outcome") == "BOOKED_THROUGH_BOLNA":
                     item["transcript_dialogue"] = [
-                        {"speaker": "Priya Voice AI", "text": "Namaste! Welcome to Apex Care Clinic. I am Priya, your AI receptionist. How may I assist you today?", "time": ts},
+                        {"speaker": "Priya Voice AI", "text": "Namaste! Welcome to Apollo Clinic Indiranagar. I am Priya, your AI receptionist. How may I assist you today?", "time": ts},
                         {"speaker": c_name, "text": "Hello, I would like to book a consultation with a doctor.", "time": ts},
                         {"speaker": "Priya Voice AI", "text": f"I can certainly help with that. {summary}", "time": ts},
                         {"speaker": c_name, "text": "That time slot works perfectly for me. Please confirm it.", "time": ts},
@@ -444,9 +444,9 @@ class VoiceAgentService:
                     ]
                 else:
                     item["transcript_dialogue"] = [
-                        {"speaker": "Priya Voice AI", "text": "Namaste! Welcome to Apex Care Clinic. I am Priya, your voice assistant. How may I assist you?", "time": ts},
+                        {"speaker": "Priya Voice AI", "text": "Namaste! Welcome to Apollo Clinic Indiranagar. I am Priya, your voice assistant. How may I assist you?", "time": ts},
                         {"speaker": c_name, "text": summary.split('.')[0] if summary else "I have a question regarding clinic timings.", "time": ts},
-                        {"speaker": "Priya Voice AI", "text": summary if summary else "Apex Care Clinic is open Monday through Saturday from 08:00 AM to 08:30 PM.", "time": ts}
+                        {"speaker": "Priya Voice AI", "text": summary if summary else "Apollo Clinic Indiranagar is open Monday through Saturday from 08:00 AM to 08:30 PM.", "time": ts}
                     ]
             mapped_inbound.append(item)
 
