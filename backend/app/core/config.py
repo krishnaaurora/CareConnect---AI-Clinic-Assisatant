@@ -19,8 +19,13 @@ class Settings(BaseSettings):
 
     # Sarvam AI Voice Agent Configuration (Workspace API Key)
     SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "sk_samvaad_33d0gu06_BdpITgDDoxLeLcmjSnCBodi6")
-    SARVAM_AGENT_ID: str = os.getenv("SARVAM_AGENT_ID", "Careconnect-ee4e51b7-aa9b")
-    SARVAM_AGENT_VERSION: int = int(os.getenv("SARVAM_AGENT_VERSION", "4"))
+    SARVAM_AGENT_ID: str = os.getenv("SARVAM_AGENT_ID", "CareConnect-162a4dc6-9779")
+    SARVAM_AGENT_VERSION: int = int(os.getenv("SARVAM_AGENT_VERSION", "11"))
+    SARVAM_DEPLOYMENT_ID: str = os.getenv("SARVAM_DEPLOYMENT_ID", "CareConnect-442595")
+    ALLOWED_SARVAM_AGENT_IDS: list[str] = [
+        "CareConnect-162a4dc6-9779",
+        "Careconnect-ee4e51b7-aa9b"
+    ]
     SARVAM_CONNECTION_ID: str = os.getenv("SARVAM_CONNECTION_ID", "befb7616-3f-5bcf15a1-5fb4")
     SARVAM_AGENT_PHONE_NUMBER: str = os.getenv("SARVAM_AGENT_PHONE_NUMBER", "+918064269783")
     SARVAM_ORG_ID: str = os.getenv("SARVAM_ORG_ID", "019e90ca-b3c9-79f3-9722-9b051c1e9794")

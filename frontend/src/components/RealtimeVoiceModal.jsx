@@ -31,8 +31,8 @@ const Role = {
 
 const SARVAM_ORG_ID = '019e90ca-b3c9-79f3-9722-9b051c1e9794';
 const SARVAM_WORKSPACE_ID = '019e90ca-b3fb-7068-87b1-86581ef98843';
-const SARVAM_APP_ID = 'Careconnect-ee4e51b7-aa9b';
-const SARVAM_VERSION = 4;
+const SARVAM_APP_ID = 'CareConnect-162a4dc6-9779';
+const SARVAM_VERSION = 11;
 
 export default function RealtimeVoiceModal({ isOpen, onClose }) {
   // Session States: 'idle' | 'requesting_permission' | 'connecting' | 'connected' | 'error' | 'permission_denied' | 'ended'

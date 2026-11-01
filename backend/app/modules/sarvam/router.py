@@ -36,7 +36,8 @@ async def proxy_sarvam_runtime_url(
     Allows sarvam-conv-ai-sdk's internal getSignedUrl() to retrieve the signed URL through the backend proxy
     without ever requiring an API key in frontend client code.
     """
-    if org_id != settings.SARVAM_ORG_ID or workspace_id != settings.SARVAM_WORKSPACE_ID or app_id != settings.SARVAM_AGENT_ID:
+    allowed_apps = getattr(settings, "ALLOWED_SARVAM_AGENT_IDS", [settings.SARVAM_AGENT_ID])
+    if org_id != settings.SARVAM_ORG_ID or workspace_id != settings.SARVAM_WORKSPACE_ID or (app_id != settings.SARVAM_AGENT_ID and app_id not in allowed_apps):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized agent, workspace, or organization scope."

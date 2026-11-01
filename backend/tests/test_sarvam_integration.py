@@ -30,8 +30,8 @@ class TestSarvamIntegration(unittest.TestCase):
         )
 
         app_config = payload["app_config"]
-        self.assertEqual(app_config["app_id"], "Careconnect-ee4e51b7-aa9b")
-        self.assertEqual(app_config["app_version"], 4)
+        self.assertEqual(app_config["app_id"], "CareConnect-162a4dc6-9779")
+        self.assertEqual(app_config["app_version"], 11)
         self.assertEqual(app_config["app_type"], "agent")
         self.assertEqual(app_config["connection_config"]["connection_id"], "befb7616-3f-5bcf15a1-5fb4")
         self.assertEqual(app_config["connection_config"]["agent_phone_number"], "+918064269783")
@@ -61,8 +61,8 @@ class TestSarvamIntegration(unittest.TestCase):
         service = SarvamService()
         health = service.check_health()
         self.assertEqual(health["provider"], "Sarvam AI Voice Agents")
-        self.assertEqual(health["agent_id"], "Careconnect-ee4e51b7-aa9b")
-        self.assertEqual(health["agent_version"], 4)
+        self.assertEqual(health["agent_id"], "CareConnect-162a4dc6-9779")
+        self.assertEqual(health["agent_version"], 11)
         self.assertIn("api_key_configured", health)
 
 if __name__ == "__main__":
