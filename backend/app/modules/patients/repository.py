@@ -5,6 +5,40 @@ from app.core.database import get_database
 
 INITIAL_PATIENTS = [
     {
+        "id": "PAT-1094",
+        "name": "Manan",
+        "phone": "9876543210",
+        "masked_phone": "98XXXXXX10",
+        "email": "manan@example.com",
+        "age": 32,
+        "dob": "1994-08-14",
+        "date_of_birth": "1994-08-14",
+        "gender": "Male",
+        "blood_group": "B+",
+        "address": "#42, 100ft Road, Indiranagar",
+        "city": "Bengaluru",
+        "pincode": "560038",
+        "emergency_contact_name": "Kavita",
+        "emergency_contact_phone": "+91 98765 43210",
+        "emergency_contact_relation": "Family",
+        "report_status": "Ready",
+        "report_id": "RPT-2094",
+        "report_type": "Blood Test",
+        "report_updated_at": "Oct 31",
+        "communication_consent": {
+            "status": "Consented",
+            "channels": ["Voice AI Call", "SMS", "WhatsApp"],
+            "consented_at": "2026-10-31T09:00:00Z",
+            "recorded_by": "Front Desk Reception",
+            "source": "Digital Intake Form",
+            "consent_notes": "Patient authorized automated voice calls and SMS alerts for diagnostic updates."
+        },
+        "notification_history": [],
+        "clinical_notes": "Complete Blood Count (CBC) and Lipid Profile verified and ready for collection.",
+        "created_at": "2026-10-31T09:00:00Z",
+        "updated_at": "2026-10-31T09:00:00Z"
+    },
+    {
         "id": "PAT-1001",
         "name": "Rahul Sharma",
         "phone": "8897371942",

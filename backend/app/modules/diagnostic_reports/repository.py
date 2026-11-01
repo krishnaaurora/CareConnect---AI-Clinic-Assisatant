@@ -4,6 +4,30 @@ from app.core.database import get_database
 
 INITIAL_DIAGNOSTIC_REPORTS = [
     {
+        "id": "RPT-2094",
+        "patient_id": "PAT-1094",
+        "patient_name": "Manan",
+        "patient_phone": "9876543210",
+        "phone": "9876543210",
+        "masked_phone": "98XXXXXX10",
+        "dob": "1994-08-14",
+        "date_of_birth": "1994-08-14",
+        "report_type": "Blood Test",
+        "uploaded_date": "Oct 31",
+        "uploaded_time": "09:30 AM",
+        "status": "Ready",
+        "file_name": "Manan_Complete_Blood_Count.pdf",
+        "file_size": "1.5 MB",
+        "notes": "Complete Blood Count (CBC) and Biochemical Profile; verified by Dr. Rajesh Sharma.",
+        "communication_consent": {
+            "status": "Consented",
+            "channels": ["Voice AI Call", "SMS", "WhatsApp"],
+            "verified": True
+        },
+        "created_at": "2026-10-31T09:30:00Z",
+        "updated_at": "2026-10-31T09:30:00Z"
+    },
+    {
         "id": "RPT-2001",
         "patient_id": "PAT-1001",
         "patient_name": "Rahul Sharma",

@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/enquiries", tags=["Enquiries & Callbacks"])
 service = EnquiryService()
 
+@router.api_route("", methods=["POST", "GET"], response_model=Dict[str, Any])
 @router.api_route("/callback", methods=["POST", "GET"], response_model=Dict[str, Any])
 async def request_callback(request: Request):
     """
@@ -36,22 +37,38 @@ async def request_callback(request: Request):
         saved = await service.register_callback(req_obj)
         
         pref_time = saved.get('preferred_time', 'Earliest Available')
-        msg = f"Callback request registered for {saved.get('patient_name')} ({saved.get('phone')}). Front desk staff will follow up {pref_time}."
+        pat_name = saved.get('patient_name') or saved.get('name') or "Valued Patient"
+        pat_phone = saved.get('phone') or saved.get('phone_number')
+        reason_val = saved.get('callback_reason') or saved.get('enquiry_topic')
+        cb_id = saved.get('callback_id')
+
+        msg = f"Callback request registered for {pat_name} ({pat_phone}). Front desk staff will follow up {pref_time} regarding: {reason_val}."
         return {
             "success": True,
             "status": "QUEUED_FOR_CLINIC_STAFF",
-            "callback_id": saved.get("callback_id"),
-            "patient_name": saved.get("patient_name"),
-            "phone": saved.get("phone"),
-            "phone_number": saved.get("phone_number"),
-            "callback_reason": saved.get("callback_reason"),
+            "callback_id": cb_id,
+            "id": cb_id,
+            "patient_name": pat_name,
+            "caller_name": pat_name,
+            "name": pat_name,
+            "phone": pat_phone,
+            "caller_phone": pat_phone,
+            "phone_number": pat_phone,
+            "callback_reason": reason_val,
+            "reason": reason_val,
+            "enquiry_topic": reason_val,
             "preferred_time": pref_time,
             "message": msg,
             "data": saved
         }
     except Exception as e:
         logger.error(f"Error handling callback request: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "success": False,
+            "status": "CALLBACK_REGISTRATION_FAILED",
+            "error": str(e),
+            "message": f"Unable to register callback: {str(e)}"
+        }
 
 @router.get("/callbacks", response_model=List[dict])
 async def list_callbacks():

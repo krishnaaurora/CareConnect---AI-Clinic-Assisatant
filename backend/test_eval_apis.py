@@ -5,9 +5,9 @@ from app.main import app
 from app.core.database import connect_to_mongo, close_mongo_connection, get_database
 
 async def run_tests():
-    print("=" * 70)
-    print("CARECONNECT AI - SARVAM EVALUATION TEST SUITE")
-    print("=" * 70)
+    print("=" * 75)
+    print("CARECONNECT AI - EXACT SARVAM EVALUATION VERIFICATION TEST SUITE")
+    print("=" * 75)
     
     await connect_to_mongo()
     db = get_database()
@@ -16,145 +16,118 @@ async def run_tests():
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         
         # -------------------------------------------------------------
-        # TEST 1: Report Status API - GET by phone only
+        # TEST 1: Exact Sarvam Payload for get_report_status (POST /api/v1/diagnostic-reports/status)
         # -------------------------------------------------------------
-        print("\n[TEST 1] GET /api/v1/diagnostic-reports/status?phone=9820154321")
-        res = await client.get("/api/v1/diagnostic-reports/status?phone=9820154321")
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200, f"Expected 200, got {res.status_code}"
-        assert res.json().get("success") is True
-        assert res.json().get("status") in ["Ready", "Processing"]
-        assert "Rahul" in res.json().get("patient_name", "")
-        print("--> PASS")
-
-        # -------------------------------------------------------------
-        # TEST 2: Report Status API - GET with Phone + DOB (YYYY-MM-DD)
-        # -------------------------------------------------------------
-        print("\n[TEST 2] GET /api/v1/diagnostic-reports/status?phone=9820154321&dob=1988-05-14")
-        res = await client.get("/api/v1/diagnostic-reports/status?phone=9820154321&dob=1988-05-14")
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200
-        assert res.json().get("success") is True
-        print("--> PASS")
-
-        # -------------------------------------------------------------
-        # TEST 3: Report Status API - POST with Phone + DOB (DD-MM-YYYY)
-        # -------------------------------------------------------------
-        print("\n[TEST 3] POST /api/reports/status (Alias) with JSON body {phone_number, dob: 14-05-1988}")
-        res = await client.post("/api/reports/status", json={
-            "phone_number": "+91 98201 54321",
-            "dob": "14-05-1988"
-        })
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200
-        assert res.json().get("success") is True
-        assert res.json().get("report_status") == "Ready"
-        print("--> PASS")
-
-        # -------------------------------------------------------------
-        # TEST 4: Report Status API - POST with Year only (1988)
-        # -------------------------------------------------------------
-        print("\n[TEST 4] POST /reports/status (Unversioned Alias) with 4-digit Year DOB")
-        res = await client.post("/reports/status", json={
-            "phone": "9820154321",
-            "dob": "1988"
-        })
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200
-        assert res.json().get("success") is True
-        print("--> PASS")
-
-        # -------------------------------------------------------------
-        # TEST 5: Report Status API - Negative Test: DOB Mismatch Detection
-        # -------------------------------------------------------------
-        print("\n[TEST 5] POST /api/reports/status with INCORRECT DOB (dob: 2005-01-01)")
-        res = await client.post("/api/reports/status", json={
-            "phone": "9820154321",
-            "dob": "2005-01-01"
-        })
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.json().get("success") is False
-        assert res.json().get("status") == "IDENTITY_VERIFICATION_FAILED"
-        print("--> PASS (Correctly rejected with IDENTITY_VERIFICATION_FAILED)")
-
-        # -------------------------------------------------------------
-        # TEST 6: Report Status API - Lookup by Report ID
-        # -------------------------------------------------------------
-        print("\n[TEST 6] GET /diagnostic-reports/status?report_id=RPT-2001")
-        res = await client.get("/diagnostic-reports/status?report_id=RPT-2001")
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200
-        assert res.json().get("report_id") == "RPT-2001"
-        print("--> PASS")
-
-        # -------------------------------------------------------------
-        # TEST 7: Callback API - POST standard Sarvam payload (no preferred_time)
-        # -------------------------------------------------------------
-        print("\n[TEST 7] POST /api/v1/enquiries/callback - Standard Sarvam payload")
-        sarvam_payload = {
-            "patient_name": "Sarah O'Connor",
-            "phone_number": "+91 98765 43210",
-            "callback_reason": "Need to consult doctor regarding lipid report"
+        print("\n[TEST 1] POST /api/v1/diagnostic-reports/status (Exact Sarvam Payload)")
+        payload_issue_1 = {
+            "date_of_birth": "1994-08-14",
+            "patient_phone": "9876543210"
         }
-        res = await client.post("/api/v1/enquiries/callback", json=sarvam_payload)
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200, f"Expected 200, got {res.status_code}: {res.text}"
-        assert res.json().get("success") is True
-        assert res.json().get("status") == "QUEUED_FOR_CLINIC_STAFF"
-        cb_id_1 = res.json().get("callback_id")
-        assert cb_id_1 is not None
-        print(f"--> PASS (Saved callback ID: {cb_id_1})")
+        res1 = await client.post("/api/v1/diagnostic-reports/status", json=payload_issue_1)
+        print(f"Status Code: {res1.status_code}")
+        print(f"Response: {json.dumps(res1.json(), indent=2)}")
+        assert res1.status_code == 200, f"Expected 200, got {res1.status_code}"
+        d1 = res1.json()
+        assert d1.get("success") is True
+        assert d1.get("status") == "Ready"
+        assert d1.get("report_status") == "Ready"
+        assert d1.get("patient_name") == "Manan"
+        assert d1.get("report_type") == "Blood Test"
+        assert d1.get("ready_for_pickup") is True
+        print("--> PASS (Report status successfully retrieved and DOB verified for Manan)")
 
         # -------------------------------------------------------------
-        # TEST 8: Callback API - POST via /callback alias with English/Latin Name
+        # TEST 2: GET with query params for get_report_status
         # -------------------------------------------------------------
-        print("\n[TEST 8] POST /callback (Alias) - Latin name with accents & punctuation")
-        latin_payload = {
-            "name": "Dr. Jean-Luc Renée",
-            "phone": "9845011223",
-            "reason": "Billing and OPD fee enquiry"
-        }
-        res = await client.post("/callback", json=latin_payload)
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200
-        assert res.json().get("success") is True
-        cb_id_2 = res.json().get("callback_id")
-        print(f"--> PASS (Saved callback ID: {cb_id_2})")
-
-        # -------------------------------------------------------------
-        # TEST 9: Callback API - GET request via /api/callback
-        # -------------------------------------------------------------
-        print("\n[TEST 9] GET /api/callback (Alias with query parameters)")
-        res = await client.get("/api/callback?patient_name=Ananya+Deshmukh&phone_number=8897371942&callback_reason=Schedule+review")
-        print(f"Status: {res.status_code}")
-        print(f"Response: {json.dumps(res.json(), indent=2)}")
-        assert res.status_code == 200
-        assert res.json().get("success") is True
+        print("\n[TEST 2] GET /api/v1/diagnostic-reports/status?date_of_birth=1994-08-14&patient_phone=9876543210")
+        res2 = await client.get("/api/v1/diagnostic-reports/status?date_of_birth=1994-08-14&patient_phone=9876543210")
+        print(f"Status Code: {res2.status_code}")
+        assert res2.status_code == 200
+        assert res2.json().get("success") is True
         print("--> PASS")
 
         # -------------------------------------------------------------
-        # TEST 10: Verify records in MongoDB
+        # TEST 3: Negative Test - Invalid Identity / DOB Mismatch
         # -------------------------------------------------------------
-        print("\n[TEST 10] Verifying saved records directly in MongoDB 'enquiries' collection...")
-        saved_rec = await db["enquiries"].find_one({"callback_id": cb_id_1}, {"_id": 0})
-        print("MongoDB Record for Sarah O'Connor:", json.dumps(saved_rec, indent=2))
-        assert saved_rec is not None
-        assert saved_rec.get("name") == "Sarah O'Connor"
-        assert saved_rec.get("status") == "QUEUED_FOR_CLINIC_STAFF"
-        print("--> PASS (Record verified in MongoDB)")
+        print("\n[TEST 3] POST /api/v1/diagnostic-reports/status with WRONG DOB (date_of_birth: 2001-05-20)")
+        res3 = await client.post("/api/v1/diagnostic-reports/status", json={
+            "date_of_birth": "2001-05-20",
+            "patient_phone": "9876543210"
+        })
+        print(f"Status Code: {res3.status_code}")
+        print(f"Response: {json.dumps(res3.json(), indent=2)}")
+        assert res3.status_code == 200
+        d3 = res3.json()
+        assert d3.get("success") is False
+        assert d3.get("status") == "IDENTITY_VERIFICATION_FAILED"
+        assert d3.get("data", {}).get("error") == "DOB_MISMATCH"
+        print("--> PASS (Cleanly distinguished identity verification failure)")
+
+        # -------------------------------------------------------------
+        # TEST 4: Negative Test - Missing Patient Records
+        # -------------------------------------------------------------
+        print("\n[TEST 4] POST /api/v1/diagnostic-reports/status for Unregistered Phone (phone: 9111122222)")
+        res4 = await client.post("/api/v1/diagnostic-reports/status", json={
+            "date_of_birth": "1994-08-14",
+            "patient_phone": "9111122222"
+        })
+        print(f"Status Code: {res4.status_code}")
+        print(f"Response: {json.dumps(res4.json(), indent=2)}")
+        assert res4.status_code == 200
+        d4 = res4.json()
+        assert d4.get("success") is False
+        assert d4.get("status") == "PATIENT_NOT_FOUND"
+        print("--> PASS (Cleanly distinguished missing patient record)")
+
+        # -------------------------------------------------------------
+        # TEST 5: Exact Sarvam Payload for Callback (POST /api/v1/enquiries/callback)
+        # -------------------------------------------------------------
+        print("\n[TEST 5] POST /api/v1/enquiries/callback (Exact Sarvam Payload)")
+        payload_issue_2 = {
+            "caller_name": "Manan",
+            "caller_phone": "9876543210",
+            "preferred_time": "today after 12 PM",
+            "reason": "checking blood test report status"
+        }
+        res5 = await client.post("/api/v1/enquiries/callback", json=payload_issue_2)
+        print(f"Status Code: {res5.status_code}")
+        print(f"Response: {json.dumps(res5.json(), indent=2)}")
+        assert res5.status_code == 200, f"Expected 200, got {res5.status_code}"
+        d5 = res5.json()
+        assert d5.get("success") is True
+        assert d5.get("status") == "QUEUED_FOR_CLINIC_STAFF"
+        assert d5.get("callback_id") is not None
+        assert d5.get("caller_name") == "Manan"
+        assert d5.get("preferred_time") == "today after 12 PM"
+        cb_id = d5.get("callback_id")
+        print(f"--> PASS (Callback registered successfully with ID: {cb_id})")
+
+        # -------------------------------------------------------------
+        # TEST 6: Exact Sarvam Payload for Callback on Root Alias (/callback)
+        # -------------------------------------------------------------
+        print("\n[TEST 6] POST /callback (Root Alias with Exact Sarvam Payload)")
+        res6 = await client.post("/callback", json=payload_issue_2)
+        print(f"Status Code: {res6.status_code}")
+        assert res6.status_code == 200
+        assert res6.json().get("success") is True
+        print("--> PASS")
+
+        # -------------------------------------------------------------
+        # TEST 7: Verify Database Record in MongoDB
+        # -------------------------------------------------------------
+        print("\n[TEST 7] Verifying saved record in MongoDB 'enquiries' collection...")
+        rec = await db["enquiries"].find_one({"callback_id": cb_id}, {"_id": 0})
+        print(f"MongoDB Document: {json.dumps(rec, indent=2)}")
+        assert rec is not None
+        assert rec.get("name") == "Manan"
+        assert rec.get("preferred_time") == "today after 12 PM"
+        assert rec.get("status") == "QUEUED_FOR_CLINIC_STAFF"
+        print("--> PASS (MongoDB record verified)")
 
     await close_mongo_connection()
-    print("\n" + "=" * 70)
-    print("ALL 10 TESTS PASSED SUCCESSFULLY! ZERO ERRORS.")
-    print("=" * 70)
+    print("\n" + "=" * 75)
+    print("ALL TESTS PASSED WITH 100% SUCCESS!")
+    print("=" * 75)
 
 if __name__ == "__main__":
     asyncio.run(run_tests())

@@ -161,10 +161,21 @@ async def get_report_status_route(request: Request):
     logger.info(f"Report status lookup ({request.method}): report_id={req_report_id}, phone={req_phone}, dob={req_dob}, name={req_name}")
 
     if not req_report_id and not req_phone and not req_name:
-        raise HTTPException(
-            status_code=400,
-            detail="Either report_id, phone number, or patient identity is required to check report status."
-        )
+        return {
+            "success": False,
+            "status": "MISSING_IDENTIFIER",
+            "report_status": "Missing Information",
+            "ready_for_pickup": False,
+            "patient_name": None,
+            "report_id": None,
+            "report_type": None,
+            "message": "Please provide your registered phone number and date of birth to check your diagnostic report status.",
+            "status_summary": "Missing required patient phone number or report ID.",
+            "data": {
+                "identity_verified": False,
+                "error": "MISSING_REQUIRED_PARAMETERS"
+            }
+        }
 
     db = get_database()
     clean_digits = re.sub(r"\D", "", str(req_phone))[-10:] if req_phone else ""
@@ -252,10 +263,48 @@ async def get_report_status_route(request: Request):
         }
 
     if not report_doc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No diagnostic reports found for identifier provided ({req_phone or req_report_id or req_name})."
-        )
+        if patient:
+            # Patient identity verified, but no diagnostic reports recorded yet
+            pat_name = patient.get("name", "Valued Patient")
+            logger.info(f"Patient {pat_name} verified but no diagnostic reports found on file.")
+            msg = f"Hello {pat_name}, we verified your clinic profile but there are currently no diagnostic reports on file for your registered number."
+            return {
+                "success": False,
+                "status": "NO_REPORTS_FOUND",
+                "report_status": "No Reports Found",
+                "ready_for_pickup": False,
+                "patient_name": pat_name,
+                "report_id": None,
+                "report_type": None,
+                "message": msg,
+                "status_summary": f"Patient identity verified, but no diagnostic reports found on file for {pat_name}.",
+                "data": {
+                    "identity_verified": True,
+                    "patient_name": pat_name,
+                    "status": "NO_REPORTS_FOUND",
+                    "report_status": "No Reports Found",
+                    "reports_count": 0
+                }
+            }
+        else:
+            # Phone number not recognized in clinic records
+            logger.info(f"Phone number {req_phone} not found in clinic database.")
+            msg = f"No clinic record or diagnostic report found for phone number {req_phone}. Please verify your registered number or request a callback with our front desk."
+            return {
+                "success": False,
+                "status": "PATIENT_NOT_FOUND",
+                "report_status": "Not Registered",
+                "ready_for_pickup": False,
+                "patient_name": None,
+                "report_id": None,
+                "report_type": None,
+                "message": msg,
+                "status_summary": f"Phone number {req_phone} is not registered in clinic records.",
+                "data": {
+                    "identity_verified": False,
+                    "error": "PHONE_NOT_REGISTERED"
+                }
+            }
 
     # 5. Build rich, voice-optimized response
     raw_status = report_doc.get("status") or report_doc.get("verification_status") or "Processing"
