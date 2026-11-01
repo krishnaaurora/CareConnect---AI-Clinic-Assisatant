@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "sk_samvaad_33d0gu06_BdpITgDDoxLeLcmjSnCBodi6")
     SARVAM_AGENT_ID: str = os.getenv("SARVAM_AGENT_ID", "CareConnect-162a4dc6-9779")
     SARVAM_AGENT_VERSION: int = int(os.getenv("SARVAM_AGENT_VERSION", "11"))
-    SARVAM_DEPLOYMENT_ID: str = os.getenv("SARVAM_DEPLOYMENT_ID", "CareConnect-442595")
+    SARVAM_DEPLOYMENT_ID: str = os.getenv("SARVAM_DEPLOYMENT_ID", "CareConnect-4425953e-aa65")
     ALLOWED_SARVAM_AGENT_IDS: list[str] = [
         "CareConnect-162a4dc6-9779",
         "Careconnect-ee4e51b7-aa9b"

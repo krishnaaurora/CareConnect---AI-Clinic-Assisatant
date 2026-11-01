@@ -42,12 +42,26 @@ class SarvamVoiceClient:
 
     @property
     def runtime_url_endpoint(self) -> str:
-        return f"https://apps.sarvam.ai/api/app-runtime/orgs/{self.org_id}/workspaces/{self.workspace_id}/apps/{self.agent_id}/url"
+        return self.get_runtime_url_endpoint()
+
+    def get_runtime_url_endpoint(
+        self, 
+        app_id: Optional[str] = None, 
+        org_id: Optional[str] = None, 
+        workspace_id: Optional[str] = None
+    ) -> str:
+        target_app = app_id or self.agent_id or settings.SARVAM_AGENT_ID
+        target_org = org_id or self.org_id or settings.SARVAM_ORG_ID
+        target_ws = workspace_id or self.workspace_id or settings.SARVAM_WORKSPACE_ID
+        return f"https://apps.sarvam.ai/api/app-runtime/orgs/{target_org}/workspaces/{target_ws}/apps/{target_app}/url"
 
     async def request_browser_session_url(
         self,
         interaction_type: str = "call",
-        version: Optional[int] = None
+        version: Optional[int] = None,
+        app_id: Optional[str] = None,
+        org_id: Optional[str] = None,
+        workspace_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Requests a fresh signed WebSocket URL from Sarvam Voice Agent Runtime API.
@@ -55,7 +69,12 @@ class SarvamVoiceClient:
         Authentication: X-API-Key header (preserving full sk_samvaad_ key prefix).
         Never logs or exposes the API key or raw signed session tokens.
         """
-        target_version = version or self.agent_version
+        target_app = app_id or self.agent_id or settings.SARVAM_AGENT_ID
+        target_org = org_id or self.org_id or settings.SARVAM_ORG_ID
+        target_ws = workspace_id or self.workspace_id or settings.SARVAM_WORKSPACE_ID
+        target_version = version or self.agent_version or settings.SARVAM_AGENT_VERSION
+        endpoint = self.get_runtime_url_endpoint(app_id=target_app, org_id=target_org, workspace_id=target_ws)
+
         params = {
             "interaction_type": interaction_type,
             "version": str(target_version)
@@ -66,7 +85,7 @@ class SarvamVoiceClient:
         }
 
         async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(self.runtime_url_endpoint, params=params, headers=headers)
+            resp = await client.get(endpoint, params=params, headers=headers)
             if resp.status_code == 200:
                 data = resp.json()
                 return {
@@ -75,9 +94,9 @@ class SarvamVoiceClient:
                     "reference_id": data.get("reference_id"),
                     "expires_at": data.get("expires_at"),
                     "config": {
-                        "org_id": self.org_id,
-                        "workspace_id": self.workspace_id,
-                        "app_id": self.agent_id,
+                        "org_id": target_org,
+                        "workspace_id": target_ws,
+                        "app_id": target_app,
                         "version": target_version,
                         "interaction_type": interaction_type
                     }

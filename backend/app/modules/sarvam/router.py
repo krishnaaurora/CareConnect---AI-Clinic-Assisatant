@@ -45,7 +45,10 @@ async def proxy_sarvam_runtime_url(
     target_version = int(version) if version and version.isdigit() else settings.SARVAM_AGENT_VERSION
     result = await service.caller.request_browser_session_url(
         interaction_type=interaction_type,
-        version=target_version
+        version=target_version,
+        app_id=app_id,
+        org_id=org_id,
+        workspace_id=workspace_id
     )
     if not result.get("success"):
         raise HTTPException(
