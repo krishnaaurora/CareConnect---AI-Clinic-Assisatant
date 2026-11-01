@@ -49,6 +49,7 @@ import {
   fetchAllAppointments
 } from '../api/client';
 import BackgroundPattern from './common/BackgroundPattern';
+import { getCachedData, setCachedData } from '../utils/adminCache';
 
 const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -70,10 +71,10 @@ export default function DoctorManagement() {
   const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'departments' | 'schedule' | 'appointments'
 
   // Master State
-  const [doctors, setDoctors] = useState([]);
-  const [clinics, setClinics] = useState([]);
-  const [departmentsData, setDepartmentsData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [doctors, setDoctors] = useState(() => getCachedData('all_doctors', []));
+  const [clinics, setClinics] = useState(() => getCachedData('clinics', []));
+  const [departmentsData, setDepartmentsData] = useState(() => getCachedData('departments', []));
+  const [loading, setLoading] = useState(() => !getCachedData('all_doctors') || getCachedData('all_doctors').length === 0);
   const [notification, setNotification] = useState({ text: '', type: 'success' });
 
   // Filtering & Search
@@ -148,9 +149,11 @@ export default function DoctorManagement() {
   const [allAppointments, setAllAppointments] = useState([]);
   const [selectedEventDetails, setSelectedEventDetails] = useState(null);
 
-  // Initial Load
-  const loadInitialData = async () => {
-    setLoading(true);
+  // Initial Load (SWR: instant rendering from cache with silent background revalidation)
+  const loadInitialData = async (isBackground = false) => {
+    if (!isBackground && doctors.length === 0) {
+      setLoading(true);
+    }
     try {
       const [docs, clinicList, depts, appts] = await Promise.all([
         fetchAllDoctors().catch(() => []),
@@ -162,6 +165,10 @@ export default function DoctorManagement() {
       setClinics(clinicList || []);
       setDepartmentsData(depts || []);
       setAllAppointments(appts || []);
+      setCachedData('all_doctors', docs || []);
+      setCachedData('clinics', clinicList || []);
+      setCachedData('departments', depts || []);
+      setCachedData('all_appointments', appts || []);
       if (clinicList && clinicList.length > 0) {
         setFormClinicCode(clinicList[0].code);
       }
@@ -177,7 +184,7 @@ export default function DoctorManagement() {
   };
 
   useEffect(() => {
-    loadInitialData();
+    loadInitialData(doctors.length > 0);
   }, []);
 
   const showNotification = (text, type = 'success') => {

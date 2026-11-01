@@ -36,11 +36,12 @@ import {
   recordPatientConsent
 } from '../api/client';
 import BackgroundPattern from './common/BackgroundPattern';
+import { getCachedData, setCachedData } from '../utils/adminCache';
 
 export default function DiagnosticReports() {
-  const [reports, setReports] = useState([]);
-  const [patients, setPatients] = useState([]);
-  const [metrics, setMetrics] = useState({
+  const [reports, setReports] = useState(() => getCachedData('diagnostic_reports_list', []));
+  const [patients, setPatients] = useState(() => getCachedData('patients', []));
+  const [metrics, setMetrics] = useState(() => getCachedData('diagnostic_reports_metrics', {
     total_reports: 0,
     ready_count: 0,
     processing_count: 0,
@@ -49,8 +50,8 @@ export default function DiagnosticReports() {
     calls_failed: 0,
     calls_blocked_consent: 0,
     ready_to_dispatch_count: 0
-  });
-  const [loading, setLoading] = useState(true);
+  }));
+  const [loading, setLoading] = useState(() => !getCachedData('diagnostic_reports_list') || getCachedData('diagnostic_reports_list').length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All'); // All | Ready | Processing
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -99,8 +100,10 @@ export default function DiagnosticReports() {
     'Other Diagnostic Report'
   ];
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground && reports.length === 0) {
+      setLoading(true);
+    }
     try {
       const [reportList, metricData, patientList] = await Promise.all([
         fetchDiagnosticReports({
@@ -113,8 +116,13 @@ export default function DiagnosticReports() {
       ]);
 
       setReports(reportList || []);
-      if (metricData) setMetrics(metricData);
+      if (metricData) {
+        setMetrics(metricData);
+        setCachedData('diagnostic_reports_metrics', metricData);
+      }
       setPatients(patientList || []);
+      setCachedData('diagnostic_reports_list', reportList || []);
+      setCachedData('patients', patientList || []);
 
       if (patientList && patientList.length > 0 && !uploadForm.patient_id) {
         const firstP = patientList.find(p => p.phone?.includes('8897371942') || p.name?.toLowerCase().includes('mubeen')) || patientList[0];
@@ -133,7 +141,7 @@ export default function DiagnosticReports() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(reports.length > 0 && !searchQuery);
   }, [searchQuery, statusFilter, categoryFilter]);
 
   const showToast = (text, isSuccess = true) => {

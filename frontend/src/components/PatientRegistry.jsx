@@ -48,17 +48,18 @@ import {
   checkPhoneRegistered
 } from '../api/client';
 import BackgroundPattern from './common/BackgroundPattern';
+import { getCachedData, setCachedData } from '../utils/adminCache';
 
 export default function PatientRegistry() {
-  const [patients, setPatients] = useState([]);
-  const [metrics, setMetrics] = useState({
+  const [patients, setPatients] = useState(() => getCachedData('patient_registry_list', []));
+  const [metrics, setMetrics] = useState(() => getCachedData('patient_registry_metrics', {
     total_patients: 0,
     reports_ready: 0,
     reports_processing: 0,
     consented_count: 0,
     pending_consent_count: 0
-  });
-  const [loading, setLoading] = useState(true);
+  }));
+  const [loading, setLoading] = useState(() => !getCachedData('patient_registry_list') || getCachedData('patient_registry_list').length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All'); // All | Ready | Processing
   const [consentFilter, setConsentFilter] = useState('All'); // All | Consented | Pending | Revoked
@@ -140,9 +141,11 @@ export default function PatientRegistry() {
     consent_notes: ''
   });
 
-  // Load Patients and Metrics from Backend
-  const loadData = async () => {
-    setLoading(true);
+  // Load Patients and Metrics from Backend (SWR: instant rendering from cache)
+  const loadData = async (isBackground = false) => {
+    if (!isBackground && patients.length === 0) {
+      setLoading(true);
+    }
     try {
       const [patientList, metricData] = await Promise.all([
         fetchPatients({
@@ -155,7 +158,11 @@ export default function PatientRegistry() {
         fetchPatientMetrics()
       ]);
       setPatients(patientList || []);
-      if (metricData) setMetrics(metricData);
+      if (metricData) {
+        setMetrics(metricData);
+        setCachedData('patient_registry_metrics', metricData);
+      }
+      setCachedData('patient_registry_list', patientList || []);
     } catch (err) {
       console.error('Error loading patient registry:', err);
     } finally {
@@ -164,7 +171,7 @@ export default function PatientRegistry() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(patients.length > 0 && !searchQuery);
   }, [searchQuery, statusFilter, consentFilter, genderFilter, bloodGroupFilter]);
 
   const showToast = (msg, isError = false) => {

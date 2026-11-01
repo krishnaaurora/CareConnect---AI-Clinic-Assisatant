@@ -44,6 +44,7 @@ import {
   batchSendReminders
 } from '../api/client';
 import BackgroundPattern from './common/BackgroundPattern';
+import { getCachedData, setCachedData } from '../utils/adminCache';
 
 const STANDARD_SLOTS = [
   '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
@@ -54,10 +55,10 @@ const STANDARD_SLOTS = [
 ];
 
 export default function AppointmentManagement() {
-  const [appointments, setAppointments] = useState([]);
-  const [doctors, setDoctors] = useState([]);
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [appointments, setAppointments] = useState(() => getCachedData('all_appointments', []));
+  const [doctors, setDoctors] = useState(() => getCachedData('doctors_on_duty', []));
+  const [patients, setPatients] = useState(() => getCachedData('patients', []));
+  const [loading, setLoading] = useState(() => !getCachedData('all_appointments') || getCachedData('all_appointments').length === 0);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,8 +114,10 @@ export default function AppointmentManagement() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground && appointments.length === 0) {
+      setLoading(true);
+    }
     try {
       const [appts, docs, pts] = await Promise.all([
         fetchAllAppointments(),
@@ -124,6 +127,9 @@ export default function AppointmentManagement() {
       setAppointments(appts || []);
       setDoctors(docs || []);
       setPatients(pts || []);
+      setCachedData('all_appointments', appts || []);
+      setCachedData('doctors_on_duty', docs || []);
+      setCachedData('patients', pts || []);
 
       if (docs && docs.length > 0 && !bookForm.doctor_name) {
         setBookForm(prev => ({ ...prev, doctor_name: docs[0].name }));
@@ -136,10 +142,10 @@ export default function AppointmentManagement() {
   };
 
   useEffect(() => {
-    loadData();
-    // Live polling: auto-refresh appointments every 10 seconds so voice calls appear live
+    loadData(appointments.length > 0);
+    // Live polling: auto-refresh appointments every 10 seconds silently without flickering
     const interval = setInterval(() => {
-      loadData();
+      loadData(true);
     }, 10000);
     return () => clearInterval(interval);
   }, []);

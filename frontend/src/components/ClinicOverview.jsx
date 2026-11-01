@@ -37,14 +37,15 @@ import {
   updateAppointmentStatus 
 } from '../api/client';
 import BackgroundPattern from './common/BackgroundPattern';
+import { getCachedData, setCachedData } from '../utils/adminCache';
 
 export default function ClinicOverview({ onNavigateToPatients, onNavigateToReports, onNavigateToDoctors }) {
   const [activeTab, setActiveTab] = useState('today'); // 'today' | 'upcoming' | 'cancellations' | 'doctors'
   const [viewAllActivity, setViewAllActivity] = useState(false);
-  const [overviewData, setOverviewData] = useState(null);
-  const [doctors, setDoctors] = useState([]);
-  const [clinics, setClinics] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [overviewData, setOverviewData] = useState(() => getCachedData('clinic_overview', null));
+  const [doctors, setDoctors] = useState(() => getCachedData('doctors_on_duty', []));
+  const [clinics, setClinics] = useState(() => getCachedData('clinics', []));
+  const [loading, setLoading] = useState(() => !getCachedData('clinic_overview'));
   const [searchQuery, setSearchQuery] = useState('');
   
   // Modals
@@ -61,9 +62,11 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docSuccessMsg, setDocSuccessMsg] = useState('');
 
-  // Load Overview & Doctors
-  const loadData = async () => {
-    setLoading(true);
+  // Load Overview & Doctors (SWR: silent background updates without flashing spinners)
+  const loadData = async (isBackground = false) => {
+    if (!isBackground && !overviewData) {
+      setLoading(true);
+    }
     try {
       const [overview, onDutyDocs, clinicList] = await Promise.all([
         fetchAppointmentsOverview(),
@@ -73,8 +76,11 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
       setOverviewData(overview);
       setDoctors(onDutyDocs || []);
       setClinics(clinicList || []);
+      setCachedData('clinic_overview', overview);
+      setCachedData('doctors_on_duty', onDutyDocs || []);
+      setCachedData('clinics', clinicList || []);
       if (clinicList && clinicList.length > 0) {
-        setNewDocClinic(clinicList[0].code);
+        setNewDocClinic(prev => prev || clinicList[0].code);
       }
     } catch (err) {
       console.error('Error loading clinic overview:', err);
@@ -84,10 +90,10 @@ export default function ClinicOverview({ onNavigateToPatients, onNavigateToRepor
   };
 
   useEffect(() => {
-    loadData();
-    // Live polling: auto-refresh dashboard metrics every 10 seconds so live bookings reflect immediately
+    loadData(!!overviewData);
+    // Live polling: auto-refresh dashboard metrics every 10 seconds silently without re-triggering loading state
     const interval = setInterval(() => {
-      loadData();
+      loadData(true);
     }, 10000);
     return () => clearInterval(interval);
   }, []);

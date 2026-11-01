@@ -39,7 +39,15 @@ import DiagnosticReports from './DiagnosticReports';
 import AICallActivity from './AICallActivity';
 import ClinicSettingsSecurity from './ClinicSettingsSecurity';
 import BackgroundPattern from './common/BackgroundPattern';
-import { fetchAllAppointments } from '../api/client';
+import { 
+  fetchAllAppointments, 
+  fetchAppointmentsOverview, 
+  fetchDoctorsOnDuty, 
+  fetchAllDoctors, 
+  fetchClinics, 
+  fetchPatients 
+} from '../api/client';
+import { setCachedData } from '../utils/adminCache';
 
 export default function AdminPage({ onNavigateHome }) {
   const [adminTab, setAdminTab] = useState(() => {
@@ -51,12 +59,38 @@ export default function AdminPage({ onNavigateHome }) {
     }
     return 'dashboard';
   });
+  const [mountedTabs, setMountedTabs] = useState(() => new Set([
+    typeof window !== 'undefined' && ['dashboard', 'doctors', 'patients', 'appointments', 'diagnostic_reports', 'call_history', 'clinic_settings'].includes(window.location.hash.replace('#', '').toLowerCase())
+      ? window.location.hash.replace('#', '').toLowerCase()
+      : 'dashboard'
+  ]));
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null); // Tooltip for collapsed sidebar
   const [bookingNotification, setBookingNotification] = useState(null);
   const knownAppointmentIds = useRef(new Set());
   const isInitialLoad = useRef(true);
+
+  // Pre-warm admin cache on page entry for instant snappy clicks
+  useEffect(() => {
+    const prewarmCache = async () => {
+      try {
+        const [overview, docs, clinics, pts] = await Promise.allSettled([
+          fetchAppointmentsOverview(),
+          fetchDoctorsOnDuty(),
+          fetchClinics(),
+          fetchPatients()
+        ]);
+        if (overview.status === 'fulfilled' && overview.value) setCachedData('clinic_overview', overview.value);
+        if (docs.status === 'fulfilled' && docs.value) setCachedData('doctors_on_duty', docs.value);
+        if (clinics.status === 'fulfilled' && clinics.value) setCachedData('clinics', clinics.value);
+        if (pts.status === 'fulfilled' && pts.value) setCachedData('patients', pts.value);
+      } catch (e) {
+        // Silent prewarm
+      }
+    };
+    prewarmCache();
+  }, []);
 
   // 1. Listen for global custom event 'appointment-booked'
   useEffect(() => {
@@ -81,6 +115,7 @@ export default function AdminPage({ onNavigateHome }) {
       try {
         const appts = await fetchAllAppointments();
         if (Array.isArray(appts)) {
+          setCachedData('all_appointments', appts);
           if (isInitialLoad.current) {
             appts.forEach(a => {
               const id = a.reference_id || a._id || a.id;
@@ -180,6 +215,7 @@ export default function AdminPage({ onNavigateHome }) {
 
   const handleSelectTab = (tabId) => {
     setAdminTab(tabId);
+    setMountedTabs(prev => new Set(prev).add(tabId));
     setMobileNavOpen(false);
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', `/admin#${tabId}`);
@@ -905,7 +941,7 @@ export default function AdminPage({ onNavigateHome }) {
           </div>
         </header>
 
-        {/* ── Active Tab Component View ── */}
+        {/* ── Active Tab Component View (Instant Tab Switching via Preserved DOM & SWR Cache) ── */}
         <main className="admin-content-main" style={{ 
           maxWidth: '1360px', 
           width: '100%', 
@@ -913,19 +949,45 @@ export default function AdminPage({ onNavigateHome }) {
           padding: '28px 32px 64px',
           boxSizing: 'border-box'
         }}>
-          {adminTab === 'dashboard' && (
-            <ClinicOverview 
-              onNavigateToDoctors={() => handleSelectTab('doctors')}
-              onNavigateToPatients={() => handleSelectTab('patients')} 
-              onNavigateToReports={() => handleSelectTab('diagnostic_reports')} 
-            />
+          {mountedTabs.has('dashboard') && (
+            <div style={{ display: adminTab === 'dashboard' ? 'block' : 'none' }}>
+              <ClinicOverview 
+                onNavigateToDoctors={() => handleSelectTab('doctors')}
+                onNavigateToPatients={() => handleSelectTab('patients')} 
+                onNavigateToReports={() => handleSelectTab('diagnostic_reports')} 
+              />
+            </div>
           )}
-          {adminTab === 'doctors' && <DoctorManagement />}
-          {adminTab === 'patients' && <PatientRegistry />}
-          {adminTab === 'appointments' && <AppointmentManagement />}
-          {adminTab === 'diagnostic_reports' && <DiagnosticReports />}
-          {adminTab === 'call_history' && <AICallActivity />}
-          {adminTab === 'clinic_settings' && <ClinicSettingsSecurity />}
+          {mountedTabs.has('doctors') && (
+            <div style={{ display: adminTab === 'doctors' ? 'block' : 'none' }}>
+              <DoctorManagement />
+            </div>
+          )}
+          {mountedTabs.has('patients') && (
+            <div style={{ display: adminTab === 'patients' ? 'block' : 'none' }}>
+              <PatientRegistry />
+            </div>
+          )}
+          {mountedTabs.has('appointments') && (
+            <div style={{ display: adminTab === 'appointments' ? 'block' : 'none' }}>
+              <AppointmentManagement />
+            </div>
+          )}
+          {mountedTabs.has('diagnostic_reports') && (
+            <div style={{ display: adminTab === 'diagnostic_reports' ? 'block' : 'none' }}>
+              <DiagnosticReports />
+            </div>
+          )}
+          {mountedTabs.has('call_history') && (
+            <div style={{ display: adminTab === 'call_history' ? 'block' : 'none' }}>
+              <AICallActivity />
+            </div>
+          )}
+          {mountedTabs.has('clinic_settings') && (
+            <div style={{ display: adminTab === 'clinic_settings' ? 'block' : 'none' }}>
+              <ClinicSettingsSecurity />
+            </div>
+          )}
         </main>
       </div>
 

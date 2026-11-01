@@ -41,10 +41,11 @@ import {
 } from '../api/client';
 import LiveCallTranscript from './LiveCallTranscript';
 import BackgroundPattern from './common/BackgroundPattern';
+import { getCachedData, setCachedData } from '../utils/adminCache';
 
 export default function AICallActivity() {
-  const [activityData, setActivityData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [activityData, setActivityData] = useState(() => getCachedData('ai_call_activity', null));
+  const [loading, setLoading] = useState(() => !getCachedData('ai_call_activity'));
   const [activeTab, setActiveTab] = useState('all_calls'); // 'all_calls' | 'live_transcript' | 'callbacks' | 'failed_retries'
   const [selectedTranscriptCallId, setSelectedTranscriptCallId] = useState(null);
   
@@ -69,10 +70,11 @@ export default function AICallActivity() {
   };
 
   const loadData = async (isSilent = false) => {
-    if (!isSilent) setLoading(true);
+    if (!isSilent && !activityData) setLoading(true);
     try {
       const data = await fetchAICallActivity();
       setActivityData(data);
+      if (data) setCachedData('ai_call_activity', data);
     } catch (err) {
       console.error('Failed to load call activity:', err);
     } finally {
@@ -81,7 +83,7 @@ export default function AICallActivity() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(!!activityData);
     // Live real-time polling: auto-refresh call activity silently every 3 seconds so live agent & caller speech updates immediately
     const interval = setInterval(() => {
       loadData(true);
