@@ -211,19 +211,48 @@ async def send_appointment_reminder_route(reference_id: str, payload: Optional[A
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to dispatch reminder: {str(e)}")
 
-@router.post("/{reference_id}/cancel", response_model=Dict[str, Any])
-async def cancel_appointment_route(reference_id: str, payload: Optional[dict] = None):
+@router.api_route("/{reference_id}/cancel", methods=["PATCH", "POST", "PUT", "DELETE"], response_model=Dict[str, Any])
+@router.api_route("/cancel", methods=["PATCH", "POST", "PUT", "DELETE"], response_model=Dict[str, Any])
+async def cancel_appointment_route(
+    request: Request,
+    reference_id: Optional[str] = None
+):
     """
     Cancel an appointment by reference ID and release the doctor slot.
+    Supports PATCH, POST, PUT, DELETE for Sarvam AI Inbound tool 'cancel_appointment'.
+    Accepts reference_id in URL path or JSON payload.
     """
-    reason = (payload or {}).get("reason", "Cancelled via clinic administration console.")
-    success = await service.update_status(reference_id, "CANCELLED", notes=reason)
-    if not success:
-        raise HTTPException(status_code=404, detail=f"Appointment '{reference_id}' not found.")
-    return {
-        "success": True,
-        "message": f"Appointment {reference_id} cancelled successfully and slot freed."
-    }
+    payload = {}
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            payload = body
+    except Exception:
+        pass
+
+    query_params = dict(request.query_params)
+
+    clean_ref = reference_id
+    if not clean_ref or clean_ref.strip() in ["{reference_id}", ":reference_id", "cancel", ""]:
+        clean_ref = (
+            payload.get("reference_id") or 
+            payload.get("appointment_id") or 
+            payload.get("id") or 
+            payload.get("booking_id") or
+            query_params.get("reference_id") or
+            query_params.get("appointment_id") or
+            query_params.get("id")
+        )
+
+    reason = (
+        payload.get("reason") or 
+        payload.get("cancellation_reason") or 
+        payload.get("notes") or 
+        query_params.get("reason") or 
+        "Cancelled by patient via Priya Voice AI / Sarvam Telephony"
+    )
+
+    return await service.cancel_appointment(clean_ref, reason=reason)
 
 @router.patch("/{reference_id}/reschedule", response_model=Dict[str, Any])
 @router.post("/{reference_id}/reschedule", response_model=Dict[str, Any])

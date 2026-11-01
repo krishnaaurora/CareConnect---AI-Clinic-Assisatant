@@ -124,6 +124,27 @@ async def seed_initial_clinics_if_needed():
                             "leave_note": "",
                             "is_active": True,
                             "available_slots": ["10:00 AM", "11:30 AM", "03:00 PM", "05:00 PM"]
+                        },
+                        {
+                            "id": "doc-samir",
+                            "name": "Dr. Samir Verma",
+                            "specialty": "General Medicine & Internal Health",
+                            "department": "General Medicine",
+                            "consultation_duration": "20 mins",
+                            "experience": "14+ years",
+                            "languages": ["English", "Hindi"],
+                            "consultation_fee": 700,
+                            "duty_status": "Available",
+                            "current_room": "Room 106",
+                            "working_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                            "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                            "shifts": ["09:00 AM - 01:00 PM (Morning)", "04:30 PM - 08:00 PM (Evening)"],
+                            "breaks": ["01:00 PM - 02:00 PM (Lunch)"],
+                            "leaves": [],
+                            "is_on_leave": False,
+                            "leave_note": "",
+                            "is_active": True,
+                            "available_slots": ["09:30 AM", "11:00 AM", "02:30 PM", "04:30 PM", "06:00 PM"]
                         }
                     ]
                 },

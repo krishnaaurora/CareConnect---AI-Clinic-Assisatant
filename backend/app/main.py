@@ -101,6 +101,20 @@ async def root_book_appointment(request: Request):
     from app.modules.appointments.router import create_appointment
     return await create_appointment(request)
 
+# Dedicated aliases for Appointment Cancellation API (PATCH, POST, PUT, DELETE)
+@app.api_route("/api/v1/appointments/{reference_id}/cancel", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/api/appointments/{reference_id}/cancel", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/appointments/{reference_id}/cancel", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/api/v1/appointments/cancel", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/api/appointments/cancel", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/appointments/cancel", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/api/v1/cancel-appointment", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/api/cancel-appointment", methods=["PATCH", "POST", "PUT", "DELETE"])
+@app.api_route("/cancel-appointment", methods=["PATCH", "POST", "PUT", "DELETE"])
+async def direct_cancel_appointment(request: Request, reference_id: str = None):
+    from app.modules.appointments.router import cancel_appointment_route
+    return await cancel_appointment_route(request, reference_id=reference_id)
+
 @app.get("/")
 async def root():
     return {

@@ -14,7 +14,17 @@ class AppointmentRepository:
         return appointment_data_clean
 
     async def get_by_reference(self, reference_id: str) -> Optional[dict]:
-        return await self.collection.find_one({"reference_id": reference_id}, {"_id": 0})
+        clean_ref = str(reference_id or "").strip()
+        if not clean_ref:
+            return None
+        return await self.collection.find_one({
+            "$or": [
+                {"reference_id": clean_ref},
+                {"reference_id": {"$regex": f"^{clean_ref}$", "$options": "i"}},
+                {"id": clean_ref},
+                {"appointment_id": clean_ref}
+            ]
+        }, {"_id": 0})
 
     async def get_appointments_by_phone(self, phone: str) -> List[dict]:
         clean_digits = "".join(filter(str.isdigit, str(phone)))
@@ -69,14 +79,26 @@ class AppointmentRepository:
         return await cursor.to_list(length=limit)
 
     async def update_status(self, reference_id: str, status: str, notes: Optional[str] = None) -> bool:
+        clean_ref = str(reference_id or "").strip()
         update_data = {
             "status": status,
             "updated_at": datetime.utcnow().isoformat() + "Z"
         }
         if notes:
             update_data["status_notes"] = notes
+            update_data["cancellation_reason"] = notes
+        if status == "CANCELLED":
+            update_data["cancelled_at"] = datetime.utcnow().isoformat() + "Z"
+
         res = await self.collection.update_one(
-            {"reference_id": reference_id},
+            {
+                "$or": [
+                    {"reference_id": clean_ref},
+                    {"reference_id": {"$regex": f"^{clean_ref}$", "$options": "i"}},
+                    {"id": clean_ref},
+                    {"appointment_id": clean_ref}
+                ]
+            },
             {"$set": update_data}
         )
         return res.modified_count > 0

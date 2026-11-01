@@ -41,12 +41,15 @@ async def request_callback(request: Request):
         pat_phone = saved.get('phone') or saved.get('phone_number')
         reason_val = saved.get('callback_reason') or saved.get('enquiry_topic')
         cb_id = saved.get('callback_id')
+        msg = f"Your callback request has been registered with reference ID {cb_id}. Our clinic front-desk coordinator will follow up with {pat_name} at {pat_phone} {pref_time}."
+        summary = f"Callback registered with Reference ID: {cb_id}. Clinic team will call {pat_phone} {pref_time}."
 
-        msg = f"Callback request registered for {pat_name} ({pat_phone}). Front desk staff will follow up {pref_time} regarding: {reason_val}."
         return {
             "success": True,
             "status": "QUEUED_FOR_CLINIC_STAFF",
             "callback_id": cb_id,
+            "reference_id": cb_id,
+            "ticket_id": cb_id,
             "id": cb_id,
             "patient_name": pat_name,
             "caller_name": pat_name,
@@ -59,6 +62,8 @@ async def request_callback(request: Request):
             "enquiry_topic": reason_val,
             "preferred_time": pref_time,
             "message": msg,
+            "summary": summary,
+            "status_summary": summary,
             "data": saved
         }
     except Exception as e:

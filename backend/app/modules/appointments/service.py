@@ -1,11 +1,14 @@
 import uuid
 import re
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple, List, Optional
 from app.modules.appointments.models import AppointmentCreateRequest, AppointmentStatus
 from app.modules.appointments.repository import AppointmentRepository
 from app.modules.clinics.repository import ClinicRepository
 from app.core.database import get_database
+
+logger = logging.getLogger("careconnect.appointments")
 
 STANDARD_TIME_SLOTS = [
     "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
@@ -218,15 +221,34 @@ class AppointmentService:
         doc_query = str(doctor_name or "").strip().lower()
         matched_doctor = None
         if doc_query and doc_query not in ["any", "doctor", "physician", "anyone", "none"]:
+            query_tokens = [t for t in re.split(r"[\s\.\-]+", doc_query) if t and t not in ["dr", "doctor", "physician"]]
             for d in doctors:
                 d_name = d.get("name", "").lower()
                 d_spec = d.get("specialty", "").lower()
                 if doc_query in d_name or d_name in doc_query or doc_query in d_spec:
                     matched_doctor = d
                     break
+                if any(tok in d_name for tok in query_tokens):
+                    matched_doctor = d
+                    break
 
         if not matched_doctor:
-            # Default to first active doctor
+            if doc_query and doc_query not in ["any", "doctor", "physician", "anyone", "none", ""]:
+                # A specific doctor was requested but not found: DO NOT silently substitute
+                active_doc_names = [d.get("name") for d in doctors if d.get("is_active", True)]
+                logger.warning(f"Requested doctor '{doctor_name}' not found. Available: {active_doc_names}")
+                return {
+                    "success": False,
+                    "doctor_name": doctor_name,
+                    "available": False,
+                    "is_available": False,
+                    "status": "DOCTOR_NOT_FOUND",
+                    "open_slots": [],
+                    "available_slots": [],
+                    "message": f"We could not find {doctor_name} at our clinic. Available physicians on duty are: {', '.join(active_doc_names[:4])}.",
+                    "summary": f"Doctor '{doctor_name}' is not registered at our clinic. Available physicians: {', '.join(active_doc_names[:4])}."
+                }
+            # Only if caller did not specify a doctor, default to first active doctor
             matched_doctor = next((d for d in doctors if d.get("is_active", True)), doctors[0])
 
         available_days = matched_doctor.get("available_days", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
@@ -301,6 +323,101 @@ class AppointmentService:
             "day_of_week": data.get("day_of_week"),
             "is_day_available": data["is_available"],
             "slots": slots_grid
+        }
+
+    async def cancel_appointment(self, reference_id: str, reason: str = None) -> Dict[str, Any]:
+        clean_ref = str(reference_id or "").strip()
+        if not clean_ref:
+            return {
+                "success": False,
+                "status": "INVALID_REFERENCE",
+                "message": "Appointment reference ID is required for cancellation."
+            }
+
+        appt = await self.repo.get_by_reference(clean_ref)
+        if not appt:
+            logger.warning(f"Cancellation failed: Appointment '{clean_ref}' not found in database.")
+            return {
+                "success": False,
+                "status": "NOT_FOUND",
+                "reference_id": clean_ref,
+                "message": f"Appointment with reference ID '{clean_ref}' was not found in clinic records. Please verify the ticket reference."
+            }
+
+        curr_status = str(appt.get("status") or "").upper()
+        if curr_status == "CANCELLED":
+            logger.info(f"Appointment '{clean_ref}' is already CANCELLED.")
+            return {
+                "success": False,
+                "status": "ALREADY_CANCELLED",
+                "reference_id": appt.get("reference_id", clean_ref),
+                "patient_name": appt.get("patient_name"),
+                "doctor_name": appt.get("doctor_name"),
+                "preferred_date": appt.get("preferred_date"),
+                "preferred_time": appt.get("preferred_time"),
+                "message": f"Appointment '{clean_ref}' for {appt.get('patient_name')} is already cancelled. The consultation slot has already been released."
+            }
+
+        cancel_note = reason or "Cancelled by patient via Priya Voice AI / Sarvam Telephony."
+        success = await self.repo.update_status(clean_ref, "CANCELLED", notes=cancel_note)
+        if not success:
+            logger.error(f"Failed to update appointment '{clean_ref}' status to CANCELLED in MongoDB.")
+            return {
+                "success": False,
+                "status": "UPDATE_FAILED",
+                "reference_id": clean_ref,
+                "message": "Database update could not be completed. Please contact clinic reception."
+            }
+
+        # Double-check persistence in MongoDB
+        updated_doc = await self.repo.get_by_reference(clean_ref)
+        if not updated_doc or updated_doc.get("status") != "CANCELLED":
+            return {
+                "success": False,
+                "status": "VERIFICATION_FAILED",
+                "reference_id": clean_ref,
+                "message": "Database state verification failed. Cancellation not confirmed."
+            }
+
+        # Record audit log
+        try:
+            await self.clinic_repo.add_audit_log(
+                action="APPOINTMENT_CANCELLED",
+                target=f"Ticket {clean_ref} ({appt.get('patient_name')})",
+                details=f"Appointment with {appt.get('doctor_name')} on {appt.get('preferred_date')} cancelled. Reason: {cancel_note}",
+                clinic_code=appt.get("clinic_code", "CARE-IND-01"),
+                user="Priya Voice AI / Telephony Desk"
+            )
+        except Exception as ae:
+            logger.warning(f"Failed to write cancellation audit log: {ae}")
+
+        ref_final = appt.get("reference_id", clean_ref)
+        pat_name = appt.get("patient_name", "Patient")
+        doc_name = appt.get("doctor_name", "Doctor")
+        pref_date = appt.get("preferred_date", "")
+        pref_time = appt.get("preferred_time", "")
+
+        msg = f"Appointment {ref_final} with {doc_name} on {pref_date} at {pref_time} has been successfully cancelled and the slot has been released."
+        return {
+            "success": True,
+            "status": "CANCELLED",
+            "reference_id": ref_final,
+            "appointment_id": ref_final,
+            "patient_name": pat_name,
+            "doctor_name": doc_name,
+            "preferred_date": pref_date,
+            "preferred_time": pref_time,
+            "message": msg,
+            "status_summary": f"Appointment {ref_final} successfully cancelled.",
+            "data": {
+                "reference_id": ref_final,
+                "status": "CANCELLED",
+                "patient_name": pat_name,
+                "doctor_name": doc_name,
+                "preferred_date": pref_date,
+                "preferred_time": pref_time,
+                "cancelled_at": updated_doc.get("cancelled_at") or updated_doc.get("updated_at")
+            }
         }
 
     async def list_all(self):
