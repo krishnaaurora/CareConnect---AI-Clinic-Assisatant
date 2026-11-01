@@ -4,13 +4,13 @@ export default function PageLoader({ onComplete }) {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Half-second page loading timer (500ms)
+    // Exactly 3 seconds of logo animation display before revealing landing page
     const timer = setTimeout(() => {
       setIsExiting(true);
       setTimeout(() => {
         if (onComplete) onComplete();
-      }, 350);
-    }, 500);
+      }, 400);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -19,7 +19,7 @@ export default function PageLoader({ onComplete }) {
     setIsExiting(true);
     setTimeout(() => {
       if (onComplete) onComplete();
-    }, 200);
+    }, 250);
   };
 
   return (
@@ -84,7 +84,7 @@ export default function PageLoader({ onComplete }) {
         .sera-stroke-draw-slow {
           stroke-dasharray: 900;
           stroke-dashoffset: 900;
-          animation: strokeDrawSlow 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+          animation: strokeDrawSlow 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
         .sera-wave-1 { animation: wavePulseSlow 1.1s ease-in-out infinite 0.1s; }

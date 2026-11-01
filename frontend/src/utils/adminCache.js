@@ -31,3 +31,4 @@ export const setCachedData = (key, value) => {
     // Ignore quota or serialization errors
   }
 };
+
