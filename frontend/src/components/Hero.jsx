@@ -16,15 +16,16 @@ import {
   PhoneOff, 
   MoreHorizontal,
   Volume2,
-  VolumeX
+  VolumeX,
+  Sparkles
 } from 'lucide-react';
 import priyaCharacter from '../assets/priya-avatar.png';
 
 const HERO_FLIP_WORDS = [
+  "never waits on hold.",
   "gets an answer.",
   "books an appointment.",
-  "speaks their language.",
-  "never waits on hold."
+  "speaks their language."
 ];
 
 const KEYFRAMES = `
@@ -355,6 +356,50 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
               }}
             />
 
+            {/* ── CareConnect AI Stylish Website Name ── */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '8px 22px',
+              borderRadius: '999px',
+              backgroundColor: '#FFFFFF',
+              background: 'linear-gradient(135deg, rgba(240, 253, 250, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%)',
+              border: '1.5px solid rgba(0, 201, 167, 0.45)',
+              boxShadow: '0 8px 24px -4px rgba(15, 91, 76, 0.12), 0 0 0 1px rgba(0, 201, 167, 0.2)',
+              marginBottom: '18px',
+              animation: 'heroFadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.08s both',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)'
+            }}>
+              <Sparkles size={17} color="#00C9A7" style={{ animation: 'pulseDot 2s infinite' }} />
+              <span style={{
+                fontFamily: 'Outfit, Plus Jakarta Sans, sans-serif',
+                fontSize: 'clamp(1.05rem, 1.8vw, 1.32rem)',
+                fontWeight: 800,
+                letterSpacing: '0.04em',
+                background: 'linear-gradient(135deg, #0A2520 0%, #0F5B4C 45%, #00C9A7 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: 'inline-block'
+              }}>
+                CareConnect AI
+              </span>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#0F5B4C',
+                backgroundColor: '#EDFDF9',
+                border: '1px solid #A7F3D0',
+                padding: '2px 8px',
+                borderRadius: '999px',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase'
+              }}>
+                Voice AI
+              </span>
+            </div>
+
             {/* ── Headline ── */}
           <h1 style={{
             position: 'relative',
@@ -371,7 +416,7 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
           }}>
             Every patient call<br />
             <ScaleInText
-              text="gets an answer."
+              text="never waits on hold."
               words={HERO_FLIP_WORDS}
               duration={3400}
             />
