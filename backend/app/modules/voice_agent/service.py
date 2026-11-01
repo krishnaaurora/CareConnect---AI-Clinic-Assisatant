@@ -407,11 +407,13 @@ class VoiceAgentService:
                         active_tx = orig_tx if orig_tx else trans_tx
                         caller_name = agent_vars.get("patient_name") or ""
                         if not caller_name:
-                            all_text = " ".join([t.get("text", "") for t in active_tx])
+                            all_text = " ".join([t.get("text", "") or t.get("indic_text", "") or t.get("en_text", "") for t in active_tx])
                             if "राजेश" in all_text or "Rajesh" in all_text:
                                 caller_name = "Rajesh"
-                            elif "mubeen" in str(agent_vars).lower():
+                            elif "mubeen" in str(agent_vars).lower() or "मुबीन" in all_text:
                                 caller_name = "Mubeen"
+                            elif "manan" in str(agent_vars).lower() or "Manan" in all_text:
+                                caller_name = "Manan"
                             else:
                                 caller_name = "Caller (Mobile)"
 
@@ -423,16 +425,25 @@ class VoiceAgentService:
                         except Exception:
                             pass
 
-                        for turn in active_tx:
+                        for idx, turn in enumerate(active_tx):
                             is_agent = turn.get("role") in ["agent", "assistant"]
                             spk = "Priya" if is_agent else caller_name
-                            raw_text = turn.get("text", "").strip()
+                            indic = turn.get("indic_text") or ""
+                            en = turn.get("en_text") or ""
+                            raw_text = indic or turn.get("text") or turn.get("content") or en or ""
                             clean_text = raw_text.replace("Apex Care Clinic", "Apollo Clinic Indiranagar").replace("एपेक्स केयर क्लिनिक", "अपोलो क्लिनिक इंदिरा नगर")
-                            dialogue.append({
-                                "speaker": spk,
-                                "text": clean_text,
-                                "time": time_str
-                            })
+                            
+                            trans_turn = trans_tx[idx] if idx < len(trans_tx) else {}
+                            en_trans = trans_turn.get("text") or en
+                            clean_translated = en_trans.replace("Apex Care Clinic", "Apollo Clinic Indiranagar") if en_trans and (indic or turn.get("text")) else None
+
+                            if clean_text:
+                                dialogue.append({
+                                    "speaker": spk,
+                                    "text": clean_text,
+                                    "translated_text": clean_translated,
+                                    "time": time_str
+                                })
 
                         dur_sec = it.get("duration_in_seconds", 0.0)
                         mins = int(dur_sec // 60)
@@ -460,6 +471,7 @@ class VoiceAgentService:
                             "sentiment": "Positive",
                             "summary": summary,
                             "transcript_dialogue": dialogue,
+                            "audio_url": it.get("audio_url"),
                             "created_at": start_iso if start_iso.endswith("Z") else start_iso + "Z",
                             "updated_at": now.isoformat() + "Z"
                         }
@@ -513,10 +525,31 @@ class VoiceAgentService:
             call_type = oc.get("call_type") or "OUTBOUND_NOTIFICATION"
             purpose = "Appointment Reminder" if call_type == "APPOINTMENT_REMINDER" else "Diagnostic Report Delivery"
 
+            # Extract dialogue from transcript_dialogue or fallback to interaction_transcript
+            tx_dialogue = oc.get("transcript_dialogue") or []
+            has_valid_text = any((turn.get("text") or "").strip() for turn in tx_dialogue)
+            if not has_valid_text and isinstance(oc.get("interaction_transcript"), list):
+                tx_dialogue = []
+                for turn in oc.get("interaction_transcript"):
+                    is_agent = turn.get("role") in ["agent", "assistant"]
+                    spk = "Priya" if is_agent else (oc.get("patient_name") or "Patient")
+                    indic = turn.get("indic_text") or ""
+                    en = turn.get("en_text") or ""
+                    raw_text = indic or turn.get("text") or turn.get("content") or en or ""
+                    clean_text = raw_text.replace("Apex Care Clinic", "Apollo Clinic Indiranagar").replace("एपेक्स केयर क्लिनिक", "अपोलो क्लिनिक इंदिरा नगर")
+                    clean_translated = en.replace("Apex Care Clinic", "Apollo Clinic Indiranagar") if en and (indic or turn.get("text")) else None
+                    if clean_text:
+                        tx_dialogue.append({
+                            "speaker": spk,
+                            "text": clean_text,
+                            "translated_text": clean_translated,
+                            "time": ts
+                        })
+
             mapped_outbound.append({
                 "call_id": oc.get("attempt_id") or f"PRIYA-OUT-{uuid.uuid4().hex[:6].upper()}",
                 "caller_name": oc.get("patient_name") or "Patient",
-                "caller_phone": oc.get("phone") or oc.get("patient_phone") or "—",
+                "caller_phone": oc.get("recipient_phone") or oc.get("phone") or oc.get("patient_phone") or "—",
                 "timestamp": ts,
                 "duration": dur_str,
                 "language": "English & Hindi",
@@ -524,7 +557,8 @@ class VoiceAgentService:
                 "call_purpose": purpose,
                 "outcome": oc.get("status", "COMPLETED"),
                 "summary": oc.get("call_summary") or oc.get("spoken_script") or "Priya Voice AI dispatched notification call.",
-                "transcript_dialogue": oc.get("transcript_dialogue") or [],
+                "transcript_dialogue": tx_dialogue,
+                "audio_url": oc.get("audio_url"),
                 "doctor_name": oc.get("doctor_name"),
                 "failure_reason": oc.get("failure_reason"),
                 "retry_count": oc.get("retry_count", 0),
@@ -549,7 +583,28 @@ class VoiceAgentService:
                 else:
                     item["call_purpose"] = "General Clinic Inquiry"
             item.setdefault("retry_count", 0)
-            item["transcript_dialogue"] = ic.get("transcript_dialogue") or []
+
+            # Check if dialogue has valid text or needs interaction_transcript fallback
+            in_dialogue = ic.get("transcript_dialogue") or []
+            has_in_text = any((turn.get("text") or "").strip() for turn in in_dialogue)
+            if not has_in_text and isinstance(ic.get("interaction_transcript"), list):
+                in_dialogue = []
+                for turn in ic.get("interaction_transcript"):
+                    is_agent = turn.get("role") in ["agent", "assistant"]
+                    spk = "Priya" if is_agent else (item.get("caller_name") or "Caller (Mobile)")
+                    indic = turn.get("indic_text") or ""
+                    en = turn.get("en_text") or ""
+                    raw_text = indic or turn.get("text") or turn.get("content") or en or ""
+                    clean_text = raw_text.replace("Apex Care Clinic", "Apollo Clinic Indiranagar").replace("एपेक्स केयर क्लिनिक", "अपोलो क्लिनिक इंदिरा नगर")
+                    clean_translated = en.replace("Apex Care Clinic", "Apollo Clinic Indiranagar") if en and (indic or turn.get("text")) else None
+                    if clean_text:
+                        in_dialogue.append({
+                            "speaker": spk,
+                            "text": clean_text,
+                            "translated_text": clean_translated,
+                            "time": item.get("timestamp") or "Today"
+                        })
+            item["transcript_dialogue"] = in_dialogue
             mapped_inbound.append(item)
 
         # Merge & sort by created_at desc

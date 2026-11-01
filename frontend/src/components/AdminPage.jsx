@@ -906,7 +906,7 @@ export default function AdminPage({ onNavigateHome }) {
         </header>
 
         {/* ── Active Tab Component View ── */}
-        <main style={{ 
+        <main className="admin-content-main" style={{ 
           maxWidth: '1360px', 
           width: '100%', 
           margin: '0 auto', 

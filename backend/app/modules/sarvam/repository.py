@@ -83,11 +83,15 @@ class SarvamCallRepository:
             for turn in transcript:
                 is_agent = turn.get("role") in ["agent", "assistant"]
                 spk = "Priya" if is_agent else (agent_vars.get("patient_name") or "Caller")
-                txt = turn.get("text") or turn.get("content") or ""
-                clean_text = txt.replace("Apex Care Clinic", "Apollo Clinic Indiranagar").replace("एपेक्स केयर क्लिनिक", "अपोलो क्लिनिक इंदिरा नगर")
+                indic = turn.get("indic_text") or ""
+                en = turn.get("en_text") or ""
+                raw_text = indic or turn.get("text") or turn.get("content") or en or ""
+                clean_text = raw_text.replace("Apex Care Clinic", "Apollo Clinic Indiranagar").replace("एपेक्स केयर क्लिनिक", "अपोलो क्लिनिक इंदिरा नगर")
+                clean_translated = en.replace("Apex Care Clinic", "Apollo Clinic Indiranagar") if en and (indic or turn.get("text")) else None
                 dialogue.append({
                     "speaker": spk,
                     "text": clean_text,
+                    "translated_text": clean_translated,
                     "time": now_str
                 })
 

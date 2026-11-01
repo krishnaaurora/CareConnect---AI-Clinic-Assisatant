@@ -41,7 +41,13 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
         sentiment: c.sentiment || (dir === 'OUTBOUND' ? 'Proactive Alert' : 'Inquiring'),
         appointment_id: c.appointment_id || c.appointment_reference || (c.call_id?.startsWith('SARVAM') ? c.call_id : 'REF-AUTO'),
         summary: c.summary || 'Real-time conversation recorded by Priya Voice AI.',
-        transcript_dialogue: c.transcript_dialogue || []
+        audio_url: c.audio_url || null,
+        transcript_dialogue: (c.transcript_dialogue || []).map(t => ({
+          speaker: t.speaker || 'Caller',
+          text: t.text || '',
+          translated_text: t.translated_text || null,
+          time: t.time || 'Today'
+        }))
       };
     });
   }, [historicalCalls]);
@@ -54,7 +60,8 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
   const userSelectedRef = useRef(false);
   const [selectedCallId, setSelectedCallId] = useState(() => {
     if (initialCallId) return initialCallId;
-    return realCalls[0]?.call_id || null;
+    const withDiag = realCalls.find(c => c.transcript_dialogue && c.transcript_dialogue.length > 0);
+    return withDiag?.call_id || realCalls[0]?.call_id || null;
   });
 
   // Track initialCallId changes or when new calls arrive
@@ -64,7 +71,8 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
       userSelectedRef.current = true;
       setShowFullTranscript(true);
     } else if (!userSelectedRef.current && realCalls.length > 0) {
-      setSelectedCallId(realCalls[0].call_id);
+      const withDiag = realCalls.find(c => c.transcript_dialogue && c.transcript_dialogue.length > 0);
+      setSelectedCallId(withDiag?.call_id || realCalls[0].call_id);
       setShowFullTranscript(true);
     }
   }, [initialCallId, realCalls]);
@@ -190,6 +198,57 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
+      <style>{`
+        .live-transcript-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 340px;
+          gap: 20px;
+          align-items: start;
+        }
+        @media (max-width: 1024px) {
+          .live-transcript-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        .live-calls-selector-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 12px;
+          max-height: 180px;
+          overflow-y: auto;
+          padding: 2px;
+        }
+        @media (max-width: 640px) {
+          .live-calls-selector-grid {
+            grid-template-columns: 1fr !important;
+            max-height: 220px;
+          }
+        }
+        .transcript-bubble-box {
+          max-width: 78%;
+        }
+        @media (max-width: 640px) {
+          .transcript-bubble-box {
+            max-width: 92% !important;
+          }
+        }
+        .transcript-toolbar {
+          padding: 12px 18px;
+          background-color: #F8FAFC;
+          border-bottom: 1px solid #E2E8F0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        @media (max-width: 640px) {
+          .transcript-toolbar {
+            padding: 10px 12px;
+            gap: 8px;
+          }
+        }
+      `}</style>
       <BackgroundPattern variant="plus" size={32} color="rgba(15, 91, 76, 0.07)" glow />
       
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -466,14 +525,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                 </div>
               </div>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: '12px',
-                maxHeight: '170px',
-                overflowY: 'auto',
-                padding: '2px'
-              }}>
+              <div className="live-calls-selector-grid">
                 {filteredCalls.map(c => {
                   const isSelected = activeCall?.call_id === c.call_id;
                   const isCallInbound = c.call_direction === 'INBOUND';
@@ -554,12 +606,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
 
             {/* ── Main Dual-Panel: Left = Live Audio & Turn-by-Turn Transcript, Right = Real Clinical Extraction ── */}
             {activeCall && (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) 360px',
-                gap: '20px',
-                alignItems: 'start'
-              }}>
+              <div className="live-transcript-grid">
                 
                 {/* ── Left Panel: Live Stream Player & Chat Streamer ── */}
                 <div style={{
@@ -648,16 +695,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                   </div>
 
                   {/* Playback Controls Bar */}
-                  <div style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#F8FAFC',
-                    borderBottom: '1px solid #E2E8F0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '10px'
-                  }}>
+                  <div className="transcript-toolbar">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       {!isPlaying ? (
                         <button
@@ -744,7 +782,7 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                         }}
                       >
                         <Eye size={13} color={showFullTranscript ? '#00C9A7' : '#64748B'} />
-                        <span>{showFullTranscript ? 'Streaming Mode' : 'View Full Dialogue'}</span>
+                        <span>{showFullTranscript ? 'Full Dialogue Active' : 'Show Full Dialogue'}</span>
                       </button>
 
                       {/* Speed selector */}
@@ -765,6 +803,24 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                         >
                           {playbackSpeed}x Speed
                         </button>
+                      )}
+
+                      {/* Real Sarvam Audio Player if available */}
+                      {activeCall.audio_url && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '3px 8px',
+                          borderRadius: '8px',
+                          backgroundColor: '#EDFDF9',
+                          border: '1px solid rgba(0, 201, 167, 0.4)'
+                        }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: '#0F5B4C', whiteSpace: 'nowrap' }}>
+                            🎧 Audio:
+                          </span>
+                          <audio controls src={activeCall.audio_url} style={{ height: '26px', maxWidth: '170px' }} />
+                        </div>
                       )}
                     </div>
 
@@ -863,16 +919,18 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                           </div>
 
                           {/* Speech Bubble */}
-                          <div style={{
-                            maxWidth: '75%',
-                            backgroundColor: isPriya ? '#FFFFFF' : '#0F5B4C',
-                            color: isPriya ? '#0A2520' : '#FFFFFF',
-                            padding: '12px 16px',
-                            borderRadius: isPriya ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
-                            border: isPriya ? '1px solid #E2E8F0' : 'none',
-                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-                            position: 'relative'
-                          }}>
+                          <div 
+                            className="transcript-bubble-box"
+                            style={{
+                              backgroundColor: isPriya ? '#FFFFFF' : '#0F5B4C',
+                              color: isPriya ? '#0A2520' : '#FFFFFF',
+                              padding: '12px 16px',
+                              borderRadius: isPriya ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
+                              border: isPriya ? '1px solid #E2E8F0' : 'none',
+                              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+                              position: 'relative'
+                            }}
+                          >
                             <div style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -892,6 +950,23 @@ export default function LiveCallTranscript({ historicalCalls = [], initialCallId
                             <div style={{ fontSize: '13.5px', lineHeight: 1.5 }}>
                               {msg.text}
                             </div>
+
+                            {msg.translated_text && msg.translated_text !== msg.text && (
+                              <div style={{
+                                fontSize: '12px',
+                                lineHeight: 1.4,
+                                marginTop: '6px',
+                                paddingTop: '6px',
+                                borderTop: isPriya ? '1px dashed #E2E8F0' : '1px dashed rgba(255, 255, 255, 0.25)',
+                                color: isPriya ? '#64748B' : '#E2E8F0',
+                                fontStyle: 'italic'
+                              }}>
+                                <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em', display: 'block', marginBottom: '2px', color: isPriya ? '#007A65' : '#5EEAD4' }}>
+                                  English Translation:
+                                </span>
+                                {msg.translated_text}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
