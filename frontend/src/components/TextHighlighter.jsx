@@ -196,7 +196,10 @@ export const TextHighlighter = forwardRef(
         onMouseLeave={() => triggerType === 'hover' && setIsHovered(false)}
         {...props}
       >
-        <span className={cn('inline font-semibold text-[#0F5B4C]', getTailwindClasses(), className)} style={highlightStyle}>
+        <span 
+          className={cn('inline font-bold text-black', getTailwindClasses(), className)} 
+          style={{ color: '#000000', ...highlightStyle }}
+        >
           {children}
         </span>
       </ElementTag>
@@ -206,3 +209,4 @@ export const TextHighlighter = forwardRef(
 
 TextHighlighter.displayName = 'TextHighlighter';
 export default TextHighlighter;
+

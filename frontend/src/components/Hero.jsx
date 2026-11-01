@@ -393,10 +393,11 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
               triggerType="auto" 
               direction="ltr"
               rounded="rounded-md"
-              highlightColor="linear-gradient(135deg, rgba(0, 201, 167, 0.32) 0%, rgba(16, 185, 129, 0.38) 100%)"
+              highlightColor="linear-gradient(rgb(253 141 62), rgb(250, 196, 158))"
+              className="text-black font-extrabold"
               transition={{ type: 'spring', duration: 0.9, delay: 0.25 }}
             >
-              CareConnect AI
+              <span style={{ color: '#000000', fontWeight: 800 }}>CareConnect AI</span>
             </TextHighlighter>{' '}
             is an AI-powered voice assistant that handles patient calls, answers enquiries, assists with appointments, and supports multiple languages — 24/7.
           </p>
