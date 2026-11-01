@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScaleInText } from './ScaleInText';
-import TextHighlighter from './TextHighlighter';
 import { 
   Play, 
   Pause, 
@@ -30,8 +29,16 @@ const HERO_FLIP_WORDS = [
 
 const KEYFRAMES = `
 @keyframes heroFadeUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroUnderlineExpand {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 0.95; }
+}
+@keyframes heroWaveFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%      { transform: translateY(-5px) rotate(0.3deg); }
 }
 @keyframes heroFloat {
   0%, 100% { transform: translateY(0); }
@@ -360,6 +367,57 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             background: 'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(255, 255, 255, 0.92) 0%, rgba(240, 253, 250, 0.45) 50%, transparent 80%)',
             filter: 'blur(35px)',
           }} />
+
+          {/* ── Subtle Ambient Voice-Wave Lines (Non-Dominating Accent) ── */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: '20%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '100%',
+              maxWidth: '1180px',
+              height: '240px',
+              pointerEvents: 'none',
+              zIndex: 1,
+              opacity: 0.55,
+              animation: 'heroWaveFloat 12s ease-in-out infinite',
+            }}
+          >
+            <svg
+              viewBox="0 0 1200 240"
+              fill="none"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <path
+                d="M 40 120 C 260 55, 480 185, 720 105 C 920 40, 1080 145, 1160 115"
+                stroke="url(#heroLineGradient1)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeDasharray="4 6"
+              />
+              <path
+                d="M 120 150 C 340 215, 580 85, 820 160 C 980 205, 1060 130, 1140 140"
+                stroke="url(#heroLineGradient2)"
+                strokeWidth="1"
+                strokeLinecap="round"
+              />
+              <defs>
+                <linearGradient id="heroLineGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#00C9A7" stopOpacity="0" />
+                  <stop offset="25%" stopColor="#00C9A7" stopOpacity="0.32" />
+                  <stop offset="70%" stopColor="#0EA5E9" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#0EA5E9" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="heroLineGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10B981" stopOpacity="0" />
+                  <stop offset="45%" stopColor="#00C9A7" stopOpacity="0.20" />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
         </div>
 
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 2 }}>
@@ -384,7 +442,7 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             margin: '0 auto 18px',
             maxWidth: '860px',
             fontFamily: 'Plus Jakarta Sans, sans-serif',
-            animation: 'heroFadeUp 0.65s cubic-bezier(0.16,1,0.3,1) 0.12s both',
+            animation: 'heroFadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.06s both',
           }}>
             Every patient call<br />
             <ScaleInText
@@ -402,18 +460,27 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             maxWidth: '720px',
             margin: '0 auto 34px',
             fontFamily: 'Inter, sans-serif',
-            animation: 'heroFadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.18s both',
+            animation: 'heroFadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.14s both',
           }}>
-            <TextHighlighter 
-              triggerType="auto" 
-              direction="ltr"
-              rounded="rounded-md"
-              highlightColor="linear-gradient(rgb(253 141 62), rgb(250, 196, 158))"
-              className="text-black font-extrabold"
-              transition={{ type: 'spring', duration: 0.9, delay: 0.25 }}
-            >
-              <span style={{ color: '#000000', fontWeight: 800 }}>CareConnect AI</span>
-            </TextHighlighter>{' '}
+            <span style={{
+              position: 'relative',
+              fontWeight: 600,
+              color: '#0F5B4C',
+              display: 'inline-block',
+            }}>
+              CareConnect AI
+              <span style={{
+                position: 'absolute',
+                bottom: '-1px',
+                left: 0,
+                width: '100%',
+                height: '2px',
+                background: 'linear-gradient(90deg, #00C9A7 0%, #10B981 100%)',
+                borderRadius: '2px',
+                transformOrigin: 'left',
+                animation: 'heroUnderlineExpand 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both',
+              }} />
+            </span>{' '}
             is an AI-powered voice assistant that handles patient calls, answers enquiries, assists with appointments, and supports multiple languages — 24/7.
           </p>
 
@@ -425,7 +492,7 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             justifyContent: 'center',
             gap: '16px',
             marginBottom: '46px',
-            animation: 'heroFadeUp 0.75s cubic-bezier(0.16,1,0.3,1) 0.24s both',
+            animation: 'heroFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.22s both',
           }}>
             {/* Primary: See it in action */}
             <button
