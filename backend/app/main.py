@@ -55,6 +55,8 @@ app.include_router(sarvam_router, prefix=settings.API_V1_STR)
 # Register aliases for Sarvam voice tools and unversioned integrations
 app.include_router(appointments_router, prefix="/api")
 app.include_router(appointments_router, prefix="")
+app.include_router(clinics_router, prefix="/api")
+app.include_router(clinics_router, prefix="")
 
 # Dedicated Sarvam webhook route without version prefix for instant hook compatibility
 @app.post("/api/voice/sarvam/webhook")
