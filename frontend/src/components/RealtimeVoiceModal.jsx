@@ -125,9 +125,8 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
 
     try {
       // Step 1: Explicitly request and verify microphone permission
-      let stream = null;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
@@ -135,7 +134,8 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
             channelCount: 1
           } 
         });
-        micStreamRef.current = stream;
+        // Immediately release tracks from this permission check so BrowserAudioInterface gets exclusive hardware mic access
+        stream.getTracks().forEach(track => track.stop());
       } catch (micErr) {
         console.error('Microphone access denied or unavailable:', micErr);
         setModalState('permission_denied');
@@ -150,9 +150,10 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
 
       setModalState('connecting');
 
-      // Step 2: Initialize official Sarvam BrowserAudioInterface
+      // Step 2: Initialize official Sarvam BrowserAudioInterface with mobile volume boost
+      const isMobileDevice = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const audioInterface = new BrowserAudioInterface(16000, {
-        outputGain: 1.0,
+        outputGain: isMobileDevice ? 1.8 : 1.2,
         outputLevelCallback: (level) => {
           if (level && typeof level.rms === 'number') {
             setAudioLevel(Math.min(100, Math.round(level.rms * 250)));
@@ -497,7 +498,7 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
               <p style={{ margin: 0, fontSize: '13.5px', color: '#64748B', maxWidth: '380px' }}>
                 {modalState === 'requesting_permission'
                   ? 'Please allow microphone access in your browser prompt to enable live two-way audio streaming.'
-                  : 'Establishing secure WebSocket audio channel with deployed Sarvam AI agent (Version 4)...'}
+                  : 'Establishing secure WebSocket audio channel with deployed Sarvam AI agent (Version 11)...'}
               </p>
             </div>
           )}
