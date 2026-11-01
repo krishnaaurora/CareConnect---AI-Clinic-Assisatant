@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import AnimatedGridPattern from './AnimatedGridPattern';
 import { ScaleInText } from './ScaleInText';
 import TextHighlighter from './TextHighlighter';
 import { 
@@ -289,44 +288,79 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
           position: 'relative',
           paddingTop: '136px',
           paddingBottom: '40px',
-          background: 'radial-gradient(ellipse 90% 60% at 50% 20%, #F0FDF4 0%, #F8FAFC 50%, #FFFFFF 100%)',
+          background: 'radial-gradient(ellipse 95% 65% at 50% -10%, #E6FAF4 0%, #F1FBF7 35%, #F8FAFC 70%, #FFFFFF 100%)',
           overflow: 'hidden',
           textAlign: 'center',
         }}
         aria-label="CareConnect AI Hero"
       >
-        {/* ── Subtle Hero Animated Grid Pattern (Shadcn / SeraUI) ── */}
-        <AnimatedGridPattern 
-          patternType="grid"
-          width={44}
-          height={44}
-          numSquares={52}
-          strokeColor="rgba(148, 163, 184, 0.48)"
-          cellFill="rgba(99, 102, 241, 0.22)"
-          cellStroke="rgba(99, 102, 241, 0.45)"
-          maxCellOpacity={0.80}
-          spotlight={true}
-          withScanLine={false}
-          style={{ zIndex: 0 }}
-        />
+        {/* ── Sera UI Radiant Aurora Mesh Gradient (Pure Fluid Glow, Zero Boxes) ── */}
+        <div 
+          aria-hidden="true" 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            zIndex: 0
+          }}
+        >
+          {/* Top Emerald/Teal Horizon Glow */}
+          <div style={{
+            position: 'absolute',
+            top: '-160px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '1000px',
+            maxWidth: '120vw',
+            height: '560px',
+            borderRadius: '50%',
+            background: 'radial-gradient(ellipse 70% 55% at 50% 30%, rgba(0, 201, 167, 0.28) 0%, rgba(16, 185, 129, 0.14) 40%, rgba(240, 253, 250, 0) 74%)',
+            filter: 'blur(50px)',
+          }} />
 
-        {/* Soft decorative background ambient glow with parallax echoing Indigo & Rose-Pink aura */}
-        <div style={{
-          position: 'absolute', top: '16%', left: '4%',
-          width: '420px', height: '420px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(79, 70, 229, 0.14) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 75%)',
-          filter: 'blur(60px)', pointerEvents: 'none',
-          transform: `translate3d(0, ${pScroll * 0.22}px, 0)`,
-          willChange: 'transform',
-        }} />
-        <div style={{
-          position: 'absolute', top: '18%', right: '4%',
-          width: '440px', height: '440px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.14) 0%, rgba(232, 121, 249, 0.07) 50%, transparent 75%)',
-          filter: 'blur(65px)', pointerEvents: 'none',
-          transform: `translate3d(0, ${pScroll * 0.16}px, 0)`,
-          willChange: 'transform',
-        }} />
+          {/* Left Atmospheric Sky/Cyan Orb */}
+          <div style={{
+            position: 'absolute',
+            top: '6%',
+            left: '-6%',
+            width: '580px',
+            height: '580px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 45% 45%, rgba(14, 165, 233, 0.18) 0%, rgba(6, 182, 212, 0.08) 40%, transparent 70%)',
+            filter: 'blur(60px)',
+            transform: `translate3d(0, ${pScroll * 0.18}px, 0)`,
+            willChange: 'transform',
+          }} />
+
+          {/* Right Sunset Amber / Rose Accent Glow */}
+          <div style={{
+            position: 'absolute',
+            top: '10%',
+            right: '-6%',
+            width: '560px',
+            height: '560px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.14) 0%, rgba(236, 72, 153, 0.08) 35%, transparent 68%)',
+            filter: 'blur(65px)',
+            transform: `translate3d(0, ${pScroll * 0.14}px, 0)`,
+            willChange: 'transform',
+          }} />
+
+          {/* Center Soft Luminous Halo */}
+          <div style={{
+            position: 'absolute',
+            top: '16%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '760px',
+            maxWidth: '92vw',
+            height: '380px',
+            borderRadius: '50%',
+            background: 'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(255, 255, 255, 0.92) 0%, rgba(240, 253, 250, 0.45) 50%, transparent 80%)',
+            filter: 'blur(35px)',
+          }} />
+        </div>
 
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 2 }}>
 
@@ -338,25 +372,6 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             willChange: 'transform, opacity',
             transition: 'transform 0.05s linear, opacity 0.05s linear',
           }}>
-            {/* Circular clearing around headline: ensures NO grid boxes appear directly around text */}
-            <div
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -55%)',
-                width: '780px',
-                maxWidth: '92vw',
-                height: '320px',
-                borderRadius: '50%',
-                background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #FFFFFF 0%, #FFFFFF 52%, rgba(255, 255, 255, 0.94) 68%, rgba(255, 255, 255, 0.45) 86%, transparent 100%)',
-                pointerEvents: 'none',
-                zIndex: 0,
-                filter: 'blur(10px)'
-              }}
-            />
-
             {/* ── Headline ── */}
           <h1 style={{
             position: 'relative',
