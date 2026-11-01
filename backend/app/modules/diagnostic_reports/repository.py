@@ -96,13 +96,20 @@ class DiagnosticReportRepository:
 
         if search:
             s = search.strip()
-            query["$or"] = [
+            digits = "".join(filter(str.isdigit, s))
+            search_clauses = [
                 {"patient_name": {"$regex": s, "$options": "i"}},
                 {"report_type": {"$regex": s, "$options": "i"}},
                 {"patient_id": {"$regex": s, "$options": "i"}},
                 {"id": {"$regex": s, "$options": "i"}},
-                {"file_name": {"$regex": s, "$options": "i"}}
+                {"file_name": {"$regex": s, "$options": "i"}},
+                {"patient_phone": {"$regex": s, "$options": "i"}},
+                {"phone": {"$regex": s, "$options": "i"}}
             ]
+            if len(digits) >= 5:
+                search_clauses.append({"patient_phone": {"$regex": digits[-10:]}})
+                search_clauses.append({"phone": {"$regex": digits[-10:]}})
+            query["$or"] = search_clauses
 
         cursor = self.col.find(query, {"_id": 0}).sort("created_at", -1).limit(limit)
         return await cursor.to_list(length=limit)

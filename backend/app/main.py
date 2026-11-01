@@ -57,6 +57,30 @@ app.include_router(appointments_router, prefix="/api")
 app.include_router(appointments_router, prefix="")
 app.include_router(clinics_router, prefix="/api")
 app.include_router(clinics_router, prefix="")
+app.include_router(diagnostic_reports_router, prefix="/api")
+app.include_router(diagnostic_reports_router, prefix="")
+app.include_router(enquiries_router, prefix="/api")
+app.include_router(enquiries_router, prefix="")
+
+# Dedicated aliases for Report Status API (GET and POST)
+@app.api_route("/api/v1/reports/status", methods=["GET", "POST"])
+@app.api_route("/api/reports/status", methods=["GET", "POST"])
+@app.api_route("/reports/status", methods=["GET", "POST"])
+@app.api_route("/api/report-status", methods=["GET", "POST"])
+@app.api_route("/report-status", methods=["GET", "POST"])
+async def direct_report_status(request: Request):
+    from app.modules.diagnostic_reports.router import get_report_status_route
+    return await get_report_status_route(request)
+
+# Dedicated aliases for Callback Request API (POST and GET)
+@app.api_route("/api/v1/callback", methods=["POST", "GET"])
+@app.api_route("/api/callback", methods=["POST", "GET"])
+@app.api_route("/callback", methods=["POST", "GET"])
+@app.api_route("/api/request-callback", methods=["POST", "GET"])
+@app.api_route("/request-callback", methods=["POST", "GET"])
+async def direct_callback_request(request: Request):
+    from app.modules.enquiries.router import request_callback
+    return await request_callback(request)
 
 # Dedicated Sarvam webhook route without version prefix for instant hook compatibility
 @app.post("/api/voice/sarvam/webhook")
