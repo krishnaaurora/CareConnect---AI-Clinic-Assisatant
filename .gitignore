@@ -53,3 +53,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Large raw video recordings (>100MB exceeds GitHub push limit; use web-optimized demo-call-walkthrough.mp4)
+frontend/public/*225332.mp4
+*.mp4.bak
+

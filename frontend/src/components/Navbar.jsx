@@ -32,6 +32,7 @@ export default function Navbar({ onOpenDialer, onNavigateAdmin }) {
   }, [mobileMenuOpen]);
 
   const navLinks = [
+    { label: 'Live Demo', href: '#demo-video-section' },
     { label: 'Product', href: '#features' },
     { label: 'How it works', href: '#how-it-works' },
     { label: 'For Hospitals', href: '#about' },

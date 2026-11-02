@@ -170,7 +170,7 @@ const CONVERSATION_STATES = [
   },
 ];
 
-export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
+export default function Hero({ onOpenDialer, onOpenRealtimeVoice, onScrollToDemo }) {
   const [currentStateIdx, setCurrentStateIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -494,10 +494,10 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
             marginBottom: '46px',
             animation: 'heroFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.22s both',
           }}>
-            {/* Primary: See it in action */}
+            {/* Primary: See it in action (Scrolls to Demo Video) */}
             <button
               type="button"
-              onClick={onOpenRealtimeVoice || scrollToPhone}
+              onClick={onScrollToDemo || onOpenRealtimeVoice || scrollToPhone}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -537,10 +537,10 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
               <span>See it in action</span>
             </button>
 
-            {/* Secondary: Request a Demo */}
+            {/* Secondary: Request a Demo / Watch Video */}
             <button
               type="button"
-              onClick={onOpenRealtimeVoice || onOpenDialer}
+              onClick={onScrollToDemo || onOpenRealtimeVoice || onOpenDialer}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -568,9 +568,52 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice }) {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <span>Request a Demo</span>
+              <span>Watch Full Demo</span>
               <ArrowRight size={15} strokeWidth={2.4} />
             </button>
+          </div>
+
+          {/* ── Test Call Badge with Direct Dial Numbers ── */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(0, 201, 167, 0.35)',
+            padding: '8px 20px',
+            borderRadius: '999px',
+            boxShadow: '0 4px 18px rgba(15, 91, 76, 0.08)',
+            marginBottom: '38px',
+            fontSize: '13px',
+            color: '#334155',
+            fontWeight: 600,
+            animation: 'heroFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.28s both'
+          }}>
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: '#10B981',
+              boxShadow: '0 0 8px #10B981',
+              display: 'inline-block'
+            }} />
+            <span>Test Priya Live on Phone:</span>
+            <a 
+              href="tel:+918064269783" 
+              style={{ color: '#0F5B4C', fontWeight: 800, textDecoration: 'none', borderBottom: '1.5px solid #00C9A7' }}
+              title="Call +918064269783"
+            >
+              +91 80642 69783
+            </a>
+            <span style={{ color: '#CBD5E1' }}>/</span>
+            <a 
+              href="tel:08064269783" 
+              style={{ color: '#0F5B4C', fontWeight: 800, textDecoration: 'none', borderBottom: '1.5px solid #00C9A7' }}
+              title="Call 08064269783"
+            >
+              08064269783
+            </a>
           </div>
           </div>
 

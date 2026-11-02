@@ -29,7 +29,7 @@
 | Live app | [https://careconnect-ai-clinic-assisatant.onrender.com](https://careconnect-ai-clinic-assisatant.onrender.com) |
 | API documentation | [Interactive OpenAPI / Swagger](https://careconnect-ai-clinic-assisatant.onrender.com/docs) |
 | GitHub repository | [https://github.com/krishnaaurora/CareConnect---AI-Clinic-Assisatant](https://github.com/krishnaaurora/CareConnect---AI-Clinic-Assisatant) |
-| Telephony carrier line | `+918064269783` (Direct Dial Inbound) |
+| Telephony carrier line | `+918064269783` or `08064269783` (Direct Dial Inbound · 24/7 Voice AI) |
 
 ## The problem
 Healthcare clinics and outpatient departments hold thousands of patient relationships, but reception operations are manual, phone lines are constantly congested, and staff are overwhelmed. Patients wait 5–15 minutes on hold during peak morning hours, regional language callers struggle to communicate with staff who speak only English or Hindi, and clinical notes scribbled on paper lead to double-booked doctors. Patients repeatedly call asking *"Is my blood test ready?"*, interrupting triage in the lobby. The challenge is not having patients; it is attending every caller instantly, verifying clinical identity securely, and giving accurate answers in their own native language 24/7.
