@@ -36,8 +36,7 @@ export default function Navbar({ onOpenDialer, onNavigateAdmin }) {
     { label: 'Product', href: '#features' },
     { label: 'How it works', href: '#how-it-works' },
     { label: 'For Hospitals', href: '#about' },
-    { label: 'Pricing', href: '#faqs' },
-    { label: 'Resources', href: '#trust' },
+    { label: 'Frequently Asked', href: '#faqs' },
   ];
 
   return (
