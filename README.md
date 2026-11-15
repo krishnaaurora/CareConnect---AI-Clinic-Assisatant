@@ -20,6 +20,10 @@
 
 </div>
 
+> [!TIP]
+> 📺 **Watch Full Walkthrough & Live PSTN Call Recording**: [Google Drive Demo Folder](https://drive.google.com/drive/folders/1Q2FIMVB2w_kHdnEigipUoN4bHjX2k2IW)  
+> 📞 **Test Priya Live via Phone**: Dial `+918064269783` or `08064269783` from any phone in India for autonomous 24/7 multilingual healthcare reception.
+
 ![Landing](docs/screenshots/01-landing.png)
 
 ## Links
@@ -95,7 +99,11 @@ Frontend code never imports Sarvam API keys. The browser calls CareConnect AI's 
 ## Screenshots
 | | |
 |---|---|
-| ![Landing](docs/screenshots/01-landing.png) **CareConnect AI Portal**: Live multilingual voice receptionist landing page with instant browser and phone access | ![Voice Modal](docs/screenshots/02-voice-modal.png) **Realtime Priya Voice Modal**: Zero-latency Web Audio streaming with live bilingual transcript display and visual equalizer |
+| > [!TIP]
+> 📺 **Watch Full Walkthrough & Live PSTN Call Recording**: [Google Drive Demo Folder](https://drive.google.com/drive/folders/1Q2FIMVB2w_kHdnEigipUoN4bHjX2k2IW)  
+> 📞 **Test Priya Live via Phone**: Dial `+918064269783` or `08064269783` from any phone in India for autonomous 24/7 multilingual healthcare reception.
+
+![Landing](docs/screenshots/01-landing.png) **CareConnect AI Portal**: Live multilingual voice receptionist landing page with instant browser and phone access | ![Voice Modal](docs/screenshots/02-voice-modal.png) **Realtime Priya Voice Modal**: Zero-latency Web Audio streaming with live bilingual transcript display and visual equalizer |
 
 ## Live call (real test call)
 A real telephony call was placed to `+918064269783`. The caller conversed in Hindi and English, verified doctor availability for Dr. Samir Verma, booked an appointment, and securely checked a blood test diagnostic report status using Date of Birth verification.
@@ -143,26 +151,31 @@ This was an end-to-end verification call over the public telephone network to ou
 
 ## Architecture
 
+![CareConnect AI System Architecture](docs/architecture-diagram.svg)
+
+<details>
+<summary><b>View Interactive Mermaid Flowchart</b></summary>
+
 ```mermaid
 flowchart TD
     subgraph Callers ["Inbound Call Channels"]
-        Phone["Mobile Phone (Carrier PSTN)"]
-        Browser["Desktop & Mobile Web Browsers\n(iOS Safari / Android Chrome)"]
+        Phone["Mobile Phone (Carrier PSTN: +918064269783)"]
+        Browser["Desktop & Mobile Web Browsers (Web Audio API)"]
     end
 
     subgraph SarvamVoice ["Sarvam AI Voice Infrastructure"]
-        TelGateway["Inbound Telephony Gateway\n(+918064269783)"]
-        VoiceAgent["Priya Voice Agent\n(v11 · CareConnect-162a4dc6-9779)"]
-        IndusCDN["Indus Media CDN\n(Audio Recordings & Transcripts)"]
+        TelGateway["Inbound Telephony Gateway"]
+        VoiceAgent["Priya Voice Agent (v11 · CareConnect-162a4dc6)"]
+        IndusCDN["Indus Media CDN (Audio & Transcripts)"]
     end
 
     subgraph BackendGateway ["CareConnect AI Backend (FastAPI Modular Monolith)"]
-        Proxy["Runtime URL Proxy\n(/api/v1/sarvam/proxy)"]
-        ApptService["Appointments Service\n(Check Availability, Book, Cancel)"]
+        Proxy["Runtime URL Proxy (/api/v1/sarvam/proxy)"]
+        ApptService["Appointments Service (Availability, Book, Cancel)"]
         ClinicsService["Clinics & Doctor Roster Service"]
-        ReportService["Diagnostic Reports Service\n(Identity & DOB Verification)"]
-        CallbackService["Callback & Enquiry Queue"]
-        WebhookHandler["Sarvam Webhook Receiver\n(/api/voice/sarvam/webhook)"]
+        ReportService["Diagnostic Reports Service (DOB Identity Check)"]
+        CallbackService["Callback & Enquiry Queue (CB-XXXXXX)"]
+        WebhookHandler["Sarvam Webhook Receiver (/api/voice/sarvam/webhook)"]
     end
 
     subgraph Database ["MongoDB Atlas Cloud"]
@@ -176,22 +189,33 @@ flowchart TD
     Phone --> TelGateway
     TelGateway --> VoiceAgent
     Browser --> Proxy
-    Proxy -. Signed WebSocket URL .-> VoiceAgent
+    Proxy -.->|Signed WebSocket URL| VoiceAgent
 
-    VoiceAgent -- "check_doctor_availability" --> ApptService
-    VoiceAgent -- "book_appointment" --> ApptService
-    VoiceAgent -- "cancel_appointment" --> ApptService
-    VoiceAgent -- "get_report_status" --> ReportService
-    VoiceAgent -- "request_callback" --> CallbackService
-    VoiceAgent -. "call_completed event" .-> WebhookHandler
+    VoiceAgent -->|check_doctor_availability| ApptService
+    VoiceAgent -->|book_appointment| ApptService
+    VoiceAgent -->|cancel_appointment| ApptService
+    VoiceAgent -->|get_report_status| ReportService
+    VoiceAgent -->|request_callback| CallbackService
+    VoiceAgent -.->|call_completed webhook| WebhookHandler
 
-    ApptService <--> AppointmentsColl
-    ClinicsService <--> DoctorsColl
-    ReportService <--> ReportsColl
-    CallbackService <--> AppointmentsColl
-    WebhookHandler <--> CallsColl
-    IndusCDN -. Audio Stream .-> Browser
+    ApptService --- AppointmentsColl
+    ClinicsService --- DoctorsColl
+    ReportService --- ReportsColl
+    CallbackService --- AppointmentsColl
+    WebhookHandler --- CallsColl
+    IndusCDN -.->|Stream Audio Playback| Browser
 ```
+</details>
+
+### Architectural Components
+
+| Layer | Component | Function & Clinical Governance |
+|---|---|---|
+| **Inbound Channels** | Mobile PSTN (`+918064269783` or `08064269783`) & Web Audio | Zero-app carrier phone call access across India + interactive web browser microphone streaming |
+| **Voice AI Stack** | Sarvam AI Agent `v11` (`CareConnect-162a4dc6-9779`) | Native Hindi, Telugu, and English conversational speech-to-speech with sub-second latency and Indus CDN recordings |
+| **Security Proxy** | Backend Runtime Proxy (`/api/v1/sarvam/proxy`) | Server-side authentication and ephemeral signed WebSocket tokens (zero API keys exposed in frontend) |
+| **Clinical Services** | FastAPI Modular Monolith | Strict anti-substitution doctor checks, real-time slot locks, multi-format DOB verification, and `CB-XXXXXX` callback tickets |
+| **Data Persistence** | MongoDB Atlas Cloud | Scalable, encrypted collections for appointments, physician rosters, diagnostic statuses, and bilingual call logs |
 
 - **Modular Monolithic Backend:** Clean separation across domain modules (`appointments`, `clinics`, `diagnostic_reports`, `enquiries`, `patients`, `sarvam`, `voice_agent`) without microservice deployment overhead.
 - **Zero-Secret Client Proxy:** Browser clients never hold or transmit the Sarvam workspace API key. The backend proxy attaches authentication server-side and issues time-limited signed tokens.

@@ -140,7 +140,7 @@ export default function MeetPriya({ onOpenDialer }) {
                 <span style={{ fontSize: '12px', color: '#0D3E33', fontWeight: 800 }}>PRIYA TELEPHONY NODE</span>
               </div>
               <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'monospace' }}>
-                {lastResponse.trace_id || lastResponse.bolna_trace_id || 'telephony-node-01'}
+                {lastResponse.trace_id || lastResponse.sarvam_trace_id || 'telephony-node-01'}
               </span>
             </div>
 

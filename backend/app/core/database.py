@@ -493,16 +493,16 @@ async def seed_initial_call_logs_if_needed():
     try:
         count = await db_instance.db["call_logs"].count_documents({})
         if count == 0:
-            logger.info("Seeding initial Bolna AI call activity in MongoDB...")
+            logger.info("Seeding initial Sarvam AI call activity in MongoDB...")
             initial_calls = [
                 {
-                    "call_id": "BOLNA-CALL-9821",
+                    "call_id": "SARVAM-CALL-9821",
                     "caller_name": "Anita Deshmukh",
                     "caller_phone": "+91 98201 54321",
                     "timestamp": "Today, 11:24 AM",
                     "duration": "2m 14s",
                     "language": "Hindi",
-                    "outcome": "BOOKED_THROUGH_BOLNA",
+                    "outcome": "BOOKED_THROUGH_VOICE_AI",
                     "summary": "Patient requested Cardiology slot. Priya verified Dr. Sharma's availability and confirmed 10:30 AM booking.",
                     "appointment_reference": "CC-8A91F2C1",
                     "doctor_name": "Dr. Rajesh Sharma",
@@ -512,13 +512,13 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9820",
+                    "call_id": "SARVAM-CALL-9820",
                     "caller_name": "Karan Johar",
                     "caller_phone": "+91 98860 33445",
                     "timestamp": "Today, 10:52 AM",
                     "duration": "1m 45s",
                     "language": "English",
-                    "outcome": "BOOKED_THROUGH_BOLNA",
+                    "outcome": "BOOKED_THROUGH_VOICE_AI",
                     "summary": "Caller booked follow-up checkup with Dr. Rajesh Sharma for tomorrow 02:30 PM.",
                     "appointment_reference": "CC-9E55A771",
                     "doctor_name": "Dr. Rajesh Sharma",
@@ -528,7 +528,7 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9819",
+                    "call_id": "SARVAM-CALL-9819",
                     "caller_name": "Arjun Nambiar",
                     "caller_phone": "+91 97400 22334",
                     "timestamp": "Today, 10:15 AM",
@@ -543,7 +543,7 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9818",
+                    "call_id": "SARVAM-CALL-9818",
                     "caller_name": "Meera Krishnan",
                     "caller_phone": "+91 94480 55667",
                     "timestamp": "Today, 09:40 AM",
@@ -558,7 +558,7 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9817",
+                    "call_id": "SARVAM-CALL-9817",
                     "caller_name": "Vikram Adithya",
                     "caller_phone": "+91 99002 88123",
                     "timestamp": "Today, 09:12 AM",
@@ -570,7 +570,7 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9816",
+                    "call_id": "SARVAM-CALL-9816",
                     "caller_name": "Rohan Deshpande",
                     "caller_phone": "+91 97410 44556",
                     "timestamp": "Yesterday, 06:45 PM",
@@ -585,13 +585,13 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9815",
+                    "call_id": "SARVAM-CALL-9815",
                     "caller_name": "Sunita Rao",
                     "caller_phone": "+91 97312 99887",
                     "timestamp": "Yesterday, 04:30 PM",
                     "duration": "2m 02s",
                     "language": "English",
-                    "outcome": "BOOKED_THROUGH_BOLNA",
+                    "outcome": "BOOKED_THROUGH_VOICE_AI",
                     "summary": "Booked Orthopedics follow-up appointment with Dr. Venkat Rao for 04:00 PM.",
                     "appointment_reference": "CC-7C33D010",
                     "doctor_name": "Dr. Venkat Rao",
@@ -601,7 +601,7 @@ async def seed_initial_call_logs_if_needed():
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
-                    "call_id": "BOLNA-CALL-9814",
+                    "call_id": "SARVAM-CALL-9814",
                     "caller_name": "Suresh Patil",
                     "caller_phone": "+91 98800 12345",
                     "timestamp": "Yesterday, 02:15 PM",
@@ -617,7 +617,7 @@ async def seed_initial_call_logs_if_needed():
                 }
             ]
             await db_instance.db["call_logs"].insert_many(initial_calls)
-            logger.info("Successfully seeded Bolna AI call records in MongoDB.")
+            logger.info("Successfully seeded Sarvam AI call records in MongoDB.")
     except Exception as e:
         logger.warning(f"Could not seed call logs: {e}")
 
@@ -736,11 +736,11 @@ async def seed_initial_audit_logs_if_needed():
                     "id": "LOG-1048",
                     "clinic_code": "CARE-IND-01",
                     "timestamp": "Today, 10:52 AM",
-                    "user": "Priya Voice AI (Bolna Bridge)",
+                    "user": "Priya Voice AI (Sarvam Telephony)",
                     "action": "APPOINTMENT_CREATED",
                     "target": "Ticket CC-9E55A771 (Karan Johar)",
                     "details": "Automated voice appointment booked for Cardiology Consultation",
-                    "ip_address": "Bolna Telephony Gateway",
+                    "ip_address": "Sarvam Telephony Gateway",
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {
@@ -758,11 +758,11 @@ async def seed_initial_audit_logs_if_needed():
                     "id": "LOG-1046",
                     "clinic_code": "CARE-IND-01",
                     "timestamp": "Yesterday, 05:20 PM",
-                    "user": "Priya Voice AI (Bolna Bridge)",
+                    "user": "Priya Voice AI (Sarvam Telephony)",
                     "action": "APPOINTMENT_CANCELLED",
                     "target": "Ticket CC-CNL-008 (Deepak Choudhury)",
                     "details": "Caller requested cancellation; slot released back to waitlist",
-                    "ip_address": "Bolna Telephony Gateway",
+                    "ip_address": "Sarvam Telephony Gateway",
                     "created_at": datetime.utcnow().isoformat() + "Z"
                 },
                 {

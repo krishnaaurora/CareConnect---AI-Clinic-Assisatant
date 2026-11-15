@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Multilingual Voice Receptionist (Priya / Bolna) for Healthcare Clinics",
+    description="Multilingual Voice Receptionist (Priya · Sarvam AI) for Healthcare Clinics",
     version="1.0.0",
     lifespan=lifespan
 )

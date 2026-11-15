@@ -77,11 +77,11 @@ export default function VoiceInfraPartners() {
             marginBottom: '28px',
             fontFamily: 'Inter, sans-serif',
           }}>
-            Our Voice Infra Partners
+            Powered by Voice AI Infrastructure
           </span>
         </motion.div>
 
-        {/* ── Partner Logos Row: Bolna ✕ Sarvam AI ── */}
+        {/* ── Partner Logo: Sarvam AI ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -91,73 +91,19 @@ export default function VoiceInfraPartners() {
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '36px',
+            gap: '24px',
             flexWrap: 'wrap',
             marginBottom: '40px',
+            padding: '16px 32px',
+            borderRadius: '24px',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
           }}
         >
-          {/* 1. Bolna Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', textAlign: 'left' }}>
-            {/* Bolna Rounded Squircle Icon */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <div style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #4361EE 0%, #3A0CA3 100%)',
-              boxShadow: '0 8px 20px rgba(67, 97, 238, 0.28)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-                {/* Speech silhouette */}
-                <path
-                  d="M10 24C10.5 20.5 12.5 18 16 18C18.5 18 20.5 16.5 20.5 14C20.5 11.5 18.5 10 16 10C13.5 10 11.5 11.5 11.5 14H8C8 9.5 11.5 6 16 6C20.5 6 24 9.5 24 14C24 18 21.5 20.5 18.5 21C16.5 21.3 15 22.5 14.5 24H10Z"
-                  fill="white"
-                />
-                <circle cx="11" cy="24" r="2.5" fill="white" />
-              </svg>
-            </div>
-
-            <div>
-              <div style={{
-                fontSize: '26px',
-                fontWeight: 800,
-                color: '#0A1128',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-              }}>
-                Bolna
-              </div>
-              <div style={{
-                fontSize: '11.5px',
-                color: '#64748B',
-                fontWeight: 600,
-                marginTop: '2px',
-                letterSpacing: '0.02em',
-              }}>
-                Voice AI Platform
-              </div>
-            </div>
-          </div>
-
-          {/* Cross Divider ✕ */}
-          <div style={{
-            fontSize: '22px',
-            fontWeight: 300,
-            color: '#94A3B8',
-            userSelect: 'none',
-            lineHeight: 1,
-          }}>
-            ✕
-          </div>
-
-          {/* 2. Sarvam AI Logo */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
-            <div style={{
-              fontSize: '28px',
+              fontSize: '32px',
               fontWeight: 800,
               color: '#0A1128',
               letterSpacing: '-0.03em',
@@ -175,22 +121,22 @@ export default function VoiceInfraPartners() {
                   top: '1px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  width: '5.5px',
-                  height: '5.5px',
+                  width: '6px',
+                  height: '6px',
                   borderRadius: '50%',
                   backgroundColor: '#EA580C',
                 }} />
               </span>
             </div>
             <div style={{
-              fontSize: '9.5px',
+              fontSize: '11px',
               fontWeight: 800,
               color: '#64748B',
               letterSpacing: '0.28em',
               textTransform: 'uppercase',
               marginTop: '4px',
             }}>
-              Bharat's AI
+              Bharat's Conversational Voice AI
             </div>
           </div>
         </motion.div>
