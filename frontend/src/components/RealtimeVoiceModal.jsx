@@ -241,9 +241,9 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
       isConnectingRef.current = false;
 
     } catch (err) {
-      console.error('Failed to start Sarvam voice conversation:', err);
+      console.error('Failed to start voice conversation:', err);
       setModalState('error');
-      setErrorMessage(err.message || 'Unable to connect to Sarvam AI Priya receptionist.');
+      setErrorMessage(err.message || 'Unable to connect to Priya receptionist.');
       await cleanupSession();
       isConnectingRef.current = false;
     }
@@ -356,7 +356,7 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
                   padding: '2px 8px',
                   borderRadius: '999px'
                 }}>
-                  Sarvam Voice AI
+                  CareConnect Voice AI
                 </span>
               </div>
               <p style={{ margin: '2px 0 0', fontSize: '12.5px', color: '#64748B', fontWeight: 500 }}>
@@ -435,7 +435,7 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
                 color: '#475569',
                 maxWidth: '420px'
               }}>
-                Have a live, natural voice conversation with our deployed Sarvam AI receptionist. Ask about doctors on duty, book appointments, check diagnostic report readiness, or enquire in English, Hindi, or Telugu.
+                Have a live, natural voice conversation with Priya, our deployed AI receptionist. Ask about doctors on duty, book appointments, check diagnostic report readiness, or enquire in English, Hindi, or Telugu.
               </p>
 
               <button
@@ -498,7 +498,7 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
               <p style={{ margin: 0, fontSize: '13.5px', color: '#64748B', maxWidth: '380px' }}>
                 {modalState === 'requesting_permission'
                   ? 'Please allow microphone access in your browser prompt to enable live two-way audio streaming.'
-                  : 'Establishing secure WebSocket audio channel with deployed Sarvam AI agent (Version 11)...'}
+                  : 'Establishing secure WebSocket audio channel with deployed Priya Voice Agent (Version 11)...'}
               </p>
             </div>
           )}
@@ -532,7 +532,7 @@ export default function RealtimeVoiceModal({ isOpen, onClose }) {
                 {modalState === 'permission_denied' ? 'Microphone Access Required' : 'Connection Error'}
               </h4>
               <p style={{ margin: '0 0 20px', fontSize: '13.5px', color: '#64748B', maxWidth: '400px', lineHeight: 1.5 }}>
-                {errorMessage || 'Failed to establish connection with Sarvam AI receptionist.'}
+                {errorMessage || 'Failed to establish connection with Priya receptionist.'}
               </p>
 
               <button

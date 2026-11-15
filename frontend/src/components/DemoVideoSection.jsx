@@ -33,7 +33,7 @@ export default function DemoVideoSection({ onOpenRealtimeVoice }) {
     { time: 250, label: "04:10 - Appointment Confirmation in MongoDB", desc: "Booking reference APT-7829104 created and synced live" },
     { time: 385, label: "06:25 - Diagnostic Report & DOB Security", desc: "Identity check via date of birth (14-08-1994) & CBC test readiness" },
     { time: 510, label: "08:30 - Automated Cancellation & Slot Release", desc: "Cancelling appointment reference & releasing doctor consultation slot" },
-    { time: 605, label: "10:05 - Admin Console Telemetry & Audio Playback", desc: "Reviewing Sarvam Indus CDN recording & bilingual transcript ledger" },
+    { time: 605, label: "10:05 - Admin Console Telemetry & Audio Playback", desc: "Reviewing telephony audio recording & bilingual transcript ledger" },
   ];
 
   const handleCopy = (text, label) => {
@@ -201,7 +201,7 @@ export default function DemoVideoSection({ onOpenRealtimeVoice }) {
                 <span>PSTN CARRIER LINE LIVE · 24/7 AUTONOMOUS RECEPTIONIST</span>
               </div>
               <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
-                Powered by Sarvam AI Conversational Engine (v11)
+                Powered by Conversational Voice AI Engine (v11)
               </span>
             </div>
 

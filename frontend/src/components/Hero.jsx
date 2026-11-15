@@ -1257,7 +1257,7 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice, onScrollToDemo
                 cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
               }}
-              title="Speak with Priya (Real-Time Sarvam Voice AI)"
+              title="Speak with Priya (Live Voice AI Receptionist)"
             >
               <Mic size={13} color="#00C9A7" />
               <span>Live Voice with Priya</span>

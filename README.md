@@ -97,13 +97,14 @@ Frontend code never imports Sarvam API keys. The browser calls CareConnect AI's 
 - Audio recording URLs depend on Sarvam's Indus CDN generation post-call.
 
 ## Screenshots
-| | |
-|---|---|
-| > [!TIP]
+
+> [!TIP]
 > 📺 **Watch Full Walkthrough & Live PSTN Call Recording**: [Google Drive Demo Folder](https://drive.google.com/drive/folders/1Q2FIMVB2w_kHdnEigipUoN4bHjX2k2IW)  
 > 📞 **Test Priya Live via Phone**: Dial `+918064269783` or `08064269783` from any phone in India for autonomous 24/7 multilingual healthcare reception.
 
-![Landing](docs/screenshots/01-landing.png) **CareConnect AI Portal**: Live multilingual voice receptionist landing page with instant browser and phone access | ![Voice Modal](docs/screenshots/02-voice-modal.png) **Realtime Priya Voice Modal**: Zero-latency Web Audio streaming with live bilingual transcript display and visual equalizer |
+| | |
+|---|---|
+| ![Landing](docs/screenshots/01-landing.png) **CareConnect AI Portal**: Live multilingual voice receptionist landing page with instant browser and phone access | ![Voice Modal](docs/screenshots/02-voice-modal.png) **Realtime Priya Voice Modal**: Zero-latency Web Audio streaming with live bilingual transcript display and visual equalizer |
 
 ## Live call (real test call)
 A real telephony call was placed to `+918064269783`. The caller conversed in Hindi and English, verified doctor availability for Dr. Samir Verma, booked an appointment, and securely checked a blood test diagnostic report status using Date of Birth verification.
@@ -152,60 +153,6 @@ This was an end-to-end verification call over the public telephone network to ou
 ## Architecture
 
 ![CareConnect AI System Architecture](docs/architecture-diagram.svg)
-
-<details>
-<summary><b>View Interactive Mermaid Flowchart</b></summary>
-
-```mermaid
-flowchart TD
-    subgraph Callers ["Inbound Call Channels"]
-        Phone["Mobile Phone (Carrier PSTN: +918064269783)"]
-        Browser["Desktop & Mobile Web Browsers (Web Audio API)"]
-    end
-
-    subgraph SarvamVoice ["Sarvam AI Voice Infrastructure"]
-        TelGateway["Inbound Telephony Gateway"]
-        VoiceAgent["Priya Voice Agent (v11 · CareConnect-162a4dc6)"]
-        IndusCDN["Indus Media CDN (Audio & Transcripts)"]
-    end
-
-    subgraph BackendGateway ["CareConnect AI Backend (FastAPI Modular Monolith)"]
-        Proxy["Runtime URL Proxy (/api/v1/sarvam/proxy)"]
-        ApptService["Appointments Service (Availability, Book, Cancel)"]
-        ClinicsService["Clinics & Doctor Roster Service"]
-        ReportService["Diagnostic Reports Service (DOB Identity Check)"]
-        CallbackService["Callback & Enquiry Queue (CB-XXXXXX)"]
-        WebhookHandler["Sarvam Webhook Receiver (/api/voice/sarvam/webhook)"]
-    end
-
-    subgraph Database ["MongoDB Atlas Cloud"]
-        AppointmentsColl[("appointments")]
-        DoctorsColl[("doctors & clinics")]
-        ReportsColl[("diagnostic_reports")]
-        PatientsColl[("patients")]
-        CallsColl[("call_logs")]
-    end
-
-    Phone --> TelGateway
-    TelGateway --> VoiceAgent
-    Browser --> Proxy
-    Proxy -.->|Signed WebSocket URL| VoiceAgent
-
-    VoiceAgent -->|check_doctor_availability| ApptService
-    VoiceAgent -->|book_appointment| ApptService
-    VoiceAgent -->|cancel_appointment| ApptService
-    VoiceAgent -->|get_report_status| ReportService
-    VoiceAgent -->|request_callback| CallbackService
-    VoiceAgent -.->|call_completed webhook| WebhookHandler
-
-    ApptService --- AppointmentsColl
-    ClinicsService --- DoctorsColl
-    ReportService --- ReportsColl
-    CallbackService --- AppointmentsColl
-    WebhookHandler --- CallsColl
-    IndusCDN -.->|Stream Audio Playback| Browser
-```
-</details>
 
 ### Architectural Components
 

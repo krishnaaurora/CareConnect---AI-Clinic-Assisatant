@@ -3,7 +3,6 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import VoiceInfraPartners from './components/VoiceInfraPartners';
 import PartnerClinics from './components/PartnerClinics';
 import About from './components/About';
 import Features from './components/Features';
@@ -182,7 +181,7 @@ export default function App() {
         onNavigateAdmin={() => navigateTo('admin')} 
       />
 
-      {/* Main Sections: Hero → Voice Infra Partners → Live Demo Video & Test Numbers → Partner Clinics → About → Features → How It Works → Trust & Privacy → FAQs */}
+      {/* Main Sections: Hero → Live Demo Video & Test Numbers → Partner Clinics → About → Features → How It Works → Trust & Privacy → FAQs */}
       <main>
         <Hero 
           onOpenDialer={() => setDialerOpen(true)} 
@@ -198,7 +197,6 @@ export default function App() {
             }
           }}
         />
-        <VoiceInfraPartners />
         <DemoVideoSection onOpenRealtimeVoice={() => setRealtimeVoiceOpen(true)} />
         <PartnerClinics />
         <About />
@@ -211,7 +209,7 @@ export default function App() {
       {/* Footer & Emergency Disclaimer */}
       <Footer />
 
-      {/* Real-Time Sarvam AI Voice Receptionist Modal */}
+      {/* Real-Time Priya Voice Receptionist Modal */}
       <RealtimeVoiceModal
         isOpen={realtimeVoiceOpen}
         onClose={() => setRealtimeVoiceOpen(false)}
