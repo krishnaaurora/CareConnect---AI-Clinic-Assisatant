@@ -14,7 +14,6 @@ import PhoneDialerModal from './components/PhoneDialerModal';
 import RealtimeVoiceModal from './components/RealtimeVoiceModal';
 import AdminPage from './components/AdminPage';
 import PageLoader from './components/PageLoader';
-import DemoVideoSection from './components/DemoVideoSection';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -181,23 +180,12 @@ export default function App() {
         onNavigateAdmin={() => navigateTo('admin')} 
       />
 
-      {/* Main Sections: Hero → Live Demo Video & Test Numbers → Partner Clinics → About → Features → How It Works → Trust & Privacy → FAQs */}
+      {/* Main Sections: Hero → Partner Clinics → About → Features → How It Works → Trust & Privacy → FAQs */}
       <main>
         <Hero 
           onOpenDialer={() => setDialerOpen(true)} 
           onOpenRealtimeVoice={() => setRealtimeVoiceOpen(true)}
-          onScrollToDemo={() => {
-            const el = document.getElementById('demo-video-section');
-            if (el) {
-              if (window.lenis) {
-                window.lenis.scrollTo(el, { offset: -50, duration: 1.0 });
-              } else {
-                el.scrollIntoView({ behavior: 'smooth' });
-              }
-            }
-          }}
         />
-        <DemoVideoSection onOpenRealtimeVoice={() => setRealtimeVoiceOpen(true)} />
         <PartnerClinics />
         <About />
         <Features />

@@ -494,10 +494,10 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice, onScrollToDemo
             marginBottom: '46px',
             animation: 'heroFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.22s both',
           }}>
-            {/* Primary: See it in action (Scrolls to Demo Video) */}
+            {/* Primary: See it in action (Opens Live Voice AI) */}
             <button
               type="button"
-              onClick={onScrollToDemo || onOpenRealtimeVoice || scrollToPhone}
+              onClick={onOpenRealtimeVoice || scrollToPhone}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -537,10 +537,10 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice, onScrollToDemo
               <span>See it in action</span>
             </button>
 
-            {/* Secondary: Request a Demo / Watch Video */}
+            {/* Secondary: Request a Demo (Opens Phone Simulator) */}
             <button
               type="button"
-              onClick={onScrollToDemo || onOpenRealtimeVoice || onOpenDialer}
+              onClick={onOpenDialer || onOpenRealtimeVoice}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -568,7 +568,7 @@ export default function Hero({ onOpenDialer, onOpenRealtimeVoice, onScrollToDemo
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <span>Watch Full Demo</span>
+              <span>Request a Demo</span>
               <ArrowRight size={15} strokeWidth={2.4} />
             </button>
           </div>

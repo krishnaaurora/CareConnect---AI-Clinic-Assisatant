@@ -96,6 +96,25 @@ Frontend code never imports Sarvam API keys. The browser calls CareConnect AI's 
 - Structured tool call extractions depend on Sarvam's tool schema adherence. We hardened all tool endpoints with flexible aliases (`caller_name`, `patient_name`, `date_of_birth`, `dob`) to ensure 100% tolerance against subtle parameter naming variations.
 - Audio recording URLs depend on Sarvam's Indus CDN generation post-call.
 
+## 📺 Video Walkthrough & Live Demonstration
+
+A complete 11-minute end-to-end video walkthrough demonstrates CareConnect AI in production action, covering real carrier telephone calls over PSTN, natural Hindi/English dialogue with Priya, real-time doctor availability checks, instant appointment bookings & cancellations, and DOB-secured diagnostic report lookups:
+
+> 🎬 **Watch Full Video Walkthrough (11m 15s)**: [Google Drive Video Mirror](https://drive.google.com/drive/folders/1Q2FIMVB2w_kHdnEigipUoN4bHjX2k2IW)  
+> 📞 **Test Priya Live via Phone**: Dial `+918064269783` or `08064269783` from any mobile or landline phone in India.
+
+### Video Milestones & Chapters
+
+| Timestamp | Chapter | Demonstration Scope |
+|---|---|---|
+| `00:00` | System Architecture Overview | Introduction to CareConnect AI architecture & Priya voice infrastructure |
+| `01:15` | Live PSTN Call to `+918064269783` | Direct carrier telephone dial-in & instant bilingual greeting without hold time |
+| `02:40` | Real-Time Doctor Availability | Dr. Samir Verma schedule lookup with strict anti-substitution validation |
+| `04:10` | Appointment Confirmation in MongoDB | Booking reference `APT-7829104` created and synced live into database |
+| `06:25` | Diagnostic Report & DOB Security | Two-factor identity check via Date of Birth (`14-08-1994`) & CBC test readiness |
+| `08:30` | Automated Cancellation & Slot Release | Cancelling appointment reference and returning consultation slot to pool |
+| `10:05` | Admin Console Telemetry & Audio Playback | Telephony analytics, bilingual transcript ledger, and audio playback |
+
 ## Screenshots
 
 > [!TIP]
